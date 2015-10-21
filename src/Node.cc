@@ -128,7 +128,8 @@ int Node_t::getBuddy(Ori_t dir)
 {
 	int retval = -1;
 
-	if (isRef_m) { return retval; }
+	//if (isRef()) { return retval; }
+	if (isSpecial()) { return retval; }
 
 	for (unsigned int i = 0; i < edges_m.size(); i++)
 	{
@@ -162,7 +163,7 @@ int Node_t::getBuddy(Ori_t dir)
 int Node_t::markRef(Ref_t * ref, int K)
 {
 	// handle special source/sink nodes
-	if (isRef_m) { return 1; }
+	if (isSource() || isSink()) { return 1; }
 
 	CanonicalMer_t cmer;
 
@@ -209,7 +210,7 @@ ostream & Node_t::print(ostream & out) const
 
 	out << "\t*s\t" << str_m;
 	out << "\t*c\t" << cov_m;
-	out << "\t*r\t" << isRef_m;
+	out << "\t*r\t" << isRef();
 
 	for (unsigned int i = 0; i < edges_m.size(); i++)
 	{
@@ -224,7 +225,8 @@ ostream & Node_t::print(ostream & out) const
 
 int Node_t::strlen() const
 {
-	if (isRef_m) { return 0; }
+	//if (isRef()) { return 0; }
+	if (isSpecial()) { return 0; }
 	return str_m.length();
 }
 
@@ -242,7 +244,8 @@ void Node_t::addReadStart(ReadId_t readid, int nodeoffset, int trim5, Ori_t ori)
 
 void Node_t::revreads()
 {
-	assert(!isRef_m);
+	//assert(!isRef());
+	assert(!isSpecial());
 
 	int len = strlen();
 

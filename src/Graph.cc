@@ -407,7 +407,8 @@ bool Graph_t::hasCycle() {
 		for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++) {
 			Node_t * node = mi->second;
 
-			if (node->isRef_m)    { continue; }
+			//if (node->isRef())    { continue; }
+			if (node->isSpecial())    { continue; }
 			//if (node->touchRef_m) { continue; }
 		
 			node->setColor(WHITE);
@@ -438,7 +439,8 @@ void Graph_t::hasCycleRec(Node_t * node, Ori_t dir, bool *ans) {
 
 				Node_t * other = getNode(edge);
 				
-				if(other->isRef_m) { continue; }
+				//if(other->isRef()) { continue; }
+				if(other->isSpecial()) { continue; }
 				
 				//if (DFS_VERBOSE) { cerr << "     ==> " << other->nodeid_m << endl; }
 
@@ -1212,9 +1214,12 @@ string Graph_t::nodeColor(Node_t * cur, string & who)
 {
 	string color = COLOR_ALL;
 
-	if      (cur->nodeid_m == "source") { color = COLOR_SOURCE; }
-	else if (cur->nodeid_m == "sink")   { color = COLOR_SINK; }
-	else if (cur->touchRef_m)           { color = COLOR_TOUCH; }
+	//if      (cur->nodeid_m == "source") { color = COLOR_SOURCE; }
+	//else if (cur->nodeid_m == "sink")   { color = COLOR_SINK; }
+	
+	if      (cur->isSource()) { color = COLOR_SOURCE; }
+	else if (cur->isSink())   { color = COLOR_SINK; }
+	else if (cur->touchRef_m) { color = COLOR_TOUCH; }
 
 	stringstream whostr;
 
@@ -1348,6 +1353,9 @@ void Graph_t::printDot(const string & filename)
 
 		string who;
 		string color = nodeColor(cur, who);
+		
+		string shape = "circle";
+		if ( (cur->isSource()) || (cur->isSink()) ) { shape = "diamond"; }
 
 		if (NODE_STRLEN == 0)
 		{
@@ -1357,7 +1365,7 @@ void Graph_t::printDot(const string & filename)
 		}
 		else if (cur->strlen() > NODE_STRLEN)
 		{
-			fprintf(fp, "  %s [label=\"%d:%s | <F> %s... | <R> len=%d cov=%0.02f rd:%d B:%d %s\" color=\"%s\"]\n",
+			fprintf(fp, "  %s [label=\"%d:%s | <F> %s... | <R> len=%d cov=%0.02f rd:%d B:%d %s\" color=\"%s\" shape=\"%s\"]\n",
 				cur->nodeid_m.c_str(),
 				nodes,
 				cur->nodeid_m.c_str(),
@@ -1367,11 +1375,12 @@ void Graph_t::printDot(const string & filename)
 				(int) cur->reads_m.size(),
 				cur->cntReadCode(CODE_BASTARD),
 				who.c_str(),
-				color.c_str());
+				color.c_str(),
+				shape.c_str());
 		}
 		else
 		{
-			fprintf(fp, "  %s [label=\"%d:%s | <F> %s | <R> len=%d cov=%0.02f rd:%d B:%d %s\" color=\"%s\"]\n",
+			fprintf(fp, "  %s [label=\"%d:%s | <F> %s | <R> len=%d cov=%0.02f rd:%d B:%d %s\" color=\"%s\" shape=\"%s\"]\n",
 				cur->nodeid_m.c_str(),
 				nodes,
 				cur->nodeid_m.c_str(),
@@ -1381,7 +1390,8 @@ void Graph_t::printDot(const string & filename)
 				(int) cur->reads_m.size(),
 				cur->cntReadCode(CODE_BASTARD),
 				who.c_str(),
-				color.c_str());
+				color.c_str(),
+				shape.c_str());
 		}
 
 		if (PRINT_DOT_READS)
@@ -1731,7 +1741,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	}
 
 	newsource->addEdge(source_mer.mer_m, sourcedir, refid);
-	newsource->isRef_m = true;
+	newsource->setLabel(SOURCE);
 	source_m->addEdge(newsource->nodeid_m, Edge_t::fliplink(sourcedir), refid);
 	source_m = newsource;
 
@@ -1766,7 +1776,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	}
 
 	newsink->addEdge(sink_mer.mer_m, sinkdir, refid);
-	newsink->isRef_m = true;
+	newsink->setLabel(SINK);
 	sink_m->addEdge(newsink->nodeid_m, Edge_t::fliplink(sinkdir), refid);
 	sink_m = newsink;
 
@@ -2143,7 +2153,8 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 		buddy->dead_m = true;
 
 		// isRef
-		node->isRef_m |= buddy->isRef_m;
+		//node->isRef_m |= buddy->isRef_m;
+		if(buddy->isRef()) { node->setLabel(REF); }
 
 		// node edges
 		node->edges_m.erase(node->edges_m.begin()+uniqueid);
@@ -2197,7 +2208,8 @@ void Graph_t::compress(int compid)
 		if(mi->second->component_m == compid) { //only analyze the selected connected component 
 		
 			if (mi->second->dead_m)  { continue; }
-			if (mi->second->isRef_m) { continue; }
+			//if (mi->second->isRef()) { continue; }
+			if (mi->second->isSpecial()) { continue; }
 
 			compressNode(mi->second, F);
 			compressNode(mi->second, R);
@@ -2280,7 +2292,8 @@ void Graph_t::removeLowCov(bool docompression, int compid)
 		
 			Node_t * node = mi->second;
 
-			if (node->isRef_m)    { continue; }
+			//if (node->isRef())    { continue; }
+			if (node->isSpecial())    { continue; }
 			//if (node->touchRef_m) { continue; }
 
 			//if (node->cov_m <= TIP_COV_THRESHOLD)
@@ -2325,7 +2338,8 @@ void Graph_t::removeTips(int compid)
 			
 				Node_t * cur = mi->second;
 
-				if (cur->isRef_m) { continue; }
+				//if (cur->isRef()) { continue; }
+				if (cur->isSpecial()) { continue; }
 
 				int deg = cur->edges_m.size();
 				int len = cur->strlen() - K + 1;
@@ -2504,7 +2518,8 @@ void Graph_t::threadReads()
 		{
 			Node_t * cur = mi->second;
 
-			if (cur->isRef_m) { continue; }
+			//if (cur->isRef()) { continue; }
+			if (cur->isSpecial()) { continue; }
 
 			//if ((cur->degree(F) > 1) || (cur->degree(R) > 1))
 			if ((cur->degree(F) > 1) && (cur->degree(R) > 1))

@@ -41,7 +41,7 @@ int Path_t::pathlen()
 	{
 		Node_t * n = nodes_m[i];
 
-		if (!n->isRef_m)
+		if (!n->isSpecial())
 		{
 			len++;
 		}
@@ -70,7 +70,7 @@ string Path_t::str()
 			nstr = rc_str(nstr);
 		}
 
-		if (!n->isRef_m)
+		if (!n->isSpecial())
 		{
 			if (retval.length() > 0)
 			{
@@ -116,7 +116,7 @@ string Path_t::covstr() {
 			}
 		}
 		
-		if (!n->isRef_m) {		
+		if (!n->isSpecial()) {		
 		
 			if ((ss.str()).size() == 0) { // first node
 				for (unsigned int j=0; j < node_coverage.size(); j++) { 
@@ -171,7 +171,7 @@ vector<int> Path_t::covDistr()
 			}
 		}
 		
-		if (!n->isRef_m) {		
+		if (!n->isSpecial()) {		
 		
 			if (path_coverage.size() == 0) { // first node
 				for (unsigned int j=0; j < node_coverage.size(); j++) { 
@@ -223,7 +223,7 @@ int Path_t::covAt(int pos)
 			}
 		}
 		
-		if (!n->isRef_m)
+		if (!n->isSpecial())
 		{
 			unsigned int j = 0;
 			if (p > 0) { // if not first node, scan only the extra base-pairs for 
@@ -280,7 +280,7 @@ float Path_t::cov()
 	{
 		Node_t * n = nodes_m[i];
 
-		if (!n->isRef_m)
+		if (!n->isSpecial())
 		{
 			int merlen = n->strlen() - K + 1;
 			covsum += n->cov_m * merlen;
@@ -302,7 +302,7 @@ float Path_t::mincov()
 	{
 		Node_t * n = nodes_m[i];
 
-		if (!n->isRef_m)
+		if (!n->isSpecial())
 		{
 			if ((mincov == -1) || (n->cov_m < mincov))
 			{
@@ -325,7 +325,7 @@ float Path_t::maxcov()
 	{
 		Node_t * n = nodes_m[i];
 
-		if (!n->isRef_m)
+		if (!n->isSpecial())
 		{
 			if ((maxcov == -1) || (n->cov_m > maxcov))
 			{
@@ -348,7 +348,7 @@ Node_t * Path_t::pathcontig(int pos)
 	{
 		Node_t * n = nodes_m[i];
 
-		if (!n->isRef_m)
+		if (!n->isSpecial())
 		{
 			int span = n->str_m.length();
 

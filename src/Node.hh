@@ -26,6 +26,11 @@
 
 using namespace std;
 
+#define UNDEFINED 0
+#define SOURCE 1
+#define SINK 2
+#define REF 3
+
 // Node_t
 //////////////////////////////////////////////////////////////////////////
 
@@ -40,7 +45,7 @@ public:
 
 	string str_m;
 	float cov_m;
-	bool isRef_m;
+	int label_m;
 
 	bool dead_m;
 	int  component_m;
@@ -60,7 +65,7 @@ public:
 		: nodeid_m(mer), 
 		str_m(mer), 
 		cov_m(0), 
-		isRef_m(0), 
+		label_m(UNDEFINED),
 		dead_m(0),
 		component_m(0),
 		touchRef_m(false),
@@ -71,8 +76,14 @@ public:
 	friend ostream& operator<<(std::ostream& o, const Node_t & n) { return n.print(o); }
 	friend ostream & operator<<(std::ostream & o, const Node_t * n) { return n->print(o); }
 
+	bool isRef() const { return label_m == REF; }
+	bool isSource() const { return label_m == SOURCE; }
+	bool isSink() const { return label_m == SINK; }
+	bool isSpecial() const { return ( (label_m == SINK) || (label_m == SOURCE) || (label_m == REF) ); }
+	
+	void setLabel(int new_label) { label_m = new_label; }
+	
 	void setRead2InfoList(ReadInfoList_t * list) { readid2info = list; }
-	void appendRefFlag(bool isRef) { isRef_m |= isRef; }
 	
 	void setColor(int c) { color = c; }
 	int getColor() { return color; }

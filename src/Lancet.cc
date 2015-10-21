@@ -261,11 +261,16 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 			// process each connected components
 			for (int c=1; c<=numcomp; c++) { 
 				
+				char comp[21]; // enough to hold all numbers up to 64-bits
+				sprintf(comp, "%d", c);
+				
 				g.printStats(c); 
 				
 				// mark source and sink
 				g.markRefEnds(refinfo, c);
 				//g.markRefNodes();
+			
+				if (PRINT_ALL) { g.printDot(out_prefix + ".1l.c" + comp + ".dot"); }
 			
 				// if there is a cycle in the graph skip analysis
 				if (g.hasCycle()) { g.clear(false); cycleInGraph = true; break; }
@@ -275,15 +280,15 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 				// Initial compression
 				g.compress(c); 
 				g.printStats(c);
-				if (PRINT_RAW) { g.printDot(out_prefix + ".1c.dot"); }
+				if (PRINT_ALL) { g.printDot(out_prefix + ".2c.dot"); }
 
 				// Remove low coverage
 				g.removeLowCov(true, c);
-				if (PRINT_ALL) { g.printDot(out_prefix + ".2l.dot"); }
+				if (PRINT_ALL) { g.printDot(out_prefix + ".3l.dot"); }
 
 				// Remove tips
 				g.removeTips(c);
-				if (PRINT_ALL) { g.printDot(out_prefix + ".3t.dot"); }
+				if (PRINT_ALL) { g.printDot(out_prefix + ".4t.dot"); }
 
 				// skip analysis if there is a cycle in the graph 
 				if (g.hasCycle()) { g.clear(false); cycleInGraph = true; break; }

@@ -90,6 +90,15 @@ void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5
 			vi = nodes_m.insert(make_pair(vc.mer_m, new Node_t(vc.mer_m))).first; 
 		}
 
+		// set node label
+		if(readid2info[readid].label_m == TMR) {
+			ui->second->setIsTumor();
+			vi->second->setIsTumor();			
+		}
+		else if(readid2info[readid].label_m == NML) {
+			ui->second->setIsNormal();
+			vi->second->setIsNormal();			
+		}
 		//ui->second->appendRefFlag(isRef);
 		//vi->second->appendRefFlag(isRef);
 
@@ -251,10 +260,10 @@ int Graph_t::countMappedReads()
 // addRead
 ////////////////////////////////////////////////////////////////
 
-ReadId_t Graph_t::addRead(const string & set, const string & readname, const string & seq, char code)
+ReadId_t Graph_t::addRead(const string & set, const string & readname, const string & seq, char code, int label)
 {
 	ReadId_t retval = readid2info.size();
-	readid2info.push_back(ReadInfo_t(set, readname, seq, code));
+	readid2info.push_back(ReadInfo_t(label, set, readname, seq, code));
 	return retval;
 }
 
@@ -285,14 +294,14 @@ void Graph_t::addPair(const string & set,
 	const string & readname,
 	const string & seq1, const string & qv1,
 	const string & seq2, const string & qv2,
-	char code)
+	char code, int label)
 {
 	if (INCLUDE_BASTARDS || (code == CODE_MAPPED))
 	{
-		int rd1 = addRead(set, readname+"_1", seq1, code);
+		int rd1 = addRead(set, readname+"_1", seq1, code, label);
 		trimAndLoad(rd1, seq1, qv1, false);
 
-		int rd2 = addRead(set, readname+"_2", seq2, code);
+		int rd2 = addRead(set, readname+"_2", seq2, code, label);
 		trimAndLoad(rd2, seq2, qv2, false);
 
 		addMates(rd1, rd2);
@@ -306,9 +315,10 @@ void Graph_t::addUnpaired(const string & set,
 	const string & readname,
 	const string & seq,
 	const string & qv,
-	char code)
+	char code,
+	int label)
 {
-	int rd = addRead(set, readname, seq, code);
+	int rd = addRead(set, readname, seq, code, label);
 	//trimAndLoad(rd, seq, qv, false);
 	trim(rd, seq, qv, false);
 	
@@ -322,19 +332,20 @@ void Graph_t::addpaired(const string & set,
 	const string & seq,
 	const string & qv,
 	const int mate_id,
-	char code)
+	char code,
+	int label)
 {
 	int rd;
 	if(mate_id == 1) {
-		rd = addRead(set, readname+"_1", seq, code);
+		rd = addRead(set, readname+"_1", seq, code, label);
 		trim(rd, seq, qv, false);
 	}
 	else if(mate_id == 2) {
-		rd = addRead(set, readname+"_2", seq, code);
+		rd = addRead(set, readname+"_2", seq, code, label);
 		trim(rd, seq, qv, false);
 	}
 	else { // no mate
-		rd = addRead(set, readname+"_0", seq, code);
+		rd = addRead(set, readname+"_0", seq, code, label);
 		trim(rd, seq, qv, false);
 	}
 }
@@ -377,7 +388,7 @@ void Graph_t::loadReadsSFA(const string & filename)
 
 	while (fscanf(fp, "%s\t%s", rbuffer, sbuffer) == 2)
 	{
-		readid = addRead("rd", rbuffer, sbuffer, 'L');
+		readid = addRead("rd", rbuffer, sbuffer, 'L', UNDEFINED);
 
 		int l = strlen(sbuffer);
 		for (int i = 0; i < l; i++) { qbuffer[i] = MIN_QUAL; } qbuffer[l] = '\0';
@@ -421,6 +432,30 @@ bool Graph_t::hasCycle() {
 	
 	if(ans) {
 		cout << "Cycle found in the graph (kmer = " << K << ")!" << endl;
+	}
+	
+	return ans;
+}
+
+// check if there is any node/kmer specific only to the tumor
+//////////////////////////////////////////////////////////////
+bool Graph_t::hasTumorOnlyKmer() {
+	
+	//cout << "Check for cycles (kmer = " << K << ")..." << endl;
+	bool ans = false;
+	
+	if ( (source_m != NULL) && (sink_m != NULL) ) {
+		
+		MerTable_t::iterator mi;
+	
+		for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++) {
+			Node_t * node = mi->second;
+
+			if (node->isTumor() && !node->isNormal()) { 
+				ans = true; 
+				break; // exit as soon as tumor spcific node is found
+			}
+		}
 	}
 	
 	return ans;
@@ -1008,7 +1043,9 @@ void Graph_t::eka(Node_t * source, Node_t * sink, Ori_t dir,
 		if (path->hasCycle_m) { allcycles++; }
 		complete++;
 		
-		processPath(path, ref, fp, printPathsToFile, complete, perfect, withsnps, withindel, withmix);
+		//if(path->hasTumorOnlyNode()) {
+			processPath(path, ref, fp, printPathsToFile, complete, perfect, withsnps, withindel, withmix);
+		//}
 		
 		for (unsigned int i = 0; i < path->edges_m.size(); i++) {
 			(path->edges_m[i])->setFlag(1);
@@ -1231,27 +1268,15 @@ string Graph_t::nodeColor(Node_t * cur, string & who)
 		whocnt[readid2info[*si].set_m]++;
 	}
 
-	bool isTumor = false;
-	bool isNormal = false;
-
+	bool isTumor = cur->isTumor();
+	bool isNormal = cur->isNormal();
+	
 	map<string, int>::iterator mi;
 	for (mi = whocnt.begin(); mi != whocnt.end(); mi++)
 	{
 		if (mi != whocnt.begin()) { whostr << " "; }
 		whostr << mi->first << ":" << mi->second;
 		//cout << whostr.str() << endl;
-
-		//if (mi->second >= COV_THRESHOLD)
-		//{
-			if ( (mi->first == "tumor") )
-			{
-				isTumor = true;
-			}
-			else if ( (mi->first == "normal") )
-			{
-				isNormal = true;
-			}
-		//}
 	}
 
 	double avgcov = ((double) totalreadbp_m) / ((double) ref_m->rawseq.length());
@@ -1303,7 +1328,7 @@ string Graph_t::edgeColor(Node_t * cur, Edge_t & e)
 
 // printDot
 //////////////////////////////////////////////////////////////
-void Graph_t::printDot(const string & filename)
+void Graph_t::printDot(const string & filename, int compid)
 {
 	cerr << "Saving graph: " << filename << endl;
 
@@ -1346,6 +1371,10 @@ void Graph_t::printDot(const string & filename)
 	MerTable_t::iterator mi;
 	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
 	{
+		// only print nodes in the selected component
+		if(mi->second->component_m != compid) { continue; }
+		//if( (mi->second->component_m != compid) && !(mi->second->isSource()) && !(mi->second->isSink()) ) { continue; }
+		 
 		nodes++;
 
 		Node_t * cur = mi->second;
@@ -1597,7 +1626,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	//ref_m = refinfo;
 	int refid = 0; 
 	if(!is_ref_added) {
-		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, 'R');
+		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, 'R', REF);
 		is_ref_added = true;
 		if (VERBOSE) { cerr << "refid: " << refid << endl; }
 	}
@@ -1715,6 +1744,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	std::stringstream sourceid;
 	sourceid << "source" << compid;
 	Node_t * newsource = new Node_t(sourceid.str());
+	newsource->component_m = compid;
 
 	Edgedir_t sourcedir = FF;
 	if (source_mer.ori_m == R) { sourcedir = FR; }
@@ -1741,7 +1771,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	}
 
 	newsource->addEdge(source_mer.mer_m, sourcedir, refid);
-	newsource->setLabel(SOURCE);
+	newsource->setIsSource();
 	source_m->addEdge(newsource->nodeid_m, Edge_t::fliplink(sourcedir), refid);
 	source_m = newsource;
 
@@ -1751,7 +1781,8 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	std::stringstream sinkid;
 	sinkid << "sink" << compid;
 	Node_t * newsink = new Node_t(sinkid.str());
-
+	newsink->component_m = compid;
+	
 	Edgedir_t sinkdir = RR;
 	if (sink_mer.ori_m == R) { sinkdir = FF; } 
 
@@ -1776,7 +1807,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	}
 
 	newsink->addEdge(sink_mer.mer_m, sinkdir, refid);
-	newsink->setLabel(SINK);
+	newsink->setIsSink();
 	sink_m->addEdge(newsink->nodeid_m, Edge_t::fliplink(sinkdir), refid);
 	sink_m = newsink;
 
@@ -2154,8 +2185,10 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 
 		// isRef
 		//node->isRef_m |= buddy->isRef_m;
-		if(buddy->isRef()) { node->setLabel(REF); }
-
+		if(buddy->isRef()) { node->setIsRef(); }
+		if(buddy->isNormal()) { node->setIsNormal(); }
+		if(buddy->isTumor()) { node->setIsTumor(); }
+				
 		// node edges
 		node->edges_m.erase(node->edges_m.begin()+uniqueid);
 
@@ -2509,7 +2542,7 @@ void Graph_t::threadReads()
 
 			char buffer [1024];
 			sprintf(buffer, "thread_%d.dot", threadround);
-			printDot(buffer);
+			printDot(buffer, 0);
 
 			cerr << "================================================================" << endl;
 		}

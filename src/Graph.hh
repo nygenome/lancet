@@ -35,6 +35,13 @@
 #define GREY 2
 #define BLACK 3
 
+#define UNDEFINED 0
+#define SOURCE 1
+#define SINK 2
+#define REF 3
+#define TMR 4
+#define NML 5
+
 using namespace std;
 
 // Graph_t
@@ -130,7 +137,7 @@ public:
 
 	int countMappedReads();
 
-	ReadId_t addRead(const string & set, const string & readname, const string & seq, char code);
+	ReadId_t addRead(const string & set, const string & readname, const string & seq, char code, int label);
 
 	void addMates(ReadId_t r1, ReadId_t r2);
 
@@ -139,20 +146,22 @@ public:
 	void addPair(const string & set, const string & readname,
 		const string & seq1, const string & qv1,
 		const string & seq2, const string & qv2,
-		char code);
+		char code, int label);
 
 	void addUnpaired(const string & set,
 		const string & readname,
 		const string & seq,
 		const string & qv,
-		char code);
+		char code,
+		int label);
 
 	void addpaired(const string & set,
 		const string & readname,
 		const string & seq,
 		const string & qv,
 		const int mate_id,
-		char code);
+		char code,
+		int label);
 
 	void loadReadsSFA(const string & filename);
 	void processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPathsToFile, int &complete, int &perfect, int &withsnps, int &withindel, int &withmix);
@@ -162,11 +171,12 @@ public:
 	void eka(Node_t * source, Node_t * sink, Ori_t dir, Ref_t * ref, FILE * fp, bool printPathsToFile);
 	void dfs(Node_t * source, Node_t * sink, Ori_t dir, Ref_t * ref, FILE * fp, bool printPathsToFile);
 	bool findRepeatsInGraphPaths(Node_t * source, Node_t * sink, Ori_t dir);
+	bool hasTumorOnlyKmer();
 	bool hasCycle();
 	void hasCycleRec(Node_t * node, Ori_t dir, bool* ans);
 	string nodeColor(Node_t * cur, string & who);
 	string edgeColor(Node_t * cur, Edge_t & e);
-	void printDot(const string & filename);
+	void printDot(const string & filename, int compid);
 	void printFasta(const string & filename);
 	void printPairs(const string & filename);
 	void markRefEnds(Ref_t * refinfo, int compid);

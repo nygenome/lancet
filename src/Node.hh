@@ -26,11 +26,6 @@
 
 using namespace std;
 
-#define UNDEFINED 0
-#define SOURCE 1
-#define SINK 2
-#define REF 3
-
 // Node_t
 //////////////////////////////////////////////////////////////////////////
 
@@ -45,8 +40,11 @@ public:
 
 	string str_m;
 	float cov_m;
-	int label_m;
-
+	bool isRef_m;
+	bool isTumor_m;
+	bool isNormal_m;
+	bool isSource_m;
+	bool isSink_m;
 	bool dead_m;
 	int  component_m;
 	bool touchRef_m;
@@ -65,8 +63,12 @@ public:
 		: nodeid_m(mer), 
 		str_m(mer), 
 		cov_m(0), 
-		label_m(UNDEFINED),
-		dead_m(0),
+		isRef_m(false),
+		isTumor_m(false),
+		isNormal_m(false),
+		isSource_m(false),
+		isSink_m(false),
+		dead_m(false),
 		component_m(0),
 		touchRef_m(false),
 		onRefPath_m(0),
@@ -76,12 +78,18 @@ public:
 	friend ostream& operator<<(std::ostream& o, const Node_t & n) { return n.print(o); }
 	friend ostream & operator<<(std::ostream & o, const Node_t * n) { return n->print(o); }
 
-	bool isRef() const { return label_m == REF; }
-	bool isSource() const { return label_m == SOURCE; }
-	bool isSink() const { return label_m == SINK; }
-	bool isSpecial() const { return ( (label_m == SINK) || (label_m == SOURCE) || (label_m == REF) ); }
+	bool isRef() const { return isRef_m; }
+	bool isSource() const { return isSource_m; }
+	bool isSink() const { return isSink_m; }
+	bool isTumor() const { return isTumor_m; }
+	bool isNormal() const { return isNormal_m; }
+	bool isSpecial() const { return (isSink_m || isSource_m || isRef_m); }
 	
-	void setLabel(int new_label) { label_m = new_label; }
+	void setIsRef() { isRef_m = true; }
+	void setIsSource() { isSource_m = true; }
+	void setIsSink() { isSink_m = true; }
+	void setIsTumor() { isTumor_m = true; }
+	void setIsNormal() { isNormal_m = true; }
 	
 	void setRead2InfoList(ReadInfoList_t * list) { readid2info = list; }
 	

@@ -65,7 +65,7 @@ const string Graph_t::COLOR_NOVO   = "darkorange3";
 const string Graph_t::COLOR_TUMOR  = "red";
 const string Graph_t::COLOR_NORMAL = "green";
 const string Graph_t::COLOR_SHARED = "deepskyblue4";
-const string Graph_t::COLOR_SOURCE = "green\" style=\"filled";
+const string Graph_t::COLOR_SOURCE = "orange\" style=\"filled";
 const string Graph_t::COLOR_SINK   = "yellow\" style=\"filled";
 const string Graph_t::COLOR_TOUCH  = "pink";
 
@@ -136,7 +136,7 @@ public:
 	set<string> RG_self;
 	set<string> RG_sibling;
 	
-	map<string, Ref_t *> reftable; // table of references (exomes) to analyze
+	map<string, Ref_t *> reftable; // table of references to analyze
 	
 	Microassembler() { 
 		graphCnt = 0;

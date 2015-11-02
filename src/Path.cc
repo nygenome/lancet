@@ -384,3 +384,23 @@ int Path_t::hasCycle(Node_t * node)
 
 	return 0;
 }
+
+// return true if tumor only node is found in the path
+//////////////////////////////////////////////////////////////
+
+bool Path_t::hasTumorOnlyNode()
+{
+	bool ans = false;
+
+	for (unsigned int i = 0; i < nodes_m.size(); i++)
+	{
+		Node_t * n = nodes_m[i];
+		
+		if (n->isTumor() && !n->isNormal()) { 
+			ans = true; 
+			break; // exit as soon as tumor spcific node is found
+		}
+	}
+
+	return ans;
+}

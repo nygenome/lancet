@@ -123,6 +123,7 @@ public:
 	float maxcov();
 	Node_t * pathcontig(int pos);
 	int hasCycle(Node_t * node);
+	bool hasTumorOnlyNode();
 	//string covDistr();
 	vector<int> covDistr();
 	vector<float> readCovNodes();

@@ -240,7 +240,6 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 			g.buildgraph(refinfo);
 			
 			double avgcov = ((double) g.totalreadbp_m) / ((double)refinfo->rawseq.length());			
-
 			cerr << "reads: "   << g.readid2info.size()
 				<< " reflen: "  << refinfo->rawseq.length()
 				<< " readlen: " << g.totalreadbp_m
@@ -251,7 +250,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 	
 			string out_prefix = prefix + "/" + refname;
 	
-			if (PRINT_ALL) { g.printDot(out_prefix + ".0.dot"); }
+			if (PRINT_ALL) { g.printDot(out_prefix + ".0.dot",0); }
 			
 			// remove low covergae nodes and compute number of connected components
 			g.removeLowCov(false, 0);
@@ -270,8 +269,11 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 				g.markRefEnds(refinfo, c);
 				//g.markRefNodes();
 			
-				if (PRINT_ALL) { g.printDot(out_prefix + ".1l.c" + comp + ".dot"); }
+				if (PRINT_ALL) { g.printDot(out_prefix + ".1l.c" + comp + ".dot", c); }
 			
+				// exit if no tumor specific kmer
+				if ( !(g.hasTumorOnlyKmer()) ) { break; }	
+					
 				// if there is a cycle in the graph skip analysis
 				if (g.hasCycle()) { g.clear(false); cycleInGraph = true; break; }
 
@@ -280,15 +282,15 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 				// Initial compression
 				g.compress(c); 
 				g.printStats(c);
-				if (PRINT_ALL) { g.printDot(out_prefix + ".2c.dot"); }
+				if (PRINT_ALL) { g.printDot(out_prefix + ".2c.c" + comp + ".dot",c); }
 
 				// Remove low coverage
 				g.removeLowCov(true, c);
-				if (PRINT_ALL) { g.printDot(out_prefix + ".3l.dot"); }
+				if (PRINT_ALL) { g.printDot(out_prefix + ".3l.c" + comp + ".dot",c); }
 
 				// Remove tips
 				g.removeTips(c);
-				if (PRINT_ALL) { g.printDot(out_prefix + ".4t.dot"); }
+				if (PRINT_ALL) { g.printDot(out_prefix + ".4t.c" + comp + ".dot",c); }
 
 				// skip analysis if there is a cycle in the graph 
 				if (g.hasCycle()) { g.clear(false); cycleInGraph = true; break; }
@@ -320,7 +322,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 					//g.printFasta(prefix + "." + refname + ".nodes.fa");
 				}
 
-				if (PRINT_ALL) { g.printDot(out_prefix + ".final.dot"); }					
+				if (PRINT_ALL) { g.printDot(out_prefix + ".final.c" + comp + ".dot",c); }					
 			}
 			
 			if (rptInQry || cycleInGraph) { continue; }
@@ -355,13 +357,13 @@ void Microassembler::fastqAsm(Graph_t & g, const string & prefix)
 		
 	if (PRINT_ALL) 
     {
-      g.printDot(out_prefix + ".0c.dot");
+      g.printDot(out_prefix + ".0c.dot", 0);
       g.printFasta(out_prefix + ".0c.fa");
     }
 
 	if (PRINT_ALL) 
     { 
-      g.printDot(out_prefix + ".0.dot"); 
+      g.printDot(out_prefix + ".0.dot", 0); 
       g.printFasta(out_prefix + ".0.fa"); 
     }
     
@@ -371,7 +373,7 @@ void Microassembler::fastqAsm(Graph_t & g, const string & prefix)
 
 	if (PRINT_RAW) 
     {
-      g.printDot(out_prefix + ".1c.dot");
+      g.printDot(out_prefix + ".1c.dot", 0);
       g.printFasta(out_prefix + ".1c.fa");
     }
 
@@ -379,7 +381,7 @@ void Microassembler::fastqAsm(Graph_t & g, const string & prefix)
 	g.removeLowCov(true,0);
 	if (PRINT_ALL) 
     { 
-      g.printDot(out_prefix + ".2l.dot"); 
+      g.printDot(out_prefix + ".2l.dot", 0); 
       g.printFasta(out_prefix + ".2l.fa"); 
     }
 
@@ -387,7 +389,7 @@ void Microassembler::fastqAsm(Graph_t & g, const string & prefix)
 	g.removeTips(0);
 	if (PRINT_ALL) 
     { 
-      g.printDot(out_prefix + ".3t.dot"); 
+      g.printDot(out_prefix + ".3t.dot", 0); 
       g.printFasta(out_prefix + ".3t.fa"); 
     }
 
@@ -406,7 +408,7 @@ void Microassembler::fastqAsm(Graph_t & g, const string & prefix)
 		g.scaffoldContigs();
 	}
 
-	g.printDot(out_prefix + ".final.dot");
+	g.printDot(out_prefix + ".final.dot", 0);
 	g.printFasta(out_prefix + ".final.fa");
 	g.printPairs(out_prefix + ".pairs.fa");
 	g.clear(true);
@@ -710,7 +712,7 @@ int Microassembler::run(int argc, char** argv)
 			fscanf(fp, "%s", seq2); // header2
 			fscanf(fp, "%s", qv1);
 
-			g.addUnpaired(READSET, readname+1, seq1, qv1, Graph_t::CODE_MAPPED);
+			g.addUnpaired(READSET, readname+1, seq1, qv1, Graph_t::CODE_MAPPED, UNDEFINED);
 			readcnt++;
 		}
 
@@ -749,7 +751,7 @@ int Microassembler::run(int argc, char** argv)
 				graphcnt++;
 			}
 
-			g.addPair(set, readname, seq1, qv1, seq2, qv2, code[0]);
+			g.addPair(set, readname, seq1, qv1, seq2, qv2, code[0], UNDEFINED);
 		}
 
 		processGraph(g, graphref, PREFIX, minK, maxK);
@@ -829,15 +831,15 @@ int Microassembler::run(int argc, char** argv)
 						
 						if (mate>1) { // mated pair
 							if( !(al.IsMapped()) ) { // unmapped read
-								g.addpaired("tumor", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD);
+								g.addpaired("tumor", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, TMR);
 								num_unmapped++; 
 							}
 							else { // mapped reads
-								g.addpaired("tumor", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED);								
+								g.addpaired("tumor", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, TMR);								
 							}
 						}
 						else { // unpaired
-							g.addUnpaired("tumor", al.Name, al.QueryBases, al.Qualities, Graph_t::CODE_MAPPED);	
+							g.addUnpaired("tumor", al.Name, al.QueryBases, al.Qualities, Graph_t::CODE_MAPPED, TMR);	
 						}
 						//cout << al.Name << endl;
 						readcnt++;
@@ -887,15 +889,15 @@ int Microassembler::run(int argc, char** argv)
 						
 						if (mate>1) { // mated pair
 							if( !(al.IsMapped()) ) { // unmapped read
-								g.addpaired("normal", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD);
+								g.addpaired("normal", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, NML);
 								num_unmapped++; 
 							}
 							else { // mapped reads
-								g.addpaired("normal", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED);								
+								g.addpaired("normal", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, NML);
 							}
 						}
 						else { // unpaired
-							g.addUnpaired("normal", al.Name, al.QueryBases, al.Qualities, Graph_t::CODE_MAPPED);	
+							g.addUnpaired("normal", al.Name, al.QueryBases, al.Qualities, Graph_t::CODE_MAPPED, NML);	
 						}
 						//cout << al.Name << endl;
 						readcnt++;
@@ -947,7 +949,7 @@ int Microassembler::run(int argc, char** argv)
 				graphref = refstr;
 				graphcnt++;
 			}
-			g.addPair(READSET, readname, seq1, qv1, seq2, qv2, code[0]);
+			g.addPair(READSET, readname, seq1, qv1, seq2, qv2, code[0], UNDEFINED);
 		}
 		processGraph(g, graphref, PREFIX, minK, maxK);
 	}

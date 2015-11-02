@@ -29,10 +29,11 @@ typedef int ReadId_t;
 class ReadInfo_t
 {
 public:
-	ReadInfo_t(const string & set, const string & readname, const string & seq, char code)
-		: set_m(set), readname_m(readname), seq_m(seq), code_m(code), mateid_m(-1), trm5(0), trm3(0), isjunk(false)
+	ReadInfo_t(const int label, const string & set, const string & readname, const string & seq, char code)
+		: label_m(label), set_m(set), readname_m(readname), seq_m(seq), code_m(code), mateid_m(-1), trm5(0), trm3(0), isjunk(false)
 		{ }
 
+	int          label_m;
 	string       set_m;
 	string       readname_m;
 	string       seq_m;

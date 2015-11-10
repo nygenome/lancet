@@ -30,6 +30,7 @@
 #include "ContigLink.hh"
 #include "Path.hh"
 #include "Transcript.hh"
+#include "Variant.hh"
 
 #define WHITE 1
 #define GREY 2

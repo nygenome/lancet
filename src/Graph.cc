@@ -116,10 +116,15 @@ void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5
 				{
 					ui->second->addReadStart(readid, K-1, trim5, uc.ori_m);
 				}
+				// update referecne k-mer coverage
+				ref_m->updateCoverage(uc.mer_m);
 			}
 			
 			vi->second->cov_m += 1;
 			vi->second->updateCovDistr((int)(vi->second->cov_m));
+			
+			// update referecne k-mer coverage
+			ref_m->updateCoverage(vc.mer_m);
 		}
 
 		Edgedir_t fdir = FF;
@@ -357,6 +362,16 @@ void Graph_t::addpaired(const string & set,
 void Graph_t::buildgraph(Ref_t * refinfo)
 {
 	ref_m = refinfo;
+	
+	/*
+	int refid = 0; 
+	if(!is_ref_added) {
+		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, 'R', REF);
+		is_ref_added = true;
+		if (VERBOSE) { cerr << "refid: " << refid << endl; }
+	}
+	*/
+	
 	for (unsigned int i = 0; i < readid2info.size(); i++)
 	{
 		if ( !(readid2info[i].isjunk) ) { // skip junk (not A,C,G,T)
@@ -368,7 +383,10 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 			if (t5 || t3) { cseq = seq.substr(t5, len-t5-t3); }
 			loadSequence(i, cseq, false, t5);
 		}
-	}	
+	}
+	
+	ref_m->computeCoverage();
+	ref_m->printKmerCoverage();
 }
 
 // loadReadsSFA
@@ -654,6 +672,8 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		char code;
 
 		vector<Transcript_t> transcript;
+		vector<Variant_t> variants;
+		
 	
 		// cov_window keeps track of the minimum coverage in a window of size K
 		multiset<int> cov_window;
@@ -769,9 +789,16 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		{
 			//cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].cov;
 			cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].getAvgCov() << "|" << transcript[ti].getMinCov() << "|" << transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt;
+
+			// save into variant format			
+			variants.push_back(Variant_t(ref->refchr, transcript[ti].pos, transcript[ti].ref, transcript[ti].qry, transcript[ti].getMinCov(), transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt));
 		}
 
 		cerr << endl;
+		
+		for (unsigned int vi = 0; vi < variants.size(); vi++) {
+			variants[vi].printVCF();
+		}
 
 		if      ((path->snp_bp + path->ins_bp + path->del_bp) == 0) { perfect++;   }
 		else if ((path->snp_bp) == 0)                               { withindel++; }
@@ -1043,9 +1070,9 @@ void Graph_t::eka(Node_t * source, Node_t * sink, Ori_t dir,
 		if (path->hasCycle_m) { allcycles++; }
 		complete++;
 		
-		//if(path->hasTumorOnlyNode()) {
+		if(path->hasTumorOnlyNode()) {
 			processPath(path, ref, fp, printPathsToFile, complete, perfect, withsnps, withindel, withmix);
-		//}
+		}
 		
 		for (unsigned int i = 0; i < path->edges_m.size(); i++) {
 			(path->edges_m[i])->setFlag(1);
@@ -1612,7 +1639,7 @@ void Graph_t::printPairs(const string & filename)
 }
 
 
-// markRefEnds
+// mark source and sink nodes
 //////////////////////////////////////////////////////////////
 
 void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
@@ -1620,7 +1647,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	if (VERBOSE) 
 	{ 
 		cerr << "Looking at " << refinfo->hdr << " " << refinfo->seq.length() 
-			<< " " << refinfo->seq << endl; 
+			<< " " << refinfo->seq << endl;
 	}
 
 	//ref_m = refinfo;

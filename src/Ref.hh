@@ -11,8 +11,9 @@
 **
 *******************************************************************/
 
+#include <iostream>
 #include <string>
-#include <set>
+#include <map>
 
 using namespace std;
 
@@ -33,7 +34,7 @@ public:
 	int trim5;
 	int trim3;
 
-	set<string> mertable;
+	map<string,int> mertable;
 	set<int> refcompids;
 
 	int refnodes;
@@ -41,11 +42,16 @@ public:
 	int allcomp;
 
 	bool indexed_m;
+	
+	vector<int> coverage; // k-mer coverage across the reference
 
 	Ref_t(int k) : indexed_m(0) 
 		{ K = k; }
-
-	void setK(int k) { K = k; indexed_m = 0; mertable.clear(); }
+	
+	void setHdr(string hdr_) { hdr = hdr_; }	
+	void setRawSeq(string rawseq_) { rawseq = rawseq_; }
+	void setK(int k) { K = k; indexed_m = 0; mertable.clear(); resetCoverage(); }
+	void setSeq(string seq_) { seq = seq_; coverage.resize(seq.size()); resetCoverage(); }
 
 	void indexMers()
 	{
@@ -55,7 +61,7 @@ public:
 			for (unsigned int i = 0; i < seq.length() - K + 1; i++)
 			{
 				cmer.set(seq.substr(i, K));
-				mertable.insert(cmer.mer_m);
+			    mertable.insert(std::pair<string,int>(cmer.mer_m,0));
 			}
 			indexed_m = true;
 		}
@@ -70,6 +76,50 @@ public:
 	bool isRefComp(int comp)
 	{
 		return refcompids.find(comp) != refcompids.end();
+	}
+	
+	void updateCoverage(const string & cmer) {
+		indexMers();
+		std::map<string,int>::iterator it = mertable.find(cmer);
+		if (it != mertable.end()) {
+			(*it).second += 1;
+		}
+	}
+	
+	// reset coverage to 0
+	void computeCoverage() {
+		CanonicalMer_t cmer;
+
+		for (unsigned i = 0; i < seq.length() - K + 1; i++) 
+		{
+			cmer.set(seq.substr(i, K));			
+			std::map<string,int>::iterator it = mertable.find(cmer.mer_m);
+			if (it != mertable.end()) {
+				int cov = (*it).second;
+				if(i==0) {
+					for (int j=i; j<K; j++) { coverage.at(j) = cov; }
+				}
+				else {
+					coverage.at(i+K-1) = cov;
+				}
+			}		
+		}
+	}
+	
+	// print k-mer coverage along the reference
+	void printKmerCoverage() {
+	    cout << "cov: ";
+		for (unsigned i=0; i<coverage.size(); i++) {
+		    cout << " " << coverage.at(i);
+		}
+		cout << " len: " << coverage.size() << endl;
+	}
+	
+	// reset coverage to 0
+	void resetCoverage() {
+		for (unsigned i=0; i<coverage.size(); i++) { 
+			coverage.at(i) = 0;
+		}
 	}
 	
 	/*

@@ -74,9 +74,10 @@ void Microassembler::loadRefs(const string & filename)
 		for (unsigned int i = 0; i < s.length(); i++) { s[i] = toupper(s[i]); }
 
 		Ref_t * ref = new Ref_t(minK);
-		ref->hdr = hdr;
-		ref->seq = s;
-		ref->rawseq = s;
+		
+		ref->setHdr(hdr);
+		ref->setSeq(s);
+		ref->setRawSeq(s);
 
 		cerr << "hdr:\t" << hdr << endl;
 
@@ -267,12 +268,11 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 				
 				// mark source and sink
 				g.markRefEnds(refinfo, c);
-				//g.markRefNodes();
 			
 				if (PRINT_ALL) { g.printDot(out_prefix + ".1l.c" + comp + ".dot", c); }
 			
-				// exit if no tumor specific kmer
-				if ( !(g.hasTumorOnlyKmer()) ) { break; }	
+				// skip this component (and go to next one) if no tumor specific kmer found
+				if ( !(g.hasTumorOnlyKmer()) ) { continue; }
 					
 				// if there is a cycle in the graph skip analysis
 				if (g.hasCycle()) { g.clear(false); cycleInGraph = true; break; }

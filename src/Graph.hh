@@ -181,7 +181,8 @@ public:
 	void printFasta(const string & filename);
 	void printPairs(const string & filename);
 	void markRefEnds(Ref_t * refinfo, int compid);
-	int markRefNodes();
+	void markRefNodes();
+	int markConnectedComponents();
 	void denovoNodes(const string & filename, const string & refname);
 	void alignRefNodes();
 	void countRefPath(const string & filename, const string & refname, bool printPathsToFile);

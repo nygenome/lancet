@@ -67,7 +67,7 @@ const string Graph_t::COLOR_NORMAL = "green";
 const string Graph_t::COLOR_SHARED = "deepskyblue4";
 const string Graph_t::COLOR_SOURCE = "orange\" style=\"filled";
 const string Graph_t::COLOR_SINK   = "yellow\" style=\"filled";
-const string Graph_t::COLOR_TOUCH  = "pink";
+const string Graph_t::COLOR_TOUCH  = "magenta";
 
 class Microassembler {
 

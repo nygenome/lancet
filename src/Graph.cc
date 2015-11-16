@@ -363,14 +363,12 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 {
 	ref_m = refinfo;
 	
-	/*
 	int refid = 0; 
 	if(!is_ref_added) {
 		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, 'R', REF);
 		is_ref_added = true;
 		if (VERBOSE) { cerr << "refid: " << refid << endl; }
-	}
-	*/
+	}	
 	
 	for (unsigned int i = 0; i < readid2info.size(); i++)
 	{
@@ -381,7 +379,12 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 			int t3 = readid2info[i].trm3;
 			string cseq = seq;
 			if (t5 || t3) { cseq = seq.substr(t5, len-t5-t3); }
-			loadSequence(i, cseq, false, t5);
+			if(readid2info[i].label_m == REF) {
+				loadSequence(i, cseq, true, t5);
+			}
+			else {
+				loadSequence(i, cseq, false, t5);
+			}
 		}
 	}
 	
@@ -1070,9 +1073,9 @@ void Graph_t::eka(Node_t * source, Node_t * sink, Ori_t dir,
 		if (path->hasCycle_m) { allcycles++; }
 		complete++;
 		
-		if(path->hasTumorOnlyNode()) {
+		//if(path->hasTumorOnlyNode()) {
 			processPath(path, ref, fp, printPathsToFile, complete, perfect, withsnps, withindel, withmix);
-		}
+		//}
 		
 		for (unsigned int i = 0; i < path->edges_m.size(); i++) {
 			(path->edges_m[i])->setFlag(1);
@@ -1844,9 +1847,29 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 // markRefNodes
 //////////////////////////////////////////////////////////////
 
-int Graph_t::markRefNodes()
+void Graph_t::markRefNodes()
 {
 	cerr << endl << "mark refnodes" << endl;
+	int nodes = 0;
+	int refnodes = 0;
+
+	MerTable_t::iterator mi;
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	{
+		nodes++;
+		refnodes += mi->second->markRef(ref_m, K);
+		mi->second->component_m = 0;
+	}
+	
+	cerr << " nodes: "    << nodes
+		 << " refnodes: " << refnodes << endl;
+}
+
+// numConnectedComponents
+//////////////////////////////////////////////////////////////
+int Graph_t::markConnectedComponents()
+{
+	cerr << endl << "connected components" << endl;
 	int nodes = 0;
 	int refnodes = 0;
 
@@ -1856,7 +1879,6 @@ int Graph_t::markRefNodes()
 	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
 	{
 		nodes++;
-		refnodes += mi->second->markRef(ref_m, K);
 		mi->second->component_m = 0;
 	}
 

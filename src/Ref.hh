@@ -86,7 +86,7 @@ public:
 		}
 	}
 	
-	// reset coverage to 0
+	// compute kmer coverage over the reference sequence 
 	void computeCoverage() {
 		CanonicalMer_t cmer;
 

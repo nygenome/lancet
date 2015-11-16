@@ -176,6 +176,7 @@ int Node_t::markRef(Ref_t * ref, int K)
 		if (ref->hasMer(cmer.mer_m))
 		{
 			touchRef_m = true;
+			//isRef_m = true;
 			return 1;
 		}
 	}

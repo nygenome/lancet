@@ -251,11 +251,12 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 	
 			string out_prefix = prefix + "/" + refname;
 	
+			g.markRefNodes();
 			if (PRINT_ALL) { g.printDot(out_prefix + ".0.dot",0); }
 			
 			// remove low covergae nodes and compute number of connected components
 			g.removeLowCov(false, 0);
-			int numcomp = g.markRefNodes();
+			int numcomp = g.markConnectedComponents();
 			//cerr << "Num components = " << numcomp << endl;
 			
 			// process each connected components

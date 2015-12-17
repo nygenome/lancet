@@ -210,7 +210,8 @@ ostream & Node_t::print(ostream & out) const
 	out << nodeid_m;
 
 	out << "\t*s\t" << str_m;
-	out << "\t*c\t" << cov_m;
+	out << "\t*c\t" << cov_tmr_m;
+	out << "\t*c\t" << cov_nml_m;
 	out << "\t*r\t" << isRef();
 
 	for (unsigned int i = 0; i < edges_m.size(); i++)
@@ -304,14 +305,25 @@ int Node_t::cntReadCode(char code)
 	return retval;
 }
 
-// updateCovDistr
-// updated the coverage distribution along the node string
+// updateCovDistrTmr
+// updated the coverage distribution along the node string for tumor
 //////////////////////////////////////////////////////////////
-void Node_t::updateCovDistr(int c) 
+void Node_t::updateCovDistrTmr(int c) 
 {
-	for (unsigned int i = 0; i < cov_distr.size(); i++)
+	for (unsigned int i = 0; i < cov_distr_tmr.size(); i++)
 	{
-		cov_distr[i] = c;
+		cov_distr_tmr[i] = c;
+	}
+}
+
+// updateCovDistrNml
+// updated the coverage distribution along the node string for normal
+//////////////////////////////////////////////////////////////
+void Node_t::updateCovDistrNml(int c) 
+{
+	for (unsigned int i = 0; i < cov_distr_nml.size(); i++)
+	{
+		cov_distr_nml[i] = c;
 	}
 }
 
@@ -321,13 +333,20 @@ void Node_t::updateCovDistr(int c)
 //////////////////////////////////////////////////////////////
 void Node_t::revCovDistr() 
 {
-	int tmp;
+	int tmp_tmr;
+	int tmp_nml;
 	int i=0;
-	int j=cov_distr.size()-1;
+	int j=cov_distr_tmr.size()-1;
 	while(i<j){
-		tmp = cov_distr[i];
-		cov_distr[i] = cov_distr[j];
-		cov_distr[j] = tmp;
+		tmp_tmr = cov_distr_tmr[i];
+		tmp_nml = cov_distr_nml[i];
+		
+		cov_distr_tmr[i] = cov_distr_tmr[j];
+		cov_distr_nml[i] = cov_distr_nml[j];
+
+		cov_distr_tmr[j] = tmp_tmr;
+		cov_distr_nml[j] = tmp_nml;
+		
 		i++;j--;
 	}
 }
@@ -338,9 +357,10 @@ void Node_t::revCovDistr()
 int Node_t::minCov() 
 {
 	int min = 10000000;
-	for (unsigned int i = 0; i < cov_distr.size(); i++)
+	for (unsigned int i = 0; i < cov_distr_tmr.size(); i++)
 	{
-		if(cov_distr[i] < min) { min = cov_distr[i]; } 
+		int totcov = cov_distr_tmr[i] + cov_distr_nml[i];
+		if(totcov < min) { min = totcov; } 
 	}
 	return min;
 }

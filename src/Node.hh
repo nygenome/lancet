@@ -39,7 +39,8 @@ public:
 	Mer_t nodeid_m;
 
 	string str_m;
-	float cov_m;
+	float cov_tmr_m; // tumor coverage
+	float cov_nml_m; // normal coverage
 	bool isRef_m;
 	bool isTumor_m;
 	bool isNormal_m;
@@ -51,7 +52,8 @@ public:
 	int  onRefPath_m;
 	int color;
 
-	vector<int> cov_distr;
+	vector<int> cov_distr_tmr;
+	vector<int> cov_distr_nml;
 	vector<Edge_t> edges_m;
 	unordered_set<ReadId_t> reads_m;
 	vector<ReadStart_t> readstarts_m;
@@ -62,7 +64,8 @@ public:
 	Node_t(Mer_t mer) 
 		: nodeid_m(mer), 
 		str_m(mer), 
-		cov_m(0), 
+		cov_tmr_m(0), 
+		cov_nml_m(0), 
 		isRef_m(false),
 		isTumor_m(false),
 		isNormal_m(false),
@@ -73,7 +76,7 @@ public:
 		touchRef_m(false),
 		onRefPath_m(0),
 		color(0)
-		{ cov_distr.resize(str_m.size()); }
+		{ cov_distr_tmr.resize(str_m.size()); cov_distr_nml.resize(str_m.size()); }
 
 	friend ostream& operator<<(std::ostream& o, const Node_t & n) { return n.print(o); }
 	friend ostream & operator<<(std::ostream & o, const Node_t * n) { return n->print(o); }
@@ -90,6 +93,18 @@ public:
 	void setIsSink() { isSink_m = true; }
 	void setIsTumor() { isTumor_m = true; }
 	void setIsNormal() { isNormal_m = true; }
+	
+	void incTmrCov() { cov_tmr_m++; }
+	void incNmlCov() { cov_nml_m++; }
+	//void setTmrCov(int c) { cov_tmr_m = c; }
+	//void setNmlCov(int c) { cov_nml_m = c; }
+	float getTmrCov() { return cov_tmr_m; }
+	float getNmlCov() { return cov_nml_m; }
+	float getTotCov() { return cov_tmr_m+cov_nml_m; }
+	void updateCovDistrTmr(int c);
+	void updateCovDistrNml(int c);
+	void revCovDistr();
+	int  minCov();
 	
 	void setRead2InfoList(ReadInfoList_t * list) { readid2info = list; }
 	
@@ -110,9 +125,7 @@ public:
 	void sortReadStarts();
 	void addContigLink(Mer_t contigid, ReadId_t rid);
 	int cntReadCode(char code);
-	void updateCovDistr(int c);
-	void revCovDistr();
-	int minCov();
+
 	int readOverlaps(const Node_t & other);
 };
 

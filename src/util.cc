@@ -37,6 +37,15 @@ FILE * xfopen(const string & filename, const string & mode)
 	return fp;
 }
 
+// integer to string conversion
+//////////////////////////////////////////////////////////////////////////
+string itos(int i) // convert int to string
+{
+    stringstream s;
+    s << i;
+    return s.str();
+}
+
 // xfclose
 //////////////////////////////////////////////////////////////////////////
 

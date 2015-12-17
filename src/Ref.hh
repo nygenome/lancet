@@ -14,6 +14,10 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <set>
+#include <vector>
+#include "Mer.hh"
+
 
 using namespace std;
 
@@ -34,7 +38,8 @@ public:
 	int trim5;
 	int trim3;
 
-	map<string,int> mertable;
+	// mapping of mers to normal/tumor counts (mer,(n_cnt,t_cnt))  
+	map<string,std::pair<int,int>> mertable;
 	set<int> refcompids;
 
 	int refnodes;
@@ -43,91 +48,26 @@ public:
 
 	bool indexed_m;
 	
-	vector<int> coverage; // k-mer coverage across the reference
+	vector<int> normal_coverage; // normal k-mer coverage across the reference
+	vector<int> tumor_coverage; // tumor k-mer coverage across the reference
 
 	Ref_t(int k) : indexed_m(0) 
 		{ K = k; }
 	
-	void setHdr(string hdr_) { hdr = hdr_; }	
+	void setHdr(string hdr_) { hdr = hdr_; }
 	void setRawSeq(string rawseq_) { rawseq = rawseq_; }
 	void setK(int k) { K = k; indexed_m = 0; mertable.clear(); resetCoverage(); }
-	void setSeq(string seq_) { seq = seq_; coverage.resize(seq.size()); resetCoverage(); }
+	void setSeq(string seq_) { seq = seq_; normal_coverage.resize(seq.size()); tumor_coverage.resize(seq.size()); resetCoverage(); }
 
-	void indexMers()
-	{
-		if (!indexed_m)
-		{
-			CanonicalMer_t cmer;
-			for (unsigned int i = 0; i < seq.length() - K + 1; i++)
-			{
-				cmer.set(seq.substr(i, K));
-			    mertable.insert(std::pair<string,int>(cmer.mer_m,0));
-			}
-			indexed_m = true;
-		}
-	}
-
-	bool hasMer(const string & cmer)
-	{
-		indexMers();
-		return mertable.count(cmer);
-	}
-
-	bool isRefComp(int comp)
-	{
-		return refcompids.find(comp) != refcompids.end();
-	}
+	void indexMers();
+	bool hasMer(const string & cmer);
+	bool isRefComp(int comp) { return refcompids.find(comp) != refcompids.end(); }
 	
-	void updateCoverage(const string & cmer) {
-		indexMers();
-		std::map<string,int>::iterator it = mertable.find(cmer);
-		if (it != mertable.end()) {
-			(*it).second += 1;
-		}
-	}
-	
-	// compute kmer coverage over the reference sequence 
-	void computeCoverage() {
-		CanonicalMer_t cmer;
-
-		for (unsigned i = 0; i < seq.length() - K + 1; i++) 
-		{
-			cmer.set(seq.substr(i, K));			
-			std::map<string,int>::iterator it = mertable.find(cmer.mer_m);
-			if (it != mertable.end()) {
-				int cov = (*it).second;
-				if(i==0) {
-					for (int j=i; j<K; j++) { coverage.at(j) = cov; }
-				}
-				else {
-					coverage.at(i+K-1) = cov;
-				}
-			}		
-		}
-	}
-	
-	// print k-mer coverage along the reference
-	void printKmerCoverage() {
-	    cout << "cov: ";
-		for (unsigned i=0; i<coverage.size(); i++) {
-		    cout << " " << coverage.at(i);
-		}
-		cout << " len: " << coverage.size() << endl;
-	}
-	
-	// reset coverage to 0
-	void resetCoverage() {
-		for (unsigned i=0; i<coverage.size(); i++) { 
-			coverage.at(i) = 0;
-		}
-	}
-	
-	/*
-	string getTrimSeq() {
-		int ref_dist = trim3 - trim5 + K;
-		return seq.substr(trim5, ref_dist);
-	}
-	*/
+	void updateCoverage(const string & cmer, char sample);
+	void computeCoverage();
+	int getCovAt(unsigned pos, char sample);
+	void printKmerCoverage(char sample);
+	void resetCoverage();
 };
 
 #endif

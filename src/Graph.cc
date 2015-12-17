@@ -106,8 +106,17 @@ void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5
 		{
 			if (offset == 0) 
 			{ 
-				ui->second->cov_m += 1; 
-				ui->second->updateCovDistr((int)(ui->second->cov_m));
+				if(readid2info[readid].label_m == TMR) {
+					ui->second->incTmrCov();
+					ui->second->updateCovDistrTmr((int)(ui->second->getTmrCov()));
+					ref_m->updateCoverage(uc.mer_m, 'T'); // update referecne k-mer coverage for tumor
+				}
+				else if(readid2info[readid].label_m == NML) {
+					ui->second->incNmlCov();
+					ui->second->updateCovDistrNml((int)(ui->second->getNmlCov()));
+					ref_m->updateCoverage(uc.mer_m, 'N'); // update referecne k-mer coverage for normal
+				}
+
 				if (uc.ori_m == F)
 				{
 					ui->second->addReadStart(readid, 0, trim5, uc.ori_m);
@@ -116,15 +125,18 @@ void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5
 				{
 					ui->second->addReadStart(readid, K-1, trim5, uc.ori_m);
 				}
-				// update referecne k-mer coverage
-				ref_m->updateCoverage(uc.mer_m);
 			}
-			
-			vi->second->cov_m += 1;
-			vi->second->updateCovDistr((int)(vi->second->cov_m));
-			
-			// update referecne k-mer coverage
-			ref_m->updateCoverage(vc.mer_m);
+
+			if(readid2info[readid].label_m == TMR) {
+				vi->second->incTmrCov();
+				vi->second->updateCovDistrTmr((int)(ui->second->getTmrCov()));
+				ref_m->updateCoverage(vc.mer_m, 'T'); // update reference k-mer coverage for tumor
+			}
+			else if(readid2info[readid].label_m == NML) {
+				vi->second->incNmlCov();
+				vi->second->updateCovDistrNml((int)(ui->second->getNmlCov()));
+				ref_m->updateCoverage(vc.mer_m, 'N'); // update reference k-mer coverage for normal
+			}
 		}
 
 		Edgedir_t fdir = FF;
@@ -389,7 +401,8 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 	}
 	
 	ref_m->computeCoverage();
-	ref_m->printKmerCoverage();
+	ref_m->printKmerCoverage('N');
+	ref_m->printKmerCoverage('T');
 }
 
 // loadReadsSFA
@@ -635,7 +648,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	assert(ref_aln.length() == path_aln.length());
 
 	cerr << "r':" << ref_aln << endl;  
-	cerr << "p':" << path_aln << " " << path->cov() << " [" << path->mincov() << " - " << path->maxcov() << "]" << endl; 
+	cerr << "p':" << path_aln << " " << path->cov('A') << " [" << path->mincov('A') << " - " << path->maxcov('A') << "]" << endl; 
 	cerr << "d':"; 
 	for (unsigned int i = 0; i < ref_aln.length(); i++)
 	{
@@ -648,8 +661,12 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	//cerr << "c':" << cov_aln << endl;
 	
 	//print coverage distribution along the sequence path
-	cerr << "c':" << path->covstr() << endl;
-	vector<int> coverage = path->covDistr();
+	cerr << "t':" << path->covstr('T') << endl;
+	cerr << "n':" << path->covstr('N') << endl;
+	
+	vector<int> coverageN = path->covDistr('N');
+	vector<int> coverageT = path->covDistr('T');
+	assert(coverageN.size() == coverageT.size());
 	
 	//print coverage distribution along the edges of the path
 	/*
@@ -668,7 +685,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 
 		unsigned int pos_in_ref = 0; 
 		unsigned int refpos  = 0; 
-		unsigned int pathpos = 0; 
+		unsigned int pathpos = 0;
 
 		Node_t * spanner;
 
@@ -679,18 +696,23 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		
 	
 		// cov_window keeps track of the minimum coverage in a window of size K
-		multiset<int> cov_window;
+		multiset<int> cov_window_N;
+		multiset<int> cov_window_T;
 	 			
-		int end = min( (int)(K-1), (int)(coverage.size()-1) );
+		int end = min( (int)(K-1), (int)(coverageN.size()-1) );
 		assert(end >= 0);
-		assert(end < (int)coverage.size());
-		for (int t=0; t<end; t++) { cov_window.insert(coverage[t]); }
+		assert(end < (int)coverageN.size());
+		for (int t=0; t<end; t++) { 
+			cov_window_N.insert(coverageN[t]); 
+			cov_window_T.insert(coverageT[t]); 
+		}
 	
 		for (unsigned int i = 0; i < ref_aln.length(); i++) {	
-			int toadd = min( (int)(pathpos+K-1), (int)(coverage.size()-1));
+			int toadd = min( (int)(pathpos+K-1), (int)(coverageN.size()-1));
 			assert(toadd >= 0);
-			assert(toadd < (int)coverage.size());
-			cov_window.insert(coverage[toadd]);
+			assert(toadd < (int)coverageN.size());
+			cov_window_N.insert(coverageN[toadd]);
+			cov_window_T.insert(coverageT[toadd]);
 					
 			unsigned int old_pathpos = pathpos;
 			if (ref_aln[i] == '-') {
@@ -707,8 +729,8 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				code = '=';
 				if (ref_aln[i] != path_aln[i]) { code = 'x'; }
 				pos_in_ref = refpos; // save value of position in reference before increment
-				refpos++; 
-				pathpos++; 
+				refpos++;
+				pathpos++;
 			}
 
 			// pathpos is a 1-based coordinate, need to substruc 1 to correctly search 
@@ -717,16 +739,19 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			spanner->setRead2InfoList(&readid2info);
 
 			// get min coverage in the window
-			int cov_at_pos = *(cov_window.begin()); // need to be adjusted for possible left normalization after alignment				
+			int cov_at_pos_N = *(cov_window_N.begin()); // need to be adjusted for possible left normalization after alignment
+			int cov_at_pos_T = *(cov_window_T.begin()); // need to be adjusted for possible left normalization after alignment
 		
 			//float cov_at_pos = path->covAt(pathpos+(K/2)); // need to be adjusted for possible left normalization after alignment
 			//float cov_at_pos = path->covAt(pathpos); 
 		
 			if(old_pathpos != pathpos) { // remove old coverage only if change in path position
 				assert(pathpos > 0);
-				assert(pathpos <= coverage.size());
-				multiset<int>:: iterator it = cov_window.find(coverage[pathpos-1]);
-				cov_window.erase(it);
+				assert(pathpos <= coverageN.size());
+				multiset<int>:: iterator it_N = cov_window_N.find(coverageN[pathpos-1]);
+				cov_window_N.erase(it_N);
+				multiset<int>:: iterator it_T = cov_window_T.find(coverageT[pathpos-1]);
+				cov_window_T.erase(it_T);
 			}
 			//multiset<float>:: iterator it = cov_window.find(path->covAt(i));
 			//cov_window.erase(path->covAt(i));
@@ -735,7 +760,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			{ 
 				cerr << (ref_aln[i] == '-' ? '*' : ref_aln[i]) << " " << (path_aln[i] == '-' ? '*' : path_aln[i]) << " " << code 
 					<< " " << pos_in_ref + ref->refstart + ref->trim5 << " " << pathpos 
-					<< " " << spanner->nodeid_m << " " << spanner->cov_m << " " << cov_at_pos << " " << spanner->reads_m.size() << " " << spanner->cntReadCode(CODE_BASTARD)
+					<< " " << spanner->nodeid_m << " " << spanner->getTotCov() << " " << cov_at_pos_N << " " << cov_at_pos_T << " " << spanner->reads_m.size() << " " << spanner->cntReadCode(CODE_BASTARD)
 					<< endl;
 
 				unsigned int rrpos = pos_in_ref+ref->refstart+ref->trim5;
@@ -766,7 +791,8 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					// extend the indel
 					transcript[ts-1].ref += ref_aln[i];
 					transcript[ts-1].qry += path_aln[i];
-					(transcript[ts-1].cov_distr).push_back(cov_at_pos);
+					(transcript[ts-1].cov_distr_N).push_back(cov_at_pos_N);
+					(transcript[ts-1].cov_distr_T).push_back(cov_at_pos_T);
 				
 					//if(code == '^') { // insertion 
 					//	if(cov_at_pos < min_cov) { min_cov = cov_at_pos; } 
@@ -774,8 +800,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				}
 				else
 				{
-					//transcript.push_back(Transcript_t(rrpos, code, ref_aln[i], path_aln[i], spanner->cov_m));
-					transcript.push_back(Transcript_t(rrpos, code, ref_aln[i], path_aln[i], cov_at_pos, ref_aln[pr], path_aln[pa]));
+					transcript.push_back(Transcript_t(rrpos, pos_in_ref, code, ref_aln[i], path_aln[i], cov_at_pos_N, cov_at_pos_T, ref_aln[pr], path_aln[pa]));
 					//min_cov = 1000000;
 				}
 			}
@@ -791,10 +816,10 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		for (unsigned int ti = 0; ti < transcript.size(); ti++)
 		{
 			//cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].cov;
-			cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].getAvgCov() << "|" << transcript[ti].getMinCov() << "|" << transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt;
+			cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].getAvgCov('N') << "," << transcript[ti].getAvgCov('T') << "|" << transcript[ti].getMinCov('N') << "," << transcript[ti].getMinCov('T') << "|" << transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt;
 
 			// save into variant format			
-			variants.push_back(Variant_t(ref->refchr, transcript[ti].pos, transcript[ti].ref, transcript[ti].qry, transcript[ti].getMinCov(), transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt));
+			variants.push_back(Variant_t(ref->refchr, transcript[ti].pos, transcript[ti].ref, transcript[ti].qry, ref->getCovAt(transcript[ti].ref_pos, 'N'), ref->getCovAt(transcript[ti].ref_pos, 'T'), transcript[ti].getMinCov('N'), transcript[ti].getMinCov('T'), transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt));
 		}
 
 		cerr << endl;
@@ -811,7 +836,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		if(printPathsToFile) {
 			fprintf(fp,  ">p_%s:%d-%d_%d len=%d cov=%0.2f mincov=%0.2f maxcov=%0.2f pathlen=%d hasCycle=%d match=%d snp=%d ins=%d del=%d pathstr=%s\n",
 				ref->refchr.c_str(), ref->refstart, ref->refend, complete, 
-				path->strlen(), path->cov(), path->mincov(), path->maxcov(), path->pathlen(), 
+				path->strlen(), path->cov('A'), path->mincov('A'), path->maxcov('A'), path->pathlen(), 
 				path->hasCycle_m, path->match_bp, path->snp_bp, path->ins_bp, path->del_bp, path->pathstr().c_str());
 			
 			fprintf(fp, "%s\n", path->str().c_str());
@@ -908,7 +933,7 @@ void Graph_t::processShortPath(Node_t * source, Ref_t * ref, FILE * fp, bool pri
 
 	if(printPathsToFile) {
 		fprintf(fp,  ">p_%d len=%d cov=%0.2f mincov=%0.2f maxcov=%0.2f pathlen=%d match=%d snp=%d ins=%d del=%d pathstr=%s\n",
-			complete, (int) str.length(), node->cov_m, node->cov_m, node->cov_m, 1, match_bp, snp_bp, ins_bp, del_bp, "shortmatch");
+			complete, (int) str.length(), node->getTotCov(), node->getTotCov(), node->getTotCov(), 1, match_bp, snp_bp, ins_bp, del_bp, "shortmatch");
 		
 		fprintf(fp, "%s\n", str.c_str());
 	}
@@ -1311,7 +1336,6 @@ string Graph_t::nodeColor(Node_t * cur, string & who)
 
 	double avgcov = ((double) totalreadbp_m) / ((double) ref_m->rawseq.length());
 
-	//if ((color == COLOR_ALL) && (cur->cov_m < COV_THRESHOLD)) 
 	if ((color == COLOR_ALL) && ((cur->minCov() <= TIP_COV_THRESHOLD) || (cur->minCov() <= (MIN_COV_RATIO*avgcov))) ) 
 	{
 		color = COLOR_LOW;
@@ -1430,7 +1454,7 @@ void Graph_t::printDot(const string & filename, int compid)
 				cur->nodeid_m.c_str(),
 				cur->str_m.substr(0, NODE_STRLEN).c_str(),
 				cur->strlen(),
-				cur->cov_m,
+				cur->getTotCov(),
 				(int) cur->reads_m.size(),
 				cur->cntReadCode(CODE_BASTARD),
 				who.c_str(),
@@ -1445,7 +1469,7 @@ void Graph_t::printDot(const string & filename, int compid)
 				cur->nodeid_m.c_str(),
 				cur->str_m.substr(0, NODE_STRLEN).c_str(),
 				cur->strlen(),
-				cur->cov_m,
+				cur->getTotCov(),
 				(int) cur->reads_m.size(),
 				cur->cntReadCode(CODE_BASTARD),
 				who.c_str(),
@@ -1570,7 +1594,7 @@ void Graph_t::printFasta(const string & filename)
             else               { rdeg++; }
         }
 
-		fprintf(fp, ">%d:%s len=%d cov=%0.2f fdeg=%d rdeg=%d\n", nodes, cur->nodeid_m.c_str(), cur->strlen(), cur->cov_m, fdeg, rdeg);
+		fprintf(fp, ">%d:%s len=%d cov=%0.2f fdeg=%d rdeg=%d\n", nodes, cur->nodeid_m.c_str(), cur->strlen(), cur->getTotCov(), fdeg, rdeg);
 		fprintf(fp, "%s\n",  cur->str_m.c_str());
 	}
 
@@ -1600,7 +1624,7 @@ void Graph_t::printPairs(const string & filename)
 		// print isolated contigs
 
 			nodes++;
-			fprintf(fp, ">%d:%s len=%d cov=%0.2f\n", nodes, cur->nodeid_m.c_str(), cur->strlen(), cur->cov_m);
+			fprintf(fp, ">%d:%s len=%d cov=%0.2f\n", nodes, cur->nodeid_m.c_str(), cur->strlen(), cur->getTotCov());
 			fprintf(fp, "%s\n",  cur->str_m.c_str());
 		}
 		else
@@ -1626,7 +1650,7 @@ void Graph_t::printPairs(const string & filename)
 
 						string pathstr = pairpath.pathstr();
 						string path    = pairpath.str();
-						float  cov     = pairpath.cov();
+						float  cov     = pairpath.cov('T');
 
 						int    strlen  = path.length();
 
@@ -1690,7 +1714,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 		tmp_mer.set(ref_m->rawseq.substr(offset, K));
 		source_tmp = getNode(tmp_mer);
 
-		if ((source_tmp) && (source_tmp->cov_m >= COV_THRESHOLD) && (source_tmp->component_m == compid) )
+		if ((source_tmp) && (source_tmp->getTotCov() >= COV_THRESHOLD) && (source_tmp->component_m == compid) )
 		{ 
 			if(source_m == NULL) { // found 1st match
 				source_m = source_tmp;
@@ -1727,7 +1751,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 		tmp_mer.set(ref_m->rawseq.substr(offset, K));
 		sink_tmp = getNode(tmp_mer);
 
-		if ((sink_tmp) && (sink_tmp->cov_m >= COV_THRESHOLD) && (sink_tmp->component_m == compid))
+		if ((sink_tmp) && (sink_tmp->getTotCov() >= COV_THRESHOLD) && (sink_tmp->component_m == compid))
 		{
 			if(sink_m == NULL) { // found 1st macth
 				sink_m = sink_tmp;
@@ -1991,7 +2015,7 @@ void Graph_t::denovoNodes(const string & filename, const string & refname)
 					mi->first.c_str(), 
 					cur->nodeid_m.c_str(),
 					cur->strlen(), 
-					cur->cov_m,
+					cur->getTotCov(),
 					cur->component_m,
 					cur->str_m.c_str());
 
@@ -2001,7 +2025,7 @@ void Graph_t::denovoNodes(const string & filename, const string & refname)
 				mi->first.c_str(), 
 				cur->nodeid_m.c_str(),
 				cur->strlen(), 
-				cur->cov_m,
+				cur->getTotCov(),
 				cur->str_m.c_str());
 		}
 	}
@@ -2192,18 +2216,20 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 		// coverage
 		int   amerlen = astr.length() - K + 1;
 		int   bmerlen = bstr.length() - K + 1;
-		float ncov = node->cov_m;
-		float ccov = buddy->cov_m;
 		
-		// update the coverage of the overlapping region
-		//for (unsigned int j = (node->cov_distr.size())-K+1; j < node->cov_distr.size(); j++) {
-		//	node->cov_distr[j] += 1;
-		//}
+		float ncov_tmr = node->getTmrCov();
+		float ncov_nml = node->getNmlCov();
+		
+		float ccov_tmr = buddy->getTmrCov();
+		float ccov_nml = buddy->getNmlCov();
+		
 		// add coverage info for the new base-pairs 	
-		for (unsigned int j = (K-1); j < buddy->cov_distr.size(); j++) {
-			node->cov_distr.push_back(buddy->cov_distr[j]);
+		for (unsigned int j = (K-1); j < buddy->cov_distr_tmr.size(); j++) {
+			node->cov_distr_tmr.push_back(buddy->cov_distr_tmr[j]);
+			node->cov_distr_nml.push_back(buddy->cov_distr_nml[j]);
 		}
-		node->cov_m = ((ncov * amerlen) + (ccov * bmerlen)) / (amerlen + bmerlen);
+		node->cov_tmr_m = ((ncov_tmr * amerlen) + (ccov_tmr * bmerlen)) / (amerlen + bmerlen);
+		node->cov_nml_m = ((ncov_nml * amerlen) + (ccov_nml * bmerlen)) / (amerlen + bmerlen);
 
 		// reads
 		unordered_set<ReadId_t>::const_iterator ri;
@@ -2378,8 +2404,6 @@ void Graph_t::removeLowCov(bool docompression, int compid)
 			if (node->isSpecial())    { continue; }
 			//if (node->touchRef_m) { continue; }
 
-			//if (node->cov_m <= TIP_COV_THRESHOLD)
-			//if (node->minCov() <= TIP_COV_THRESHOLD)
 			if ( (node->minCov() <= TIP_COV_THRESHOLD) || (node->minCov() <= (MIN_COV_RATIO*avgcov)) )
 			{
 				lowcovnodes++;
@@ -2457,7 +2481,7 @@ public:
     MerTable_t::iterator ai = _g->nodes_m.find(a);
     MerTable_t::iterator bi = _g->nodes_m.find(b);
 
-    return ai->second->cov_m > bi->second->cov_m;
+    return ai->second->getTotCov() > bi->second->getTotCov();
   }
   
   Graph_t * _g;
@@ -2489,7 +2513,7 @@ void Graph_t::greedyTrim()
 
     if (i < 10)
     {
-      cerr << i << " " << nodelist[i] << " " << cur->cov_m << endl;
+      cerr << i << " " << nodelist[i] << " " << cur->getTotCov() << endl;
     }
 
     // figure out the best edges in the forward and reverse
@@ -2504,8 +2528,8 @@ void Graph_t::greedyTrim()
       Edge_t & edge = cur->edges_m[j];
       Node_t * other = getNode(edge);
 
-      if (edge.isDir(F)) { degf++; if (other->cov_m > covf) { bestf = edge; covf = other->cov_m; } }
-      else               { degr++; if (other->cov_m > covr) { bestr = edge; covr = other->cov_m; } }
+      if (edge.isDir(F)) { degf++; if (other->getTotCov() > covf) { bestf = edge; covf = other->getTotCov(); } }
+      else               { degr++; if (other->getTotCov() > covr) { bestr = edge; covr = other->getTotCov(); } }
     }
 
     // prune away all the other edges
@@ -2794,9 +2818,9 @@ void Graph_t::threadReads()
 
 								copy->nodeid_m = buffer;      // nodeid
 								copy->str_m = cur->str_m;     // sequence
-								copy->cov_m = overlap.size(); // coverage
-								copy->cov_distr.resize(copy->str_m.size());
-								copy->updateCovDistr(overlap.size()); // coverage distribution
+								//copy->cov_m = overlap.size(); // coverage
+								//copy->cov_distr.resize(copy->str_m.size());
+								//copy->updateCovDistr(overlap.size()); // coverage distribution
 
 								// reads and edges
 								set<ReadId_t>::iterator si;

@@ -13,6 +13,7 @@
 
 #include <string>
 #include <set>
+#include <sstream>
 
 
 //-- Include hash_map
@@ -45,6 +46,8 @@
 FILE * xfopen(const std::string & filename, const std::string & mode);
 
 void xfclose(FILE * fp);
+
+std::string itos(int i);
 
 bool isDNA(char b);
 

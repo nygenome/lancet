@@ -95,28 +95,34 @@ string Path_t::str()
 // coverage distribution for nodes in string format
 //////////////////////////////////////////////////////////////
 
-string Path_t::covstr() {
+string Path_t::covstr(char sample) {
+	
 	stringstream ss;
 	vector<float> node_coverage;
+	vector<int> C;
+	
 	Ori_t dir = Edge_t::edgedir_start(edgedir_m[0]);
 
 	for (unsigned int i = 0; i < nodes_m.size(); i++)
 	{
 		node_coverage.clear();
 		Node_t * n = nodes_m[i]; 
-				
-		if (dir == R) {
-			for (unsigned int j=n->cov_distr.size(); j>0; j--) { 
-				node_coverage.push_back(n->cov_distr[j-1]); 
+		
+		if(sample == 'T') { C = n->cov_distr_tmr; } // tumor coverage
+		else if(sample == 'N') { C = n->cov_distr_nml; } // normal coverage
+		
+		if (dir == R) { 
+			for (unsigned int j=C.size(); j>0; j--) { 
+				node_coverage.push_back(C[j-1]); 
 			}
 		}
 		else {
-			for (unsigned int j=0; j < n->cov_distr.size(); j++) { 
-				node_coverage.push_back(n->cov_distr[j]); 
+			for (unsigned int j=0; j < C.size(); j++) { 
+				node_coverage.push_back(C[j]); 
 			}
 		}
 		
-		if (!n->isSpecial()) {		
+		if (!n->isSpecial()) {
 		
 			if ((ss.str()).size() == 0) { // first node
 				for (unsigned int j=0; j < node_coverage.size(); j++) { 
@@ -124,8 +130,7 @@ string Path_t::covstr() {
 					else { ss << node_coverage[j]; }
 				}
 			}
-			else { // not the first node: update coverage of overlapping region
-				// add coverage info for the new base-pairs 	
+			else { // not the first node: add coverage info only for the new base-pairs 	
 				for (unsigned int j = (K-1); j < node_coverage.size(); j++) {
 					if (i != (nodes_m.size()-1)) { ss << node_coverage[j] << " "; }
 					else { ss << node_coverage[j]; }
@@ -145,10 +150,11 @@ string Path_t::covstr() {
 // coverage distribution for nodes
 //////////////////////////////////////////////////////////////
 
-vector<int> Path_t::covDistr()
+vector<int> Path_t::covDistr(char sample)
 {
 	vector<int> path_coverage;
 	vector<int> node_coverage;
+	vector<int> C;
 	
 	Ori_t dir = Edge_t::edgedir_start(edgedir_m[0]);
 	
@@ -160,14 +166,17 @@ vector<int> Path_t::covDistr()
 		node_coverage.clear();
 		Node_t * n = nodes_m[i]; 
 		
+		if(sample == 'T') { C = n->cov_distr_tmr; } // tumor coverage
+		else if(sample == 'N') { C = n->cov_distr_nml; } // normal coverage
+		
 		if (dir == R) {
-			for (unsigned int j=n->cov_distr.size(); j>0; j--) { 
-				node_coverage.push_back(n->cov_distr[j-1]); 
+			for (unsigned int j=C.size(); j>0; j--) { 
+				node_coverage.push_back(C[j-1]); 
 			}
 		}
 		else {
-			for (unsigned int j=0; j < n->cov_distr.size(); j++) { 
-				node_coverage.push_back(n->cov_distr[j]); 
+			for (unsigned int j=0; j < C.size(); j++) { 
+				node_coverage.push_back(C[j]); 
 			}
 		}
 		
@@ -182,8 +191,7 @@ vector<int> Path_t::covDistr()
 				// add coverage info for the new base-pairs 	
 				for (unsigned int j = (K-1); j < node_coverage.size(); j++) {
 					path_coverage.push_back(node_coverage[j]);
-				}
-			
+				}	
 			}
 		}
 		
@@ -199,10 +207,11 @@ vector<int> Path_t::covDistr()
 // coverage at position
 //////////////////////////////////////////////////////////////
 
-int Path_t::covAt(int pos)
+int Path_t::covAt(int pos, char sample)
 {
 	int retval = -1; 
 	int p = 0;
+	vector<int> C;
 	vector<int> coverage;
 	
 	Ori_t dir = Edge_t::edgedir_start(edgedir_m[0]);
@@ -212,14 +221,17 @@ int Path_t::covAt(int pos)
 		coverage.clear();
 		Node_t * n = nodes_m[i];
 		
+		if(sample == 'T') { C = n->cov_distr_tmr; } // tumor coverage
+		else if(sample == 'N') { C = n->cov_distr_nml; } // normal coverage
+		
 		if (dir == R) {
-			for (unsigned int j=n->cov_distr.size(); j>0; j--) { 
-				coverage.push_back(n->cov_distr[j-1]);
+			for (unsigned int j=C.size(); j>0; j--) { 
+				coverage.push_back(C[j-1]);
 			}
 		}
 		else {
-			for (unsigned int j=0; j < n->cov_distr.size(); j++) { 
-				coverage.push_back(n->cov_distr[j]); 
+			for (unsigned int j=0; j < C.size(); j++) { 
+				coverage.push_back(C[j]); 
 			}
 		}
 		
@@ -229,7 +241,6 @@ int Path_t::covAt(int pos)
 			if (p > 0) { // if not first node, scan only the extra base-pairs for 
 				j = K-1;
 			}
-			//for (; j < n->cov_distr.size(); j++) {
 			for (; j < coverage.size(); j++) {
 				//if(p == pos) { return n->cov_distr[j]; }
 				if(p == pos) { return coverage[j]; }
@@ -271,19 +282,24 @@ vector<float> Path_t::readCovNodes()
 // cov
 //////////////////////////////////////////////////////////////
 
-float Path_t::cov()
+float Path_t::cov(char sample)
 {
 	float covsum = 0;
 	float strlen = 0;
-
+	float C = 0;
+	
 	for (unsigned int i = 0; i < nodes_m.size(); i++)
 	{
 		Node_t * n = nodes_m[i];
+		
+		if(sample == 'T') { C = n->cov_tmr_m; } // tumor coverage
+		else if(sample == 'N') { C = n->cov_nml_m; } // normal coverage
+		else if(sample == 'A') { C = n->cov_tmr_m + n->cov_nml_m; } // normal + tumor coverage
 
 		if (!n->isSpecial())
 		{
 			int merlen = n->strlen() - K + 1;
-			covsum += n->cov_m * merlen;
+			covsum += C * merlen;
 			strlen += merlen;
 		}
 	}
@@ -294,19 +310,24 @@ float Path_t::cov()
 // mincov
 //////////////////////////////////////////////////////////////
 
-float Path_t::mincov()
+float Path_t::mincov(char sample)
 {
 	float mincov = -1;
+	float C = 0;
 
 	for (unsigned int i = 0; i < nodes_m.size(); i++)
 	{
 		Node_t * n = nodes_m[i];
+		
+		if(sample == 'T') { C = n->cov_tmr_m; } // tumor coverage
+		else if(sample == 'N') { C = n->cov_nml_m; } // normal coverage
+		else if(sample == 'A') { C = n->cov_tmr_m + n->cov_nml_m; } // normal + tumor coverage
 
 		if (!n->isSpecial())
 		{
-			if ((mincov == -1) || (n->cov_m < mincov))
+			if ((mincov == -1) || (C < mincov))
 			{
-				mincov = n->cov_m;
+				mincov = C;
 			}
 		}
 	}
@@ -317,19 +338,24 @@ float Path_t::mincov()
 // maxcov
 //////////////////////////////////////////////////////////////
 
-float Path_t::maxcov()
+float Path_t::maxcov(char sample)
 {
 	float maxcov = -1;
+	float C = 0;
 
 	for (unsigned int i = 0; i < nodes_m.size(); i++)
 	{
 		Node_t * n = nodes_m[i];
+		
+		if(sample == 'T') { C = n->cov_tmr_m; } // tumor coverage
+		else if(sample == 'N') { C = n->cov_nml_m; } // normal coverage
+		else if(sample == 'A') { C = n->cov_tmr_m + n->cov_nml_m; } // normal + tumor coverage=
 
 		if (!n->isSpecial())
 		{
-			if ((maxcov == -1) || (n->cov_m > maxcov))
+			if ((maxcov == -1) || (C > maxcov))
 			{
-				maxcov = n->cov_m;
+				maxcov = C;
 			}
 		}
 	}

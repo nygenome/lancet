@@ -117,17 +117,16 @@ public:
 	string pathstr();
 	int pathlen();
 	string str();
-	string covstr();
-	float cov();
-	float mincov();
-	float maxcov();
+	string covstr(char sample);
+	float cov(char sample);
+	float mincov(char sample);
+	float maxcov(char sample);
 	Node_t * pathcontig(int pos);
 	int hasCycle(Node_t * node);
 	bool hasTumorOnlyNode();
-	//string covDistr();
-	vector<int> covDistr();
+	vector<int> covDistr(char sample);
 	vector<float> readCovNodes();
-	int covAt(int pos);
+	int covAt(int pos, char sample);
 
 };
 

@@ -273,7 +273,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 				if (PRINT_ALL) { g.printDot(out_prefix + ".1l.c" + comp + ".dot", c); }
 			
 				// skip this component (and go to next one) if no tumor specific kmer found
-				if ( !(g.hasTumorOnlyKmer()) ) { continue; }
+				//if ( !(g.hasTumorOnlyKmer()) ) { continue; }
 					
 				// if there is a cycle in the graph skip analysis
 				if (g.hasCycle()) { g.clear(false); cycleInGraph = true; break; }

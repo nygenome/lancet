@@ -401,8 +401,8 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 	}
 	
 	ref_m->computeCoverage();
-	ref_m->printKmerCoverage('N');
-	ref_m->printKmerCoverage('T');
+	if (VERBOSE) { ref_m->printKmerCoverage('N'); }
+	if (VERBOSE) { ref_m->printKmerCoverage('T'); }
 }
 
 // loadReadsSFA
@@ -647,22 +647,23 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 
 	assert(ref_aln.length() == path_aln.length());
 
-	cerr << "r':" << ref_aln << endl;  
-	cerr << "p':" << path_aln << " " << path->cov('A') << " [" << path->mincov('A') << " - " << path->maxcov('A') << "]" << endl; 
-	cerr << "d':"; 
-	for (unsigned int i = 0; i < ref_aln.length(); i++)
-	{
-		if (ref_aln[i] == path_aln[i]) { path->match_bp++;  cerr << ' '; }
-		else if (ref_aln[i] == '-')    { path->ins_bp++;    cerr << '^'; }
-		else if (path_aln[i] == '-')   { path->del_bp++;    cerr << 'v'; }
-		else                           { path->snp_bp++;    cerr << 'x'; }
+	if(verbose) { cerr << "r':" << ref_aln << endl; }  
+	if(verbose) { cerr << "p':" << path_aln << " " << path->cov('A') << " [" << path->mincov('A') << " - " << path->maxcov('A') << "]" << endl; }
+	if(verbose) { 
+		cerr << "d':"; 
+		for (unsigned int i = 0; i < ref_aln.length(); i++)
+		{
+			if (ref_aln[i] == path_aln[i]) { path->match_bp++;  cerr << ' '; }
+			else if (ref_aln[i] == '-')    { path->ins_bp++;    cerr << '^'; }
+			else if (path_aln[i] == '-')   { path->del_bp++;    cerr << 'v'; }
+			else                           { path->snp_bp++;    cerr << 'x'; }
+		}
+		cerr << "\n"; 
 	}
-	cerr << "\n";
-	//cerr << "c':" << cov_aln << endl;
 	
 	//print coverage distribution along the sequence path
-	cerr << "t':" << path->covstr('T') << endl;
-	cerr << "n':" << path->covstr('N') << endl;
+	if (verbose) { cerr << "t':" << path->covstr('T') << endl; }
+	if (verbose) { cerr << "n':" << path->covstr('N') << endl; }
 	
 	vector<int> coverageN = path->covDistr('N');
 	vector<int> coverageT = path->covDistr('T');
@@ -758,11 +759,12 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		
 			if (code != '=')
 			{ 
-				cerr << (ref_aln[i] == '-' ? '*' : ref_aln[i]) << " " << (path_aln[i] == '-' ? '*' : path_aln[i]) << " " << code 
+				if(verbose) {
+					cerr << (ref_aln[i] == '-' ? '*' : ref_aln[i]) << " " << (path_aln[i] == '-' ? '*' : path_aln[i]) << " " << code 
 					<< " " << pos_in_ref + ref->refstart + ref->trim5 << " " << pathpos 
 					<< " " << spanner->nodeid_m << " " << spanner->getTotCov() << " " << cov_at_pos_N << " " << cov_at_pos_T << " " << spanner->reads_m.size() << " " << spanner->cntReadCode(CODE_BASTARD)
 					<< endl;
-
+				}
 				unsigned int rrpos = pos_in_ref+ref->refstart+ref->trim5;
 				unsigned int ts = transcript.size();
 
@@ -806,23 +808,23 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			}
 		}
 
-		cerr << ">p_" << ref->refchr << ":" << ref->refstart << "-" << ref->refend << "_" << complete
+		if(verbose) {
+			cerr << ">p_" << ref->refchr << ":" << ref->refstart << "-" << ref->refend << "_" << complete
 			<< " cycle: " << path->hasCycle_m
 			<< " match: " << path->match_bp
 			<< " snp: "   << path->snp_bp
 			<< " ins: "   << path->ins_bp
 			<< " del: "   << path->del_bp;
-
+		}
 		for (unsigned int ti = 0; ti < transcript.size(); ti++)
 		{
 			//cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].cov;
-			cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].getAvgCov('N') << "," << transcript[ti].getAvgCov('T') << "|" << transcript[ti].getMinCov('N') << "," << transcript[ti].getMinCov('T') << "|" << transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt;
+			if(verbose) { cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].getAvgCov('N') << "," << transcript[ti].getAvgCov('T') << "|" << transcript[ti].getMinCov('N') << "," << transcript[ti].getMinCov('T') << "|" << transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt; }
 
 			// save into variant format			
 			variants.push_back(Variant_t(ref->refchr, transcript[ti].pos, transcript[ti].ref, transcript[ti].qry, ref->getCovAt(transcript[ti].ref_pos, 'N'), ref->getCovAt(transcript[ti].ref_pos, 'T'), transcript[ti].getMinCov('N'), transcript[ti].getMinCov('T'), transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt));
 		}
-
-		cerr << endl;
+		if(verbose) { cerr << endl; }
 		
 		for (unsigned int vi = 0; vi < variants.size(); vi++) {
 			variants[vi].printVCF();
@@ -1075,7 +1077,7 @@ Path_t * Graph_t::bfs(Node_t * source, Node_t * sink, Ori_t dir, Ref_t * ref)
 void Graph_t::eka(Node_t * source, Node_t * sink, Ori_t dir, 
 	Ref_t * ref, FILE * fp, bool printPathsToFile)
 {
-	cerr << endl << "searching from " << source->nodeid_m << " to " << sink->nodeid_m << " dir: " << dir << endl;
+	if(verbose) { cerr << endl << "searching from " << source->nodeid_m << " to " << sink->nodeid_m << " dir: " << dir << endl; }
 	
 	int complete = 0;
 	//int toolong = 0;
@@ -1123,18 +1125,19 @@ void Graph_t::eka(Node_t * source, Node_t * sink, Ori_t dir,
 	//	<< " toolong: "    << toolong
 	//	<< " deadend: "    << deadend << endl;
 	
-	cerr << " refcomp: "   << ref_m->refcomp
+	if(verbose) {
+		cerr << " refcomp: "   << ref_m->refcomp
 		<< " refnodes: "   << ref_m->refnodes-2
 		<< " complete: "   << complete 
 		<< " allcycles: "  << allcycles << endl;
-	
 
-	cerr << " perfect: "     << perfect
+		cerr << " perfect: "     << perfect
 		<< " withsnps: "     << withsnps
 		<< " withindel: "    << withindel
 		<< " withmix: "      << withmix 
 		<< " withmixindel: " << withmixindel
 		<< endl;
+	}
 
 	//if(printPathsToFile) {
 	//	fprintf(fp, ">stats\treflen=%d\tnumreads=%d\tcov=%0.02f\ttrim5=%d\ttrim3=%d\tnodes=%d\trefnodes=%d\tcomp=%d\trefcomp=%d\tvisit=%d\tcomplete=%d\tallcycles=%d\tshortpath=%d\ttoolong=%d\tdeadend=%d\tperfect=%d\twithsnps=%d\twithindel=%d\twithmix=%d\twithmixindel=%d\twithmixsnp=%d\twithvar=%d\n",
@@ -1384,7 +1387,7 @@ string Graph_t::edgeColor(Node_t * cur, Edge_t & e)
 //////////////////////////////////////////////////////////////
 void Graph_t::printDot(const string & filename, int compid)
 {
-	cerr << "Saving graph: " << filename << endl;
+	if(verbose) { cerr << "Saving graph: " << filename << endl; }
 
 	FILE * fp = xfopen(filename, "w");
 
@@ -1734,12 +1737,12 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	}
 
 	if(ambiguous_match) {
-		cerr << "Ambiguous match to reference for source" << endl;
+		if(verbose) { cerr << "Ambiguous match to reference for source" << endl; }
 		return;
 	}
 	
 	if (!source_m) {
-		cerr << "No match to reference for source" <<  endl;
+		if(verbose) { cerr << "No match to reference for source" <<  endl; }
 		return;
 	}
 
@@ -1771,12 +1774,12 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	}
 	
 	if(ambiguous_match) {
-		cerr << "Ambiguous match to reference for sink" << endl;
+		if(verbose) { cerr << "Ambiguous match to reference for sink" << endl; }
 		return;
 	}
 	
 	if (!sink_m) {
-		cerr << "No match to reference for sink" << endl;
+		if(verbose) { cerr << "No match to reference for sink" << endl; }
 		return;
 	}
 
@@ -1784,10 +1787,12 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	sink_offset = ref_m->rawseq.length() - sink_offset - K;
 	ref_m->seq = ref_m->rawseq.substr(source_offset, ref_dist);
 
-	cerr << "ref trim5: "     << source_offset 
+	if(verbose) {
+		cerr << "ref trim5: "     << source_offset 
 		<< " trim3: "     << sink_offset
 		<< " uncovered: " << source_offset + sink_offset
 		<< " ref_dist: "  << ref_dist << endl;
+	}
 
 	ref_m->trim5 = source_offset;
 	ref_m->trim3 = sink_offset;
@@ -1873,7 +1878,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 
 void Graph_t::markRefNodes()
 {
-	cerr << endl << "mark refnodes" << endl;
+	if(verbose) { cerr << endl << "mark refnodes" << endl; }
 	int nodes = 0;
 	int refnodes = 0;
 
@@ -1885,15 +1890,14 @@ void Graph_t::markRefNodes()
 		mi->second->component_m = 0;
 	}
 	
-	cerr << " nodes: "    << nodes
-		 << " refnodes: " << refnodes << endl;
+	if(verbose) { cerr << " nodes: " << nodes << " refnodes: " << refnodes << endl; }
 }
 
 // numConnectedComponents
 //////////////////////////////////////////////////////////////
 int Graph_t::markConnectedComponents()
 {
-	cerr << endl << "connected components" << endl;
+	if(verbose) { cerr << endl << "connected components" << endl; }
 	int nodes = 0;
 	int refnodes = 0;
 
@@ -1959,18 +1963,20 @@ int Graph_t::markConnectedComponents()
 	ref_m->refcomp  = refcomp;
 	ref_m->allcomp  = comp;
 
-	cerr << " nodes: "    << nodes
+	if (verbose) {
+		cerr << " nodes: "    << nodes
 		<< " refnodes: " << refnodes
 		<< " comp: "     << comp
 		<< " refcomp: "  << refcomp
 		<< " refcompids: ";
+	}
 
 	set<int>::iterator si;
 	for (si = ref_m->refcompids.begin(); si != ref_m->refcompids.end(); si++)
 	{
-		cerr << " " << *si;
+		if(verbose) { cerr << " " << *si; }
 	}
-	cerr << endl;
+	if(verbose) { cerr << endl; }
 	
 	return comp;
 }
@@ -2051,7 +2057,7 @@ void Graph_t::alignRefNodes()
 		}
 	}
 
-	cerr << " Found " << refpathnodes << " on ref path" << endl;
+	if(verbose) { cerr << " Found " << refpathnodes << " on ref path" << endl; }
 }
 
 // countRefPath
@@ -2307,7 +2313,7 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 
 void Graph_t::compress(int compid)
 {
-	cerr << "compressing graph:";
+	if(verbose) { cerr << "compressing graph:"; }
 
 	MerTable_t::iterator mi;
 
@@ -2343,7 +2349,7 @@ void Graph_t::cleanDead()
 		}
 	}
 
-	cerr << "  removing " << deadnodes.size() << " dead nodes" << endl;
+	if(verbose) { cerr << "  removing " << deadnodes.size() << " dead nodes" << endl; }
 
 	set<Mer_t>::iterator di;
 	for (di = deadnodes.begin(); di != deadnodes.end(); di++)
@@ -2385,7 +2391,7 @@ void Graph_t::removeNode(Node_t * node)
 
 void Graph_t::removeLowCov(bool docompression, int compid)
 {
-	cerr << endl << "removing low coverage:";
+	if(verbose) { cerr << endl << "removing low coverage:"; }
 
 	int lowcovnodes = 0;
 	
@@ -2412,12 +2418,12 @@ void Graph_t::removeLowCov(bool docompression, int compid)
 		}
 	}
 
-	cerr << " found " << lowcovnodes;
+	if (verbose) { cerr << " found " << lowcovnodes; }
 
 	cleanDead();
 	if(docompression) { compress(compid); }
 
-	printStats(compid);
+	if(verbose) { printStats(compid); }
 }
 
 
@@ -2434,7 +2440,7 @@ void Graph_t::removeTips(int compid)
 		round++;
 		tips = 0;
 
-		cerr << endl << "remove tips round: " << round;
+		if (verbose) { cerr << endl << "remove tips round: " << round; }
 
 		MerTable_t::iterator mi;
 
@@ -2458,13 +2464,13 @@ void Graph_t::removeTips(int compid)
 			}
 		}
 
-		cerr << " removed: " << tips << endl;
+		if(verbose) { cerr << " removed: " << tips << endl; }
 
 		if (tips) { compress(compid); }
 	}
 	while (tips);
 
-	printStats(compid);
+	if(verbose) { printStats(compid); }
 }
 
 // greedyTrim
@@ -2565,7 +2571,7 @@ void Graph_t::greedyTrim()
 
 	if (branches) { compress(0); }
 
-	printStats(0);
+	if(verbose) { printStats(0); }
 }
 
 
@@ -2900,7 +2906,7 @@ void Graph_t::threadReads()
 
 	VERBOSE=oldverbose;
 
-	printStats(0);
+	if(verbose) { printStats(0); }
 }
 
 // checkReadStarts
@@ -2908,7 +2914,7 @@ void Graph_t::threadReads()
 
 void Graph_t::checkReadStarts(int compid)
 {
-	cerr << "checking read starts.... ";
+	if(verbose) { cerr << "checking read starts.... "; }
 
 	int all = 0;
 	int bad = 0;
@@ -2967,7 +2973,7 @@ void Graph_t::checkReadStarts(int compid)
 		}
 	}
 
-	cerr << " found " << bad << " bad starts out of " << all << endl;
+	if(verbose) { cerr << " found " << bad << " bad starts out of " << all << endl; }
 }
 
 // updateContigReadStarts

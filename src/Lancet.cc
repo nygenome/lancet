@@ -13,7 +13,8 @@
 
 void Microassembler::printConfiguration(ostream & out)
 {
-	out << "VERBOSE: "          << VERBOSE << endl;
+	out << "VERBOSE: "          << verbose << endl;
+	out << "MORE VERBOSE: "     << VERBOSE << endl;
 
 	out << "tumor BAM: "        << TUMOR << endl;
 	out << "normal BAM: "       << NORMAL << endl;
@@ -63,7 +64,7 @@ void Microassembler::printConfiguration(ostream & out)
 
 void Microassembler::loadRefs(const string & filename)
 {
-	cerr << "LoadRef " << filename << endl;
+	if(verbose) { cerr << "LoadRef " << filename << endl; }
 
 	FILE * fp = xfopen(filename, "r");
 
@@ -79,7 +80,7 @@ void Microassembler::loadRefs(const string & filename)
 		ref->setSeq(s);
 		ref->setRawSeq(s);
 
-		cerr << "hdr:\t" << hdr << endl;
+		if(verbose) { cerr << "hdr:\t" << hdr << endl; }
 
 		size_t x = hdr.find_first_of(':');
 		size_t y = hdr.find_first_of('-', x);
@@ -117,7 +118,7 @@ void Microassembler::loadRefs(const string & filename)
 		reftable.insert(make_pair(hdr, ref));
 	}
 
-	cerr << "Loaded " << reftable.size() << " ref sequences" << endl << endl;
+	if(verbose) { cerr << "Loaded " << reftable.size() << " ref sequences" << endl << endl; }
 
 	xfclose(fp);
 }
@@ -191,14 +192,14 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 		// skip region if no mapped reads
 		if(g.countMappedReads()<=0) { return; }
 
-		cerr << "== Processing " << graphCnt << ": " << refname 
+		if(verbose) { 
+			cerr << "== Processing " << graphCnt << ": " << refname 
 			<< " numsequences: " << g.readid2info.size() 
 			<< " mapped: " << g.countMappedReads()
 			<< " bastards: " << g.countBastardReads()
 			<< endl;
-
-		cerr << "=====================================================" << endl;
-
+			cerr << "=====================================================" << endl;
+		}
 		// Load the reference
 		map<string, Ref_t *>::iterator ri = reftable.find(refname);
 		if (ri == reftable.end())
@@ -223,7 +224,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 
 			// exit if the region has a repeat of size K
 			if(isRepeat(refinfo->rawseq, k)) { 
-				cerr << "Repeat in reference sequence for kmer " << k << endl;
+				if(verbose) { cerr << "Repeat in reference sequence for kmer " << k << endl; }
 				rptInRef = true;
 				//return; 
 				continue;
@@ -231,7 +232,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 
 			// exit if the region has an almost perfect repeat of size K
 			if(isAlmostRepeat(refinfo->rawseq, k, MAX_MISMATCH)) { 
-				cerr << "Near-perfect repeat in reference sequence for kmer " << k << endl;
+				if(verbose) { cerr << "Near-perfect repeat in reference sequence for kmer " << k << endl; }
 				rptInRef = true;
 				//return; 
 				continue;
@@ -240,14 +241,15 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 			//if no repeats in the reference build graph			
 			g.buildgraph(refinfo);
 			
-			double avgcov = ((double) g.totalreadbp_m) / ((double)refinfo->rawseq.length());			
-			cerr << "reads: "   << g.readid2info.size()
+			double avgcov = ((double) g.totalreadbp_m) / ((double)refinfo->rawseq.length());	
+			if(verbose) {
+				cerr << "reads: "   << g.readid2info.size()
 				<< " reflen: "  << refinfo->rawseq.length()
 				<< " readlen: " << g.totalreadbp_m
 				<< " cov: "     << avgcov << endl;
-
+			}
 			//printReads();
-			g.printStats(0);
+			if(verbose) { g.printStats(0); }
 	
 			string out_prefix = prefix + "/" + refname;
 	
@@ -265,7 +267,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 				char comp[21]; // enough to hold all numbers up to 64-bits
 				sprintf(comp, "%d", c);
 				
-				g.printStats(c); 
+				if(verbose) { g.printStats(c); }
 				
 				// mark source and sink
 				g.markRefEnds(refinfo, c);
@@ -282,7 +284,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 	
 				// Initial compression
 				g.compress(c); 
-				g.printStats(c);
+				if(verbose) { g.printStats(c); }
 				if (PRINT_ALL) { g.printDot(out_prefix + ".2c.c" + comp + ".dot",c); }
 
 				// Remove low coverage
@@ -338,7 +340,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 		if(rptInQry) { cerr << " Found repeat in assembly" << endl; }	
 		if(cycleInGraph) { cerr << " Found cycle in assembly" << endl; }	
 		
-		cerr << "FINISHED" << endl;
+		if(verbose) { cerr << "FINISHED" << endl; }
 	}
 }
 
@@ -471,6 +473,7 @@ int Microassembler::run(int argc, char** argv)
 		"\n"
 		"   -E            : fastq assembly, map file is in fq (experimental)\n"
 		"   -v            : be verbose\n"
+		"   -V            : be more verbose\n"
 		"\n";
 
 	bool errflg = false;
@@ -507,6 +510,7 @@ int Microassembler::run(int argc, char** argv)
 
 		{"erroflag", no_argument,      0, 'h'},		
 		{"verbose", no_argument,       0, 'v'},
+		{"more-verbose", no_argument,  0, 'V'},
 		{"print-denovo", no_argument,  0, 'D'},
 		{"print-refpath", no_argument, 0, 'R'},
 		{"print-all", no_argument,     0, 'A'},
@@ -553,7 +557,8 @@ int Microassembler::run(int argc, char** argv)
 			case 'C': BAMFILE          = 1; 		   break;
 			case 'E': FASTQ_ASM        = 1;            break;
 			case 'B': INCLUDE_BASTARDS = 1;            break;
-			case 'v': VERBOSE          = 1;            break;
+			case 'v': verbose          = 1;            break;
+			case 'V': VERBOSE=1; verbose=1;            break;
 			case 'D': PRINT_DENOVO     = 1;            break;
 			case 'R': PRINT_REFPATH    = 1;            break;
 			case 'A': PRINT_ALL        = 1;            break;
@@ -589,7 +594,7 @@ int Microassembler::run(int argc, char** argv)
 
 	if (errflg) { exit(EXIT_FAILURE); }
 
-	printConfiguration(cerr);
+	if(verbose) { printConfiguration(cerr); }
 
 	if (REFFILE != "")
 	{
@@ -665,7 +670,8 @@ int Microassembler::run(int argc, char** argv)
 
 	//set configuration parameters
 	g.setK(minK);
-	g.setVerbose(VERBOSE);
+	g.setVerbose(verbose);
+	g.setMoreVerbose(VERBOSE);
 	g.setMinQual(MIN_QUAL);
 	g.setIncludeBastards(INCLUDE_BASTARDS);
 	g.setBufferSize(BUFFER_SIZE);
@@ -955,9 +961,8 @@ int Microassembler::run(int argc, char** argv)
 		processGraph(g, graphref, PREFIX, minK, maxK);
 	}
 
-	cerr << "=======" << endl;
-
-	cerr << "total reads: " << readcnt << " pairs: " << paircnt << " total graphs: " << graphcnt << " ref sequences: " << reftable.size() <<  endl;
+	if(verbose) cerr << "=======" << endl;
+	if(verbose) cerr << "total reads: " << readcnt << " pairs: " << paircnt << " total graphs: " << graphcnt << " ref sequences: " << reftable.size() <<  endl;
 
 	if(!BAMFILE) {
 		if (!feof(fp))

@@ -67,6 +67,7 @@ public:
 	static const string COLOR_SINK;
 	static const string COLOR_TOUCH;
 
+	bool verbose;
 	bool VERBOSE;
 	bool PRINT_DOT_READS;
 
@@ -107,7 +108,8 @@ public:
 	}
 
 	void setK(int k) { K = k; }
-	void setVerbose(bool v) { VERBOSE = v; }
+	void setVerbose(bool v) { verbose = v; }
+	void setMoreVerbose(bool v) { VERBOSE = v; }
 	void setMinQual(int mq) { MIN_QUAL = mq; }
 	void setIncludeBastards(int ib) { INCLUDE_BASTARDS = ib; }
 	void setBufferSize(int bs) { BUFFER_SIZE = bs; }

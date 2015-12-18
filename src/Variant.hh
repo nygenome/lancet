@@ -14,6 +14,7 @@
 #include <string>
 #include <iostream>
 #include "util.hh"
+#include "FET.hh"
 
 using namespace std;
 

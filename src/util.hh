@@ -41,28 +41,17 @@
   #define HASHMAP std
 #endif
 
-
-
 FILE * xfopen(const std::string & filename, const std::string & mode);
-
 void xfclose(FILE * fp);
-
 std::string itos(int i);
-
+std::string dtos(double d);
 bool isDNA(char b);
-
 char rrc(char b);
-
 std::string rc_str(const std::string & str);
-
 bool Fasta_Read(FILE * fp, std::string & s, std::string & hdr);
-
 bool isNseq(const std::string & seq);
-
 bool isRepeat(const std::string & seq, int K);
-
 bool isAlmostRepeat(const std::string & seq, int K, int max);
-
 //bool kMismatch(const std::string & p, const std::string & t, int start, int max);
 bool kMismatch(size_t s, size_t e, const std::string & t, size_t start, int max);
 

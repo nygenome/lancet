@@ -15,8 +15,20 @@ void Variant_t::printVCF() {
 	string ID = ".";
 	float QUAL = 0.0;
 	
+	FET_t fet;
+	int n11 = ref_cov_normal;
+	int n12 = ref_cov_tumor;
+	int n21 = alt_cov_normal;
+	int n22 = alt_cov_tumor;
+	double left = 0;
+	double right = 0;
+	double twotail = 0;
+	
+	double prob = fet.kt_fisher_exact(n11, n12, n21, n22, &left, &right, &twotail);
+	double score = -10*log10(prob);
+	
 	string FILTER = "PASS";
-	string INFO = "SOMATIC;";
+	string INFO = "SOMATIC;FETS=" + dtos(score);
 	string FOMRAT = "GT:AD:DP";	
 	string GT_normal = genotype(ref_cov_normal,alt_cov_normal);
 	string GT_tumor = genotype(ref_cov_tumor,alt_cov_tumor);

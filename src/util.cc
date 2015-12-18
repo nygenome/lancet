@@ -46,6 +46,15 @@ string itos(int i) // convert int to string
     return s.str();
 }
 
+// double to string conversion
+//////////////////////////////////////////////////////////////////////////
+string dtos(double d) // convert int to string
+{
+    stringstream s;
+    s << d;
+    return s.str();
+}
+
 // xfclose
 //////////////////////////////////////////////////////////////////////////
 

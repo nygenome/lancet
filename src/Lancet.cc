@@ -31,8 +31,6 @@ void Microassembler::printConfiguration(ostream & out)
 	out << "MIN_MAP_QUAL: "     << MIN_MAP_QUAL << endl;
 	out << "MAX_AVG_COV: "		<< MAX_AVG_COV << endl;
 
-	out << "INCLUDE_BASTARDS: " << bvalue(INCLUDE_BASTARDS) << endl;
-
 	out << "MIN_THREAD_READS: " << MIN_THREAD_READS << endl;
 	out << "COV_THRESHOLD: "    << COV_THRESHOLD << endl;
 	cerr.unsetf(ios::floatfield); // floatfield not set
@@ -40,7 +38,7 @@ void Microassembler::printConfiguration(ostream & out)
 	out << "MIN_COV_RATIO: "    << MIN_COV_RATIO << endl;
 	cerr.setf(ios::fixed,ios::floatfield);
 	cerr.precision(1);
-	out << "TIP_COV_THRESHOLD: "<< TIP_COV_THRESHOLD << endl;
+	out << "LOW_COV_THRESHOLD: "<< LOW_COV_THRESHOLD << endl;
 	out << "DFS_LIMIT: "        << DFS_LIMIT << endl;
 	out << "PATH_LIMIT: "       << PATH_LIMIT << endl;
 	out << "MAX_INDEL_LEN: "    << MAX_INDEL_LEN << endl;
@@ -68,54 +66,59 @@ void Microassembler::loadRefs(const string & filename)
 
 	FILE * fp = xfopen(filename, "r");
 
-	string s, hdr;
+	string s, ss, hdr;
 
 	while (Fasta_Read (fp, s, hdr))
 	{
+		// extrat coordinates for header		
+		size_t x     = hdr.find_first_of(':');
+		size_t y     = hdr.find_first_of('-', x);
+		string CHR   = hdr.substr(0,x);
+		string START = hdr.substr(x+1, y-x-1);
+		string END   = hdr.substr(y+1, string::npos);
+		
 		for (unsigned int i = 0; i < s.length(); i++) { s[i] = toupper(s[i]); }
 
-		Ref_t * ref = new Ref_t(minK);
+		// split into overalpping windoes if sequence is too long
+		int end = s.length();
+		int offset = 0;
+		int delta = 100;
 		
-		ref->setHdr(hdr);
-		ref->setSeq(s);
-		ref->setRawSeq(s);
-
-		if(verbose) { cerr << "hdr:\t" << hdr << endl; }
-
-		size_t x = hdr.find_first_of(':');
-		size_t y = hdr.find_first_of('-', x);
-
-		string start = hdr.substr(x+1, y-x-1);
-		string end   = hdr.substr(y+1, string::npos);
-
-		ref->refchr   = hdr.substr(0,x);
-		ref->refstart = atoi(start.c_str());
-		ref->refend   = atoi(end.c_str());
-
-		size_t z = hdr.find_first_of(';', y);
-
-		if (z != string::npos)
-		{
-			y = hdr.find_first_of('-', z);
-
-			start = hdr.substr(z+1, y-z-1);
-			end =   hdr.substr(y+1, string::npos);
-
+		for (; offset < end; offset+=delta) {
+			
+			// adjust end if 
+			int LEN = WINDOW_SIZE;
+			if( (offset + WINDOW_SIZE) > (int)s.length() ) { 
+				LEN = s.length() - offset;
+				end = offset;
+			}
+			
+			ss = s.substr(offset,LEN);
+			
+			// make new reference entry 
+			Ref_t * ref = new Ref_t(minK);
+		
+			ref->refchr   = CHR;
+			ref->refstart = atoi(START.c_str()) + offset;
+			ref->refend   = ref->refstart + LEN - 1;
+			//ref->refend   = atoi(end.c_str());
+			
 			hdr = ref->refchr;
 			hdr += ":";
-			hdr += start;
+			hdr += itos(ref->refstart);
 			hdr += "-";
-			hdr += end;
+			hdr += itos(ref->refend);
 
+			if(verbose) { cerr << "hdr:\t" << hdr << endl; }
+			
+			ref->setHdr(hdr);
+			ref->setSeq(ss);
+			ref->setRawSeq(ss);
+			
 			ref->hdr = hdr;
+
+			reftable.insert(make_pair(hdr, ref));
 		}
-
-		//cerr << "label:\t"    << ref->hdr << endl;
-		//cerr << "refchr:\t"   << ref->refchr << endl;
-		//cerr << "refstart:\t" << ref->refstart << endl;
-		//cerr << "refend:\t"   << ref->refend << endl;
-
-		reftable.insert(make_pair(hdr, ref));
 	}
 
 	if(verbose) { cerr << "Loaded " << reftable.size() << " ref sequences" << endl << endl; }
@@ -455,7 +458,7 @@ int Microassembler::run(int argc, char** argv)
 		"   --cov-thr, -c        <int>         : coverage threshold (default: " << COV_THRESHOLD << ")\n"
 		"   --cov-ratio, -x      <float>       : minimum coverage ratio (default: " << MIN_COV_RATIO << ")\n"
 		"   --max-avg-cov, -u    <int>         : maximum average coverage allowed per region (default: " << MAX_AVG_COV << ")\n"
-		"   --tip-cov, -d        <int>         : tip coverage threshold (default: " << TIP_COV_THRESHOLD << ")\n"
+		"   --low-cov, -d        <int>         : low coverage threshold (default: " << LOW_COV_THRESHOLD << ")\n"
 		"   --dfs-limit, -F      <int>         : limit dfs search space (default: " << DFS_LIMIT << ")\n"
 		"   --path-limit, -P     <int>         : limit on number of paths to report (default: " << PATH_LIMIT << ")\n"
 		"   --max-indel-len, -T  <int>         : limit on size of detectable indel (default: " << MAX_INDEL_LEN << ")\n"
@@ -468,7 +471,6 @@ int Microassembler::run(int argc, char** argv)
 		"   -R            : print reference paths\n"
 		"   -A            : print graph after every stage\n"
 		"   -I            : don't print initial graph\n"
-		"   -B            : include bastards\n"	
 		"   -L <len>      : length of sequence to display at graph node (default: " << NODE_STRLEN << ")\n"
 		"\n"
 		"   -E            : fastq assembly, map file is in fq (experimental)\n"
@@ -525,7 +527,7 @@ int Microassembler::run(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:m:n:r:g:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:m:n:r:g:k:K:l:t:c:d:x:DRACIhSL:T:M:vF:q:b:Q:P:p:E", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -541,7 +543,7 @@ int Microassembler::run(int argc, char** argv)
 			//case 't': MIN_THREAD_READS = atoi(optarg); break;
 			case 'c': COV_THRESHOLD    = atoi(optarg); break;
 			case 'x': MIN_COV_RATIO    = atof(optarg); break;
-			case 'd': TIP_COV_THRESHOLD= atoi(optarg); break;
+			case 'd': LOW_COV_THRESHOLD= atoi(optarg); break;
 			case 'u': MAX_AVG_COV      = atoi(optarg); break;
 			
 			case 'q': MIN_QV           = atoi(optarg); break;
@@ -556,7 +558,6 @@ int Microassembler::run(int argc, char** argv)
 
 			case 'C': BAMFILE          = 1; 		   break;
 			case 'E': FASTQ_ASM        = 1;            break;
-			case 'B': INCLUDE_BASTARDS = 1;            break;
 			case 'v': verbose          = 1;            break;
 			case 'V': VERBOSE=1; verbose=1;            break;
 			case 'D': PRINT_DENOVO     = 1;            break;
@@ -669,17 +670,17 @@ int Microassembler::run(int argc, char** argv)
 	Graph_t g;
 
 	//set configuration parameters
+	g.setDB(&vDB);
 	g.setK(minK);
 	g.setVerbose(verbose);
 	g.setMoreVerbose(VERBOSE);
 	g.setMinQual(MIN_QUAL);
-	g.setIncludeBastards(INCLUDE_BASTARDS);
 	g.setBufferSize(BUFFER_SIZE);
 	g.setDFSLimit(DFS_LIMIT);
 	g.setPathLimit(PATH_LIMIT);
 	g.setCovThreshold(COV_THRESHOLD);
 	g.setMinCovRatio(MIN_COV_RATIO);
-	g.setTipCovThreshold(TIP_COV_THRESHOLD);
+	g.setLowCovThreshold(LOW_COV_THRESHOLD);
 	g.setPrintDotReads(PRINT_DOT_READS);
 	g.setNodeStrlen(NODE_STRLEN);
 	g.setMaxTipLength(MAX_TIP_LEN);
@@ -926,7 +927,7 @@ int Microassembler::run(int argc, char** argv)
 			//cout << "Number of unmapped reads: " << num_unmapped << endl;	
 			
 			if(!skip){ 
-				processGraph(g, graphref, PREFIX, minK, maxK); 
+				processGraph(g, graphref, PREFIX, minK, maxK);
 			}
 			else { g.clear(true); }
 		}
@@ -993,6 +994,7 @@ int main(int argc, char** argv)
 	try {
 		Microassembler* assembler = new Microassembler();
 		assembler->run(argc, argv);
+		assembler->vDB.printToVCF();
 	}
 	catch (int e) {
 		cout << "An exception occurred. Exception Nr. " << e << endl;

@@ -41,6 +41,7 @@
 #include "Node.hh"
 #include "Path.hh"
 #include "Graph.hh"
+#include "VariantDB.hh"
 
 using namespace std;
 using namespace HASHMAP;
@@ -74,6 +75,7 @@ class Microassembler {
 public:
 	
 	int BUFFER_SIZE;
+	int WINDOW_SIZE;
 	
 	// Configuration
 	//////////////////////////////////////////////////////////////////////////
@@ -107,10 +109,8 @@ public:
 	unsigned int MIN_THREAD_READS;
 	int COV_THRESHOLD;
 	double MIN_COV_RATIO;
-	int TIP_COV_THRESHOLD;
+	int LOW_COV_THRESHOLD;
 	int MAX_AVG_COV;
-
-	int INCLUDE_BASTARDS;
 
 	bool SCAFFOLD_CONTIGS;
 	int  INSERT_SIZE;
@@ -139,10 +139,13 @@ public:
 	
 	map<string, Ref_t *> reftable; // table of references to analyze
 	
+	VariantDB_t vDB; // DB of variants
+	
 	Microassembler() { 
 		graphCnt = 0;
-		
+				
 		BUFFER_SIZE = 10*1024;
+		WINDOW_SIZE = 400;
 
 		VERBOSE         = false;
 		PRINT_DOT_READS = true;
@@ -166,10 +169,8 @@ public:
 		MIN_THREAD_READS = 3;
 		COV_THRESHOLD = 5;
 		MIN_COV_RATIO = 0.01;
-		TIP_COV_THRESHOLD = 1;
+		LOW_COV_THRESHOLD = 1;
 		MAX_AVG_COV = 10000;
-
-		INCLUDE_BASTARDS = 0;
 
 		SCAFFOLD_CONTIGS = 0;
 		INSERT_SIZE = 150;
@@ -177,7 +178,7 @@ public:
 
 		QUAD_ASM = 0;
         FASTQ_ASM = 0;
-		NODE_STRLEN = 1000;
+		NODE_STRLEN = 100;
 
 		BAMFILE = 0;
 		RG_FILE = "";
@@ -185,7 +186,7 @@ public:
 		DFS_LIMIT = 1000000;
 		PATH_LIMIT = 0;
 		MAX_INDEL_LEN = 250;
-		MAX_MISMATCH = 1;
+		MAX_MISMATCH = 2;
 	}
 		
 	~Microassembler() { }

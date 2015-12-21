@@ -31,6 +31,7 @@
 #include "Path.hh"
 #include "Transcript.hh"
 #include "Variant.hh"
+#include "VariantDB.hh"
 
 #define WHITE 1
 #define GREY 2
@@ -72,7 +73,6 @@ public:
 	bool PRINT_DOT_READS;
 
 	int MIN_QUAL;
-	int INCLUDE_BASTARDS;
 	int BUFFER_SIZE;
 
 	int DFS_LIMIT;
@@ -85,7 +85,7 @@ public:
 	int MIN_THREAD_READS;
 	int COV_THRESHOLD;
 	double MIN_COV_RATIO;
-	int TIP_COV_THRESHOLD;
+	int LOW_COV_THRESHOLD;
 	bool SCAFFOLD_CONTIGS;
 	int  INSERT_SIZE;
 	int  INSERT_STDEV;
@@ -102,22 +102,24 @@ public:
 
 	ReadInfoList_t readid2info;
 	int readCycles;
+	
+	VariantDB_t *vDB; // DB of variants
 
 	Graph_t() : ref_m(NULL), is_ref_added(0), readCycles(0) {
 		clear(true); 
 	}
 
+	void setDB(VariantDB_t *db) { vDB = db; }
 	void setK(int k) { K = k; }
 	void setVerbose(bool v) { verbose = v; }
 	void setMoreVerbose(bool v) { VERBOSE = v; }
 	void setMinQual(int mq) { MIN_QUAL = mq; }
-	void setIncludeBastards(int ib) { INCLUDE_BASTARDS = ib; }
 	void setBufferSize(int bs) { BUFFER_SIZE = bs; }
 	void setDFSLimit(int l) { DFS_LIMIT = l; }
 	void setPathLimit(int l) { PATH_LIMIT = l; }
 	void setCovThreshold(int ct) { COV_THRESHOLD = ct; }
 	void setMinCovRatio(double cr) { MIN_COV_RATIO = cr; }
-	void setTipCovThreshold(int ct) { TIP_COV_THRESHOLD = ct; }
+	void setLowCovThreshold(int ct) { LOW_COV_THRESHOLD = ct; }
 	void setPrintDotReads(bool pdr) { PRINT_DOT_READS = pdr; }
 	void setNodeStrlen(int ns) { NODE_STRLEN = ns; }
 	void setMaxTipLength(int mtl) { MAX_TIP_LEN = mtl; }

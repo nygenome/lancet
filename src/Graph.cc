@@ -157,7 +157,7 @@ void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5
 			{
 				if (readCycles == 0)
 				{
-					cerr << "WARNING: Cycles detected in the reads" << endl << endl;
+					if(verbose) { cerr << "WARNING: Cycles detected in the reads" << endl << endl; }
 				}
 
 				readCycles++;
@@ -313,7 +313,7 @@ void Graph_t::addPair(const string & set,
 	const string & seq2, const string & qv2,
 	char code, int label)
 {
-	if (INCLUDE_BASTARDS || (code == CODE_MAPPED))
+	if (code == CODE_MAPPED)
 	{
 		int rd1 = addRead(set, readname+"_1", seq1, code, label);
 		trimAndLoad(rd1, seq1, qv1, false);
@@ -465,7 +465,7 @@ bool Graph_t::hasCycle() {
 	}
 	
 	if(ans) {
-		cout << "Cycle found in the graph (kmer = " << K << ")!" << endl;
+		if(verbose) { cerr << "Cycle found in the graph (kmer = " << K << ")!" << endl; }
 	}
 	
 	return ans;
@@ -573,7 +573,7 @@ bool Graph_t::findRepeatsInGraphPaths(Node_t * source, Node_t * sink, Ori_t dir)
 			
 			if(isAlmostRepeat(path->str(), K, MAX_MISMATCH)) {
 				answer = true;
-				cerr << "Near-perfect repeat in assembled sequence for kmer " << K << endl;
+				if(verbose) { cerr << "Near-perfect repeat in assembled sequence for kmer " << K << endl; }
 				break;
 			}
 		}
@@ -693,8 +693,6 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		char code;
 
 		vector<Transcript_t> transcript;
-		vector<Variant_t> variants;
-		
 	
 		// cov_window keeps track of the minimum coverage in a window of size K
 		multiset<int> cov_window_N;
@@ -822,13 +820,9 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			if(verbose) { cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].getAvgCov('N') << "," << transcript[ti].getAvgCov('T') << "|" << transcript[ti].getMinCov('N') << "," << transcript[ti].getMinCov('T') << "|" << transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt; }
 
 			// save into variant format			
-			variants.push_back(Variant_t(ref->refchr, transcript[ti].pos, transcript[ti].ref, transcript[ti].qry, ref->getCovAt(transcript[ti].ref_pos, 'N'), ref->getCovAt(transcript[ti].ref_pos, 'T'), transcript[ti].getMinCov('N'), transcript[ti].getMinCov('T'), transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt));
+			vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos, transcript[ti].ref, transcript[ti].qry, ref->getCovAt(transcript[ti].ref_pos, 'N'), ref->getCovAt(transcript[ti].ref_pos, 'T'), transcript[ti].getMinCov('N'), transcript[ti].getMinCov('T'), transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt));
 		}
 		if(verbose) { cerr << endl; }
-		
-		for (unsigned int vi = 0; vi < variants.size(); vi++) {
-			variants[vi].printVCF();
-		}
 
 		if      ((path->snp_bp + path->ins_bp + path->del_bp) == 0) { perfect++;   }
 		else if ((path->snp_bp) == 0)                               { withindel++; }
@@ -972,7 +966,7 @@ Path_t * Graph_t::bfs(Node_t * source, Node_t * sink, Ori_t dir, Ref_t * ref)
 		visit++;
 
 		if ((DFS_LIMIT) && (visit > DFS_LIMIT)) {
-			cerr << "WARNING: DFS_LIMIT (" << DFS_LIMIT << ") exceeded" << endl;
+			if(verbose) { cerr << "WARNING: DFS_LIMIT (" << DFS_LIMIT << ") exceeded" << endl; }
 			break;
 		}
 
@@ -1189,7 +1183,7 @@ void Graph_t::dfs(Node_t * source, Node_t * sink, Ori_t dir,
 
 		if ((DFS_LIMIT) && (visit > DFS_LIMIT))
 		{
-			cerr << "WARNING: DFS_LIMIT (" << DFS_LIMIT << ") exceeded" << endl;
+			if(verbose) { cerr << "WARNING: DFS_LIMIT (" << DFS_LIMIT << ") exceeded" << endl; }
 			break;
 		}
 
@@ -1339,7 +1333,7 @@ string Graph_t::nodeColor(Node_t * cur, string & who)
 
 	double avgcov = ((double) totalreadbp_m) / ((double) ref_m->rawseq.length());
 
-	if ((color == COLOR_ALL) && ((cur->minCov() <= TIP_COV_THRESHOLD) || (cur->minCov() <= (MIN_COV_RATIO*avgcov))) ) 
+	if ((color == COLOR_ALL) && ((cur->minCov() <= LOW_COV_THRESHOLD) || (cur->minCov() <= (MIN_COV_RATIO*avgcov))) ) 
 	{
 		color = COLOR_LOW;
 	}
@@ -2410,7 +2404,7 @@ void Graph_t::removeLowCov(bool docompression, int compid)
 			if (node->isSpecial())    { continue; }
 			//if (node->touchRef_m) { continue; }
 
-			if ( (node->minCov() <= TIP_COV_THRESHOLD) || (node->minCov() <= (MIN_COV_RATIO*avgcov)) )
+			if ( (node->minCov() <= LOW_COV_THRESHOLD) || (node->minCov() <= (MIN_COV_RATIO*avgcov)) )
 			{
 				lowcovnodes++;
 				removeNode(node);

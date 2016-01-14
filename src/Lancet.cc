@@ -775,7 +775,19 @@ int Microassembler::run(int argc, char** argv)
 		// for each reference location
 		BamRegion region;
 		map<string, Ref_t *>::iterator ri;
+		
+		int counter = 0;
+		double progress;
+		double old_progress = 0;
 		for ( ri=reftable.begin() ; ri != reftable.end(); ri++ ) {
+
+			counter++;
+			progress = floor(100*(double(counter)/(double)reftable.size()));
+			if (progress > old_progress) {
+				cerr << progress << "\% done." << endl;
+				old_progress = progress;
+			}
+			
 			graphref = (*ri).first;
 			//cout << graphref << endl;
 			Ref_t * refinfo = (*ri).second;

@@ -105,6 +105,8 @@ public:
 	void updateCovDistrNml(int c);
 	void revCovDistr();
 	int  minCov();
+	int minNon0Cov(char sample);
+	int avgCovDistr(char sample);
 	
 	void setRead2InfoList(ReadInfoList_t * list) { readid2info = list; }
 	

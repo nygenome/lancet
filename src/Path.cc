@@ -107,7 +107,8 @@ string Path_t::covstr(char sample) {
 	{
 		node_coverage.clear();
 		Node_t * n = nodes_m[i]; 
-		
+		ss << " | ";
+			
 		if(sample == 'T') { C = n->cov_distr_tmr; } // tumor coverage
 		else if(sample == 'N') { C = n->cov_distr_nml; } // normal coverage
 		

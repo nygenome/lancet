@@ -129,12 +129,12 @@ void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5
 
 			if(readid2info[readid].label_m == TMR) {
 				vi->second->incTmrCov();
-				vi->second->updateCovDistrTmr((int)(ui->second->getTmrCov()));
+				vi->second->updateCovDistrTmr((int)(vi->second->getTmrCov()));
 				ref_m->updateCoverage(vc.mer_m, 'T'); // update reference k-mer coverage for tumor
 			}
 			else if(readid2info[readid].label_m == NML) {
 				vi->second->incNmlCov();
-				vi->second->updateCovDistrNml((int)(ui->second->getNmlCov()));
+				vi->second->updateCovDistrNml((int)(vi->second->getNmlCov()));
 				ref_m->updateCoverage(vc.mer_m, 'N'); // update reference k-mer coverage for normal
 			}
 		}
@@ -694,26 +694,31 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 
 		vector<Transcript_t> transcript;
 	
-		// cov_window keeps track of the minimum coverage in a window of size K
-		multiset<int> cov_window_N;
-		multiset<int> cov_window_T;
+		// cov_window keeps track of the minimum (non-0) coverage in a window of size K
+		//multiset<int> cov_window_N;
+		//multiset<int> cov_window_T;
+		CoverageWindow_t cov_window_N;
+		CoverageWindow_t cov_window_T;
 	 			
 		int end = min( (int)(K-1), (int)(coverageN.size()-1) );
 		assert(end >= 0);
 		assert(end < (int)coverageN.size());
 		for (int t=0; t<end; t++) { 
-			cov_window_N.insert(coverageN[t]); 
-			cov_window_T.insert(coverageT[t]); 
+			//if (coverageN[t]>0) { cov_window_N.insert(coverageN[t]); }
+			//if (coverageT[t]>0) { cov_window_T.insert(coverageT[t]); }
+			if (coverageN[t]>0) { cov_window_N.insert(coverageN[t]); }
+			if (coverageT[t]>0) { cov_window_T.insert(coverageT[t]); }
 		}
-	
+		
 		for (unsigned int i = 0; i < ref_aln.length(); i++) {	
+			
 			int toadd = min( (int)(pathpos+K-1), (int)(coverageN.size()-1));
 			assert(toadd >= 0);
 			assert(toadd < (int)coverageN.size());
-			cov_window_N.insert(coverageN[toadd]);
-			cov_window_T.insert(coverageT[toadd]);
-					
+			if (coverageN[toadd]>0) { cov_window_N.insert(coverageN[toadd]); }
+			if (coverageT[toadd]>0) { cov_window_T.insert(coverageT[toadd]); }
 			unsigned int old_pathpos = pathpos;
+			
 			if (ref_aln[i] == '-') {
 				code = '^'; // insertion
 				pos_in_ref = refpos; // save value of position in reference before increment
@@ -735,32 +740,44 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			// pathpos is a 1-based coordinate, need to substruc 1 to correctly search 
 			// into the sequence path which is indexed using 0-based coordinates
 			spanner = path->pathcontig(pathpos);
+			if (spanner == NULL) { cerr << "Error: path position out of range: " << pathpos << endl; break; }
 			spanner->setRead2InfoList(&readid2info);
 
 			// get min coverage in the window
-			int cov_at_pos_N = *(cov_window_N.begin()); // need to be adjusted for possible left normalization after alignment
-			int cov_at_pos_T = *(cov_window_T.begin()); // need to be adjusted for possible left normalization after alignment
+			int cov_at_pos_N = cov_window_N.getAvg();
+			int cov_at_pos_T = cov_window_T.getAvg();
+			//if(cov_window_N.size() > 0) { cov_at_pos_N = *(cov_window_N.begin()); }
+			//if(cov_window_T.size() > 0) { cov_at_pos_T = *(cov_window_T.begin()); }
 		
-			//float cov_at_pos = path->covAt(pathpos+(K/2)); // need to be adjusted for possible left normalization after alignment
-			//float cov_at_pos = path->covAt(pathpos); 
-		
+			//int cov_at_pos_N = path->covAt(pathpos,'N'); 
+			//int cov_at_pos_T = path->covAt(pathpos,'T'); 
+			//int cov_at_pos_N = spanner->avgCovDistr('N'); 
+			//int cov_at_pos_T = spanner->avgCovDistr('T'); 
+			//int cov_at_pos_N = spanner->minNon0Cov('N'); 
+			//int cov_at_pos_T = spanner->minNon0Cov('T'); 
+			
+			
 			if(old_pathpos != pathpos) { // remove old coverage only if change in path position
 				assert(pathpos > 0);
 				assert(pathpos <= coverageN.size());
-				multiset<int>:: iterator it_N = cov_window_N.find(coverageN[pathpos-1]);
-				cov_window_N.erase(it_N);
-				multiset<int>:: iterator it_T = cov_window_T.find(coverageT[pathpos-1]);
-				cov_window_T.erase(it_T);
+				
+				cov_window_N.remove(coverageN[pathpos-1]);
+				cov_window_T.remove(coverageT[pathpos-1]);
+				
+				//multiset<int>:: iterator it_N = cov_window_N.find(coverageN[pathpos-1]);
+				//if(it_N != cov_window_N.end()) { cov_window_N.erase(it_N); }
+				//multiset<int>:: iterator it_T = cov_window_T.find(coverageT[pathpos-1]);
+				//if(it_T != cov_window_T.end()) { cov_window_T.erase(it_T); }				
 			}
-			//multiset<float>:: iterator it = cov_window.find(path->covAt(i));
-			//cov_window.erase(path->covAt(i));
+			
 		
 			if (code != '=')
 			{ 
 				if(verbose) {
 					cerr << (ref_aln[i] == '-' ? '*' : ref_aln[i]) << " " << (path_aln[i] == '-' ? '*' : path_aln[i]) << " " << code 
 					<< " " << pos_in_ref + ref->refstart + ref->trim5 << " " << pathpos 
-					<< " " << spanner->nodeid_m << " " << spanner->getTotCov() << " " << cov_at_pos_N << " " << cov_at_pos_T << " " << spanner->reads_m.size() << " " << spanner->cntReadCode(CODE_BASTARD)
+					<< " " << spanner->nodeid_m << " " << spanner->getTotCov() << " (" <<  spanner->avgCovDistr('N') << "," << spanner->avgCovDistr('T') << ") "
+					<< cov_at_pos_N << " " << cov_at_pos_T << " " << spanner->reads_m.size() << " " << spanner->cntReadCode(CODE_BASTARD)
 					<< endl;
 				}
 				unsigned int rrpos = pos_in_ref+ref->refstart+ref->trim5;
@@ -820,7 +837,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			if(verbose) { cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].getAvgCov('N') << "," << transcript[ti].getAvgCov('T') << "|" << transcript[ti].getMinCov('N') << "," << transcript[ti].getMinCov('T') << "|" << transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt; }
 
 			// save into variant format			
-			vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos, transcript[ti].ref, transcript[ti].qry, ref->getCovAt(transcript[ti].ref_pos, 'N'), ref->getCovAt(transcript[ti].ref_pos, 'T'), transcript[ti].getMinCov('N'), transcript[ti].getMinCov('T'), transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt));
+			vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos, transcript[ti].ref, transcript[ti].qry, ref->getMinCovInKbp(transcript[ti].ref_pos, K, 'N'), ref->getMinCovInKbp(transcript[ti].ref_pos, K, 'T'), transcript[ti].getMinCov('N'), transcript[ti].getMinCov('T'), transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt));
 		}
 		if(verbose) { cerr << endl; }
 

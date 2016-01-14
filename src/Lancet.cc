@@ -39,6 +39,7 @@ void Microassembler::printConfiguration(ostream & out)
 	cerr.setf(ios::fixed,ios::floatfield);
 	cerr.precision(1);
 	out << "LOW_COV_THRESHOLD: "<< LOW_COV_THRESHOLD << endl;
+	out << "WINDOW_SIZE: "      << WINDOW_SIZE << endl;
 	out << "DFS_LIMIT: "        << DFS_LIMIT << endl;
 	out << "PATH_LIMIT: "       << PATH_LIMIT << endl;
 	out << "MAX_INDEL_LEN: "    << MAX_INDEL_LEN << endl;
@@ -339,9 +340,11 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 		// clear graph at the end.
 		g.clear(true);
 		
-		if(rptInRef) { cerr << " Found repeat in reference" << endl; }
-		if(rptInQry) { cerr << " Found repeat in assembly" << endl; }	
-		if(cycleInGraph) { cerr << " Found cycle in assembly" << endl; }	
+		if(verbose) {
+			if(rptInRef) { cerr << " Found repeat in reference" << endl; }
+			if(rptInQry) { cerr << " Found repeat in assembly" << endl; }	
+			if(cycleInGraph) { cerr << " Found cycle in assembly" << endl; }	
+		}
 		
 		if(verbose) { cerr << "FINISHED" << endl; }
 	}
@@ -449,20 +452,21 @@ int Microassembler::run(int argc, char** argv)
 		"   --ref, -r            <FASTA file>  : multifasta file of reference regions\n"
 		"   --prefix, -p         <string>      : use prefix (default: mapfile)\n"
 		"\nOptional\n"
-		"   --min-k, k           <int>         : min kmersize (default: " << minK << ")\n"
-		"   --max-k, -K          <int>         : max kmersize (default: " << maxK << ")\n"
-		"   --trim-lowqual, -q   <int>         : trim bases below qv at 5' and 3' (default: " << MIN_QV << ")\n"
-		"   --quality-range, -Q  <char>        : quality value range (default: " << (char) QV_RANGE << ")\n"
-		"   --min-map-qual, -b   <inr>         : minimum read mapping quality in Phred-scale (default: " << MIN_MAP_QUAL << ")\n"
-		"   --tip-len, -l        <int>         : max tip length (default: " << MAX_TIP_LEN << ")\n"
-		"   --cov-thr, -c        <int>         : coverage threshold (default: " << COV_THRESHOLD << ")\n"
-		"   --cov-ratio, -x      <float>       : minimum coverage ratio (default: " << MIN_COV_RATIO << ")\n"
-		"   --max-avg-cov, -u    <int>         : maximum average coverage allowed per region (default: " << MAX_AVG_COV << ")\n"
-		"   --low-cov, -d        <int>         : low coverage threshold (default: " << LOW_COV_THRESHOLD << ")\n"
-		"   --dfs-limit, -F      <int>         : limit dfs search space (default: " << DFS_LIMIT << ")\n"
-		"   --path-limit, -P     <int>         : limit on number of paths to report (default: " << PATH_LIMIT << ")\n"
-		"   --max-indel-len, -T  <int>         : limit on size of detectable indel (default: " << MAX_INDEL_LEN << ")\n"
-		"   --max-mismatch, -M   <int>         : max number of mismatches for near-perfect repeats (default: " << MAX_MISMATCH << ")\n"
+		"   --min-k, k           <int>         : min kmersize [default: " << minK << "]\n"
+		"   --max-k, -K          <int>         : max kmersize [default: " << maxK << "]\n"
+		"   --trim-lowqual, -q   <int>         : trim bases below qv at 5' and 3' [default: " << MIN_QV << "]\n"
+		"   --quality-range, -Q  <char>        : quality value range [default: " << (char) QV_RANGE << "]\n"
+		"   --min-map-qual, -b   <inr>         : minimum read mapping quality in Phred-scale [default: " << MIN_MAP_QUAL << "]\n"
+		"   --tip-len, -l        <int>         : max tip length [default: " << MAX_TIP_LEN << "]\n"
+		"   --cov-thr, -c        <int>         : coverage threshold [default: " << COV_THRESHOLD << "]\n"
+		"   --cov-ratio, -x      <float>       : minimum coverage ratio [default: " << MIN_COV_RATIO << "]\n"
+		"   --max-avg-cov, -u    <int>         : maximum average coverage allowed per region [default: " << MAX_AVG_COV << "]\n"
+		"   --low-cov, -d        <int>         : low coverage threshold [default: " << LOW_COV_THRESHOLD << "]\n"
+		"   --window-size, -w    <int>         : window size of the region to assemble (in base-pairs) [default: " << WINDOW_SIZE << "]\n"
+		"   --dfs-limit, -F      <int>         : limit dfs search space [default: " << DFS_LIMIT << "]\n"
+		"   --path-limit, -P     <int>         : limit on number of paths to report [default: " << PATH_LIMIT << "]\n"
+		"   --max-indel-len, -T  <int>         : limit on size of detectable indel [default: " << MAX_INDEL_LEN << "]\n"
+		"   --max-mismatch, -M   <int>         : max number of mismatches for near-perfect repeats [default: " << MAX_MISMATCH << "]\n"
 		"   --rg-file, -g        <string>      : read group file\n"
 		
 		"\nFlags\n"
@@ -498,7 +502,8 @@ int Microassembler::run(int argc, char** argv)
 		{"tip-len",  required_argument, 0, 'l'},
 		{"cov-thr",  required_argument, 0, 'c'},
 		{"cov-ratio",  required_argument, 0, 'x'},
-		{"tip-cov",  required_argument, 0, 'd'},
+		{"low-cov",  required_argument, 0, 'd'},
+		{"window-size",  required_argument, 0, 'w'},
 		{"max-avg-cov",  required_argument, 0, 'u'},
 		{"min-map-qual",  required_argument, 0, 'b'},
 		{"trim-lowqual",  required_argument, 0, 'q'},
@@ -527,7 +532,7 @@ int Microassembler::run(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:m:n:r:g:k:K:l:t:c:d:x:DRACIhSL:T:M:vF:q:b:Q:P:p:E", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:m:n:r:g:k:K:l:t:c:d:x:DRACIhSL:T:M:vVF:q:b:Q:P:p:E", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -544,6 +549,7 @@ int Microassembler::run(int argc, char** argv)
 			case 'c': COV_THRESHOLD    = atoi(optarg); break;
 			case 'x': MIN_COV_RATIO    = atof(optarg); break;
 			case 'd': LOW_COV_THRESHOLD= atoi(optarg); break;
+			case 'w': WINDOW_SIZE      = atoi(optarg); break;
 			case 'u': MAX_AVG_COV      = atoi(optarg); break;
 			
 			case 'q': MIN_QV           = atoi(optarg); break;
@@ -786,13 +792,13 @@ int Microassembler::run(int argc, char** argv)
 
 			bool jumpT = readerT.SetRegion(region);
 			if(!jumpT) {
-				cout << "Error: not able to jump successfully to the region's left boundary in tumor" << endl;
+				cerr << "Error: not able to jump successfully to the region's left boundary in tumor" << endl;
 				return -1;
 			}
 
 			bool jumpN = readerN.SetRegion(region);
 			if(!jumpN) {
-				cout << "Error: not able to jump successfully to the region's left boundary in normal" << endl;
+				cerr << "Error: not able to jump successfully to the region's left boundary in normal" << endl;
 				return -1;
 			}
 			
@@ -812,15 +818,16 @@ int Microassembler::run(int argc, char** argv)
 				
 				avgcov = ((double) totalreadbp) / ((double)refinfo->rawseq.length());
 				if(avgcov > MAX_AVG_COV) { 
-					cout << "WARINING: Skip region " << refinfo->refchr << ":" << refinfo->refstart << "-" << refinfo->refend << ". Too much coverage (>" << MAX_AVG_COV << "x)." << endl;
+					cerr << "WARINING: Skip region " << refinfo->refchr << ":" << refinfo->refstart << "-" << refinfo->refend << ". Too much coverage (>" << MAX_AVG_COV << "x)." << endl;
 					skip = true;
 					break;
 				}
 				
-				// skip alignments outside region
+				/*
 				int alstart = al.Position;
 				int alend = al.GetEndPosition();
-				if( (alstart < region.LeftPosition) || (alend > region.RightPosition) ) { continue; }
+				if( (alstart < region.LeftPosition) || (alend > region.RightPosition) ) { continue; } // skip alignments outside region
+				*/
 				
 				if ( (al.MapQuality >= MIN_MAP_QUAL) && !al.IsDuplicate() ) { // only keeping ones with high map quality and skip PCR duplicates
 					
@@ -870,7 +877,7 @@ int Microassembler::run(int argc, char** argv)
 				
 				avgcov = ((double) totalreadbp) / ((double)refinfo->rawseq.length());
 				if(avgcov > MAX_AVG_COV) { 
-					cout << "WARINING: Skip region " << refinfo->refchr << ":" << refinfo->refstart << "-" << refinfo->refend << ". Too much coverage (>" << MAX_AVG_COV << "x)." << endl;
+					cerr << "WARINING: Skip region " << refinfo->refchr << ":" << refinfo->refstart << "-" << refinfo->refend << ". Too much coverage (>" << MAX_AVG_COV << "x)." << endl;
 					skip = true;
 					break;
 				}
@@ -997,7 +1004,7 @@ int main(int argc, char** argv)
 		assembler->vDB.printToVCF();
 	}
 	catch (int e) {
-		cout << "An exception occurred. Exception Nr. " << e << endl;
+		cerr << "An exception occurred. Exception Nr. " << e << endl;
 	} 
 	//catch(std::out_of_range& e) {
    	//	cerr << e.what( ) << endl;

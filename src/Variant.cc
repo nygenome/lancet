@@ -13,17 +13,22 @@
 void Variant_t::printVCF() {
 	//CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  Pat4-FF-Normal-DNA      Pat4-FF-Tumor-DNA
 	string ID = ".";
-	
 	string FILTER = "PASS";
-	string INFO = "SOMATIC;FETS=" + dtos(fet_score);
+
+	string status = "?";
+	char flag = bestState(ref_cov_normal,alt_cov_normal,ref_cov_tumor,alt_cov_tumor);
+	if(flag == 'T') { status = "SOMATIC"; }
+	else if(flag == 'S') { status = "SHARED"; }
+	else if(flag == 'N') { status = "NORMAL"; }
+	
+	string INFO = status + ";FETS=" + dtos(fet_score);
 	if(type=='I') { INFO += ";TYPE=ins"; }
 	if(type=='D') { INFO += ";TYPE=del"; }
-	if(type=='S') { INFO += ";TYPE=snp"; }
+	if(type=='S') { INFO += ";TYPE=snv"; }
 	
 	double QUAL = fet_score;
-	string FORMAT = "GT:AD:DP";	
-	string GT_normal = genotype(ref_cov_normal,alt_cov_normal);
-	string GT_tumor = genotype(ref_cov_tumor,alt_cov_tumor);
+	string FORMAT = "GT:AD:DP";		
+	if(fet_score < minPhredFisher) { FILTER = "LowFisherScore"; }
 	
 	string NORMAL = GT_normal + ":" + itos(ref_cov_normal) + "," + itos(alt_cov_normal) + ":" + itos(ref_cov_normal+alt_cov_normal);
 	string TUMOR = GT_tumor + ":" + itos(ref_cov_tumor) + "," + itos(alt_cov_tumor) + ":" + itos(ref_cov_tumor+alt_cov_tumor);
@@ -50,8 +55,41 @@ string Variant_t::genotype(int R, int A) {
 	return GT;
 }
 
+void Variant_t::update() {
+	
+	double left = 0;
+	double right = 0;
+	double twotail = 0;
+	FET_t fet;
+	double prob = fet.kt_fisher_exact(ref_cov_normal, ref_cov_tumor, alt_cov_normal, alt_cov_tumor, &left, &right, &twotail);
+	if(prob == 1) { fet_score = 0; }
+	else { fet_score = -10*log10(prob); }
+	
+	//compute genotype
+	GT_normal = genotype(ref_cov_normal,alt_cov_normal);
+	GT_tumor = genotype(ref_cov_tumor,alt_cov_tumor);
+}
+
+// compute best state for the variant
+//////////////////////////////////////////////////////////////
+char Variant_t::bestState(int Rn, int An, int Rt, int At) {
+	
+	char ans = '?';
+	if ( (An>0) && (At>0) ) { // shred
+		ans = 'S';
+	}
+	else if ( (An==0) && (At>0) ) { // somatic
+		ans = 'T';
+	}
+	else if ( (An>0) && (At==0) ) { // somatic
+		ans = 'N';
+	}
+	return ans;
+}
+
 string Variant_t::getSignature() {
 		
-	string ans = chr+":"+itos(pos)+":"+type+":"+itos(len)+":"+ref+":"+alt; 
+	string ans = chr+":"+itos(pos)+":"+type+":"+itos(len)+":"+ref+":"+alt;
+	//cerr << ans << endl;
 	return ans;
 }

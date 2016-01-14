@@ -66,6 +66,7 @@ public:
 	void updateCoverage(const string & cmer, char sample);
 	void computeCoverage();
 	int getCovAt(unsigned pos, char sample);
+	int getMinCovInKbp(unsigned pos, int K, char sample);
 	void printKmerCoverage(char sample);
 	void resetCoverage();
 };

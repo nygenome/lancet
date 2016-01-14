@@ -327,6 +327,31 @@ void Node_t::updateCovDistrNml(int c)
 	}
 }
 
+// avgCovDistr
+// average coverage of non-zoero elements
+//////////////////////////////////////////////////////////////
+int Node_t::avgCovDistr(char sample)
+{
+	vector<int> cov_distr;
+	if(sample == 'T') { cov_distr = cov_distr_tmr; }
+	else if(sample == 'N') { cov_distr = cov_distr_nml; }
+	
+	int sum = 0;
+	int cnt = 0;
+	for (unsigned int i = 0; i < cov_distr.size(); i++)
+	{
+		if(cov_distr[i] !=0 ) {
+			sum += cov_distr[i];
+			cnt++;
+		}
+	}
+	//cerr << "SPANNER: (" << sum << "," << cnt << ")" << endl; 
+
+	int ans = 0;
+	if (sum>0) { ans = floor(float(sum)/float(cnt)); }
+	
+	return ans;
+}
 
 // revCovDistr
 // reverse the coverage distribution along the node string
@@ -350,6 +375,26 @@ void Node_t::revCovDistr()
 		i++;j--;
 	}
 }
+
+// minCov
+// retunr the minimum coverage along the node
+//////////////////////////////////////////////////////////////
+int Node_t::minNon0Cov(char sample) 
+{
+	
+	vector<int> cov_distr;
+	if(sample == 'T') { cov_distr = cov_distr_tmr; }
+	else if(sample == 'N') { cov_distr = cov_distr_nml; }
+	
+	int min = 10000000;
+	for (unsigned int i = 0; i < cov_distr.size(); i++)
+	{
+		if( (cov_distr[i] > 0) && (cov_distr[i] < min) ) { min = cov_distr[i]; }
+	}
+	
+	return min;
+}
+
 
 // minCov
 // retunr the minimum coverage along the node

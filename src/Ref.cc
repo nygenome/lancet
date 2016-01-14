@@ -80,6 +80,23 @@ int Ref_t::getCovAt(unsigned pos, char sample) {
 	return c;
 }
 
+// return min k-mer coverage in radius of size K bp
+int Ref_t::getMinCovInKbp(unsigned pos, int K, char sample) {
+		
+	vector<int> cov;
+	if (sample == 'T') { cov = tumor_coverage; }
+	else if (sample == 'N') { cov = normal_coverage; }
+	else { cerr << "Error: unknown sample " << sample << endl; }	
+	
+	int min = 1000000000;
+	if(cov.size()>=pos) {	
+		for(int i=0; i<K; i++) {
+			if(cov[pos+i]<min) { min = cov[pos+i]; } 
+		}
+	}
+	return min;
+}
+
 // print k-mer coverage along the reference
 void Ref_t::printKmerCoverage(char sample) {
 	

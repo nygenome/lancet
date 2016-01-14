@@ -28,6 +28,7 @@ public:
 	int len;
 	string ref;
 	string alt;
+	char status; // T=somatic, S=shared
 	int ref_cov_normal;
 	int ref_cov_tumor;
 	int alt_cov_normal;
@@ -37,20 +38,22 @@ public:
 	string GT_normal;
 	string GT_tumor;
 	double fet_score;
+	double minPhredFisher;
 
 	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_, int alt_cov_tumor_, char prev_bp_ref_, char prev_bp_alt_)
 	{ 	
+		minPhredFisher = 10;
+		
 		chr = chr_;
 		pos = pos_;
-		if(ref_.at(0) == '-') { type = 'D'; ref_ = ""; len = alt_.length(); }  // deletion
-		if(alt_.at(0) == '-') { type = 'I'; alt_ = ""; len = ref_.length(); }  // insertion
+		if(ref_.at(0) == '-') { type = 'I'; ref_ = ""; len = alt_.length(); }  // deletion
+		if(alt_.at(0) == '-') { type = 'D'; alt_ = ""; len = ref_.length(); }  // insertion
 		if(ref_.size()==1 && alt_.size()==1 && ref_.at(0)!='-' && alt_.at(0)!='-') { type = 'S'; } // snp 
 		if(type != 'S') {
 			ref = prev_bp_alt_ + ref_;
 			alt = prev_bp_alt_ + alt_;
-			len = 1;
 		}
-		else { alt = alt_; ref = ref_; }
+		else { alt = alt_; ref = ref_; len = 1; }
 		
 		ref_cov_normal = ref_cov_normal_;
 		ref_cov_tumor = ref_cov_tumor_;
@@ -59,22 +62,15 @@ public:
 		prev_bp_ref = prev_bp_ref_;
 		prev_bp_alt = prev_bp_alt_;
 		
-		double left = 0;
-		double right = 0;
-		double twotail = 0;
-		FET_t fet;
-		double prob = fet.kt_fisher_exact(ref_cov_normal, ref_cov_tumor, alt_cov_normal, alt_cov_tumor, &left, &right, &twotail);
-		fet_score = -10*log10(prob);
-		
-		//compute genotype
-		GT_normal = genotype(ref_cov_normal,alt_cov_normal);
-		GT_tumor = genotype(ref_cov_tumor,alt_cov_tumor);
-		//fet_score = Fisher_score(ref_cov_normal,ref_cov_tumor,alt_cov_normal,alt_cov_tumor); // Fisher's exact test score
+		// update score and genotypes
+		update();
 	}
 	
 	void printVCF();
 	string genotype(int R, int A);
+	char bestState(int Rn, int An, int Rt, int At);
 	string getSignature();
+	void update();
 };
 
 #endif

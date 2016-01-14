@@ -20,6 +20,25 @@
 
 using namespace std;
 
+struct byPos
+{
+	bool operator()(pair<string,Variant_t> first, pair<string,Variant_t> second) const {
+		
+		bool ans = true;
+		string chr1 = (first.second).chr; 
+		int pos1 = (first.second).pos; 
+		string chr2 = (second.second).chr; 
+		int pos2 = (second.second).pos; 
+	
+		int cmp = chr1.compare(chr2);
+		if (cmp == 0) { ans = (pos1 < pos2); }
+		else if (cmp < 0) { ans = true; }
+		else if (cmp < 0) { ans = false; }
+	
+		return ans;
+	}
+};
+
 class VariantDB_t
 {
 public:

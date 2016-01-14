@@ -7,7 +7,7 @@ INCLUDES := -I$(ABS_BAMTOOLS_DIR)/include/ -L$(ABS_BAMTOOLS_DIR)/lib/
 
 all: Lancet
 
-Lancet: Lancet.cc Lancet.hh align.cc util.hh util.cc sha256.hh sha256.cc FET.hh Mer.hh Ref.cc Ref.hh ReadInfo.hh ReadStart.hh Transcript.hh Variant.hh Variant.cc VariantDB.hh VariantDB.cc Edge.cc Edge.hh ContigLink.hh Node.cc Node.hh Path.cc Path.hh ContigLink.cc Graph.cc Graph.hh
+Lancet: Lancet.cc Lancet.hh align.cc util.hh util.cc sha256.hh sha256.cc FET.hh Mer.hh Ref.cc Ref.hh ReadInfo.hh ReadStart.hh Transcript.hh CoverageWindow.hh Variant.hh Variant.cc VariantDB.hh VariantDB.cc Edge.cc Edge.hh ContigLink.hh Node.cc Node.hh Path.cc Path.hh ContigLink.cc Graph.cc Graph.hh
 	$(CXX) $(CXXFLAGS) $(INCLUDES) Lancet.cc Edge.cc Node.cc Graph.cc Ref.cc Path.cc ContigLink.cc align.cc util.cc sha256.cc VariantDB.cc Variant.cc -o Lancet -lbamtools -lz
 
 clean:

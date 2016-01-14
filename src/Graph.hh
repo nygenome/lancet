@@ -32,6 +32,7 @@
 #include "Transcript.hh"
 #include "Variant.hh"
 #include "VariantDB.hh"
+#include "CoverageWindow.hh"
 
 #define WHITE 1
 #define GREY 2

@@ -290,7 +290,7 @@ int Microassembler::processReads() {
 		counter++;
 		progress = floor(100*(double(counter)/(double)reftable.size()));
 		if (progress > old_progress) {
-			cerr << progress << "\% done." << endl;
+			cerr << "Thread " << ID << " is " << progress << "\% done." << endl;
 			old_progress = progress;
 		}
 			

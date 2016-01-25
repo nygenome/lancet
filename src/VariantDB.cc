@@ -20,15 +20,15 @@ void VariantDB_t::addVar(Variant_t v) {
 		Variant_t old_v = it->second;
 		
 		// keep highest supporting coverage found
-		if (old_v.ref_cov_normal < v.ref_cov_normal) { old_v.ref_cov_normal = v.ref_cov_normal; }
-		if (old_v.ref_cov_tumor < v.ref_cov_tumor) { old_v.ref_cov_tumor = v.ref_cov_tumor; }
-		if (old_v.alt_cov_normal < v.alt_cov_normal) { old_v.alt_cov_normal = v.alt_cov_normal; }
-		if (old_v.alt_cov_tumor < v.alt_cov_tumor) { old_v.alt_cov_tumor = v.alt_cov_tumor; }
+		if (it->second.ref_cov_normal < v.ref_cov_normal) { it->second.ref_cov_normal = v.ref_cov_normal; }
+		if (it->second.ref_cov_tumor < v.ref_cov_tumor) { it->second.ref_cov_tumor = v.ref_cov_tumor; }
+		if (it->second.alt_cov_normal < v.alt_cov_normal) { it->second.alt_cov_normal = v.alt_cov_normal; }
+		if (it->second.alt_cov_tumor < v.alt_cov_tumor) { it->second.alt_cov_tumor = v.alt_cov_tumor; }
 
 		// re-gentype and score
-		old_v.update();
+		it->second.update();
 		// update variant in DB
-		it->second = old_v;
+		//it->second = old_v;
 	}
 	else { 
 		DB.insert(pair<string,Variant_t>(key,v));
@@ -48,11 +48,4 @@ void VariantDB_t::printToVCF() {
 		//cerr << it->first << "\t";
 		it->second.printVCF();
 	}	
-	/*
-	std::map<string,Variant_t>::iterator it;
-	for (it=DB.begin(); it!=DB.end(); ++it) {
-		//cerr << it->first << "\t";
-		it->second.printVCF();
-	}
-	*/
 }

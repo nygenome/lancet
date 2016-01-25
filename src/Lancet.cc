@@ -117,14 +117,14 @@ void printConfiguration(ostream & out)
 // loadRef
 //////////////////////////////////////////////////////////////
 
-void loadRefs(const string & filename, map<string, Ref_t *> &reftable)
+//void loadRefs(const string & filename, map<string, Ref_t *> &reftable, int NUM_THREADS)
+void loadRefs(const string & filename, vector< map<string, Ref_t *> > &reftable, int num_threads)	
 {
 	if(verbose) { cerr << "LoadRef " << filename << endl; }
 
 	FILE * fp = xfopen(filename, "r");
-
 	string s, ss, hdr;
-
+	
 	while (Fasta_Read (fp, s, hdr))
 	{
 		// extrat coordinates for header		
@@ -141,6 +141,7 @@ void loadRefs(const string & filename, map<string, Ref_t *> &reftable)
 		int offset = 0;
 		int delta = 100;
 		
+		int T = 0; // thread counter
 		for (; offset < end; offset+=delta) {
 			
 			// adjust end if 
@@ -173,8 +174,12 @@ void loadRefs(const string & filename, map<string, Ref_t *> &reftable)
 			ref->setRawSeq(ss);
 			
 			ref->hdr = hdr;
-
-			reftable.insert(make_pair(hdr, ref));
+			
+			reftable[T].insert(make_pair(hdr, ref));
+			
+			// move to next reftable
+			T++;
+			if( (T%num_threads) == 0) { T=0; }
 		}
 	}
 
@@ -188,7 +193,7 @@ static void* execute(void* ptr) {
     Microassembler* ma = (Microassembler*)ptr;
 	
 	ma->processReads();
-	ma->vDB.printToVCF();
+	//ma->vDB.printToVCF();
 	
 	pthread_exit(NULL);
 }
@@ -249,6 +254,7 @@ int main(int argc, char** argv)
 		"   --path-limit, -P          <int>         : limit on number of paths to report [default: " << PATH_LIMIT << "]\n"
 		"   --max-indel-len, -T       <int>         : limit on size of detectable indel [default: " << MAX_INDEL_LEN << "]\n"
 		"   --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: " << MAX_MISMATCH << "]\n"
+		"   --num-threads, -X         <int>         : number of parallel threads [default: " << NUM_THREADS << "]\n"
 		"   --rg-file, -g             <string>      : read group file\n"
 
 		"\nFilters\n"
@@ -301,6 +307,7 @@ int main(int argc, char** argv)
 		{"node-str-len",  required_argument, 0, 'L'},
 		{"dfs-limit",  required_argument, 0, 'F'},
 		{"path-limit",  required_argument, 0, 'P'},
+		{"num-threads",  required_argument, 0, 'X'},
 		{"max-indel-len",  required_argument, 0, 'T'},
 		{"max-mismatch",  required_argument, 0, 'M'},
 		
@@ -332,7 +339,7 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:t:c:d:x:RAIhSL:T:M:vVF:q:b:Q:P:p:s:a:m:e:i:o:y:z:w:j:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:t:c:d:x:RAIhSL:T:M:vVF:q:b:Q:P:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -359,6 +366,7 @@ int main(int argc, char** argv)
 			case 'L': NODE_STRLEN      = atoi(optarg); break;
 			case 'F': DFS_LIMIT        = atoi(optarg); break;
 			case 'P': PATH_LIMIT       = atoi(optarg); break;
+			case 'X': NUM_THREADS      = atoi(optarg); break;
 			case 'T': MAX_INDEL_LEN    = atoi(optarg); break;
 			case 'M': MAX_MISMATCH     = atoi(optarg); break;
 			
@@ -401,8 +409,6 @@ int main(int argc, char** argv)
 	if (errflg) { exit(EXIT_FAILURE); }
 
 	if(verbose) { printConfiguration(cerr); }
-
-	//if (REFFILE != "") { loadRefs(REFFILE); }
 	
 	// run the assembler on each region
 	try {
@@ -410,56 +416,89 @@ int main(int argc, char** argv)
 		//Microassembler* driver = new Microassembler();
 		//driver->run(argc, argv);
 		//assembler->vDB.printToVCF();
-		
+
 		pthread_t threads[NUM_THREADS];
+		pthread_attr_t attr;
+		void * status;
 		int rc;
-		int i;
-		for( i=1; i <= NUM_THREADS; i++ ) {
-			cerr << "starting thread " << i << endl;
+		int i;		
+		vector<Microassembler*> assemblers(NUM_THREADS, new Microassembler());
+		vector< map<string, Ref_t *> > reftables(NUM_THREADS, map<string, Ref_t *>()); // table of references to analyze
 		
-			Microassembler* assembler = new Microassembler();
-			map<string, Ref_t *> reftable; // table of references to analyze
+		loadRefs(REFFILE,reftables,NUM_THREADS);
+
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+		for( i=0; i < NUM_THREADS; i++ ) {
+			cerr << "starting thread " << (i+1) << " on " << reftables[i].size() << " windows" << endl;
+		
+			assemblers[i] = new Microassembler();
+						
+			assemblers[i]->verbose = verbose;
+			assemblers[i]->VERBOSE = VERBOSE;
+			assemblers[i]->PRINT_DOT_READS = PRINT_DOT_READS;
+			assemblers[i]->PRINT_RAW = PRINT_RAW;
+			assemblers[i]->PRINT_ALL = PRINT_ALL;
+			assemblers[i]->PRINT_REFPATH = PRINT_REFPATH;
+			assemblers[i]->MIN_QV = MIN_QV;
+			assemblers[i]->QV_RANGE = QV_RANGE;
+			assemblers[i]->MIN_QUAL = MIN_QUAL;
+			assemblers[i]->MIN_MAP_QUAL = MIN_MAP_QUAL;
+			assemblers[i]->TUMOR = TUMOR;
+			assemblers[i]->NORMAL = NORMAL;
+			assemblers[i]->RG_FILE = RG_FILE;
+			assemblers[i]->REFFILE = REFFILE;
+			assemblers[i]->PREFIX = PREFIX;
+			assemblers[i]->minK = minK;
+			assemblers[i]->maxK = maxK;
+			assemblers[i]->MAX_TIP_LEN = MAX_TIP_LEN;
+			assemblers[i]->MIN_THREAD_READS = MIN_THREAD_READS;
+			assemblers[i]->COV_THRESHOLD = COV_THRESHOLD;
+			assemblers[i]->MIN_COV_RATIO = MIN_COV_RATIO;
+			assemblers[i]->LOW_COV_THRESHOLD = LOW_COV_THRESHOLD;
+			assemblers[i]->MAX_AVG_COV = MAX_AVG_COV;
+			assemblers[i]->NODE_STRLEN = NODE_STRLEN;
+			assemblers[i]->DFS_LIMIT = DFS_LIMIT;
+			assemblers[i]->PATH_LIMIT = PATH_LIMIT;
+			assemblers[i]->MAX_INDEL_LEN = MAX_INDEL_LEN;
+			assemblers[i]->MAX_MISMATCH = MAX_MISMATCH;	
 			
-			loadRefs(REFFILE,reftable);
-			
-			assembler->verbose = verbose;
-			assembler->VERBOSE = VERBOSE;
-			assembler->PRINT_DOT_READS = PRINT_DOT_READS;
-			assembler->PRINT_RAW = PRINT_RAW;
-			assembler->PRINT_ALL = PRINT_ALL;
-			assembler->PRINT_REFPATH = PRINT_REFPATH;
-			assembler->MIN_QV = MIN_QV;
-			assembler->QV_RANGE = QV_RANGE;
-			assembler->MIN_QUAL = MIN_QUAL;
-			assembler->MIN_MAP_QUAL = MIN_MAP_QUAL;
-			assembler->TUMOR = TUMOR;
-			assembler->NORMAL = NORMAL;
-			assembler->RG_FILE = RG_FILE;
-			assembler->REFFILE = REFFILE;
-			assembler->PREFIX = PREFIX;
-			assembler->minK = minK;
-			assembler->maxK = maxK;
-			assembler->MAX_TIP_LEN = MAX_TIP_LEN;
-			assembler->MIN_THREAD_READS = MIN_THREAD_READS;
-			assembler->COV_THRESHOLD = COV_THRESHOLD;
-			assembler->MIN_COV_RATIO = MIN_COV_RATIO;
-			assembler->LOW_COV_THRESHOLD = LOW_COV_THRESHOLD;
-			assembler->MAX_AVG_COV = MAX_AVG_COV;
-			assembler->NODE_STRLEN = NODE_STRLEN;
-			assembler->DFS_LIMIT = DFS_LIMIT;
-			assembler->PATH_LIMIT = PATH_LIMIT;
-			assembler->MAX_INDEL_LEN = MAX_INDEL_LEN;
-			assembler->MAX_MISMATCH = MAX_MISMATCH;	
-			
-			assembler->reftable = reftable;
-			assembler->setFilters(filters);
+			assemblers[i]->reftable = reftables[i];
+			assemblers[i]->setFilters(filters);
+			assemblers[i]->setID(i+1);
 	
-			rc = pthread_create(&threads[i], NULL, execute, (void * )assembler);
+			rc = pthread_create(&threads[i], NULL, execute, (void * )assemblers[i]);
+			
 			if (rc){
 				cerr << "Error:unable to create thread," << rc << endl;
 				exit(-1);
 			}
 		}
+		
+		// free attribute and wait for the other threads
+		pthread_attr_destroy(&attr);
+		for( i=0; i < NUM_THREADS; i++ ){
+			rc = pthread_join(threads[i], &status);
+			if (rc){
+				cerr << "Error:unable to join," << rc << endl;
+				exit(-1);
+			}
+			cerr << "Main: completed thread id :" << (i+1) ;
+			cerr << " exiting with status :" << status << endl;
+		}
+		
+		//merge variant from all threads
+		cerr << "Merge variants" << endl;
+		VariantDB_t variantDB; // variants DB
+		for( i=0; i < NUM_THREADS; i++ ) {		
+			map<string,Variant_t> db = (assemblers[i]->vDB).DB;
+			map<string,Variant_t>::iterator it;			
+			for (it=db.begin(); it!=db.end(); ++it) {
+				variantDB.addVar(it->second);
+			}
+		}
+		variantDB.printToVCF();
 	}
 	catch (int e) {
 		cerr << "An exception occurred. Exception Nr. " << e << endl;

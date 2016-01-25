@@ -69,17 +69,6 @@ public:
 	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_, int alt_cov_tumor_, char prev_bp_ref_, char prev_bp_alt_, Filters &fs)
 	{ 	
 		filters = fs;
-		/*
-		minPhredFisher = fs.minPhredFisher;
-		maxVafNormal = fs.maxVafNormal;
-		minCovNormal = fs.minCovNormal;
-		maxCovNormal = fs.maxCovNormal;
-		minCovTumor = fs.minCovTumor;
-		maxCovTumor = fs.maxCovTumor;
-		minVafTumor = fs.minVafTumor;
-		minAltCntTumor = fs.minAltCntTumor;
-		maxAltCntNormal = fs.maxAltCntNormal;
-		*/
 		
 		chr = chr_;
 		pos = pos_;

@@ -54,6 +54,7 @@ class Microassembler {
 
 public:
 	
+	int ID;
 	int BUFFER_SIZE;
 	int WINDOW_SIZE;
 	
@@ -171,6 +172,7 @@ public:
 	int run(int argc, char** argv);
 	int processReads();
 	void setFilters(Filters &fs) { filters = fs; }
+	void setID(int i) { ID = i; }
 };
 
 #endif

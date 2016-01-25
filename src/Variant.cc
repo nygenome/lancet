@@ -13,7 +13,7 @@
 void Variant_t::printVCF() {
 	//CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  Pat4-FF-Normal-DNA      Pat4-FF-Tumor-DNA
 	string ID = ".";
-	string FILTER = "PASS";
+	string FILTER = "";
 
 	string status = "?";
 	char flag = bestState(ref_cov_normal,alt_cov_normal,ref_cov_tumor,alt_cov_tumor);
@@ -27,8 +27,66 @@ void Variant_t::printVCF() {
 	if(type=='S') { INFO += ";TYPE=snv"; }
 	
 	double QUAL = fet_score;
-	string FORMAT = "GT:AD:DP";		
-	if(fet_score < minPhredFisher) { FILTER = "LowFisherScore"; }
+	string FORMAT = "GT:AD:DP";
+	
+	// apply filters
+	/*	
+	##FILTER=<ID=MS,Description="Microsatellite mutation (format: #LEN#MOTIF)">
+	##FILTER=<ID=LowCovNormal,Description="low coverage in the normal (<10)">
+	##FILTER=<ID=HighCovNormal,Description="high coverage in the normal (>1000000000)">
+	##FILTER=<ID=LowCovTumor,Description="low coverage in the tumor (<4)">
+	##FILTER=<ID=HighCovTumor,Description="high coverage in the tumor (>1000000000)">
+	##FILTER=<ID=LowVafTumor,Description="low variant allele frequency in the tumor (<0.05)">
+	##FILTER=<ID=HighVafNormal,Description="high variant allele frequency in the normal (>0)">
+	##FILTER=<ID=LowAltCntTumor,Description="low alternative allele count in the tumor (<4)">
+	##FILTER=<ID=HighAltCntNormal,Description="high alternative allele count in the normal (>0)">
+	##FILTER=<ID=LowFisherScore,Description="low Fisher's exact test score for tumor-normal allele counts (<20)">
+	*/
+	
+	int tumor_cov = ref_cov_tumor + alt_cov_tumor;
+	double tumor_vaf = (tumor_cov == 0) ? 0 : ((double)alt_cov_tumor/(double)tumor_cov);
+	
+	int normal_cov = ref_cov_normal + alt_cov_normal;
+	double normal_vaf = (normal_cov == 0) ? 0 : ((double)alt_cov_normal/(double)normal_cov);
+	
+	if(fet_score < filters.minPhredFisher) { 
+		if (FILTER.compare("") == 0) { FILTER = "LowFisherScore"; }
+		else { FILTER += ";LowFisherScore"; }
+	}
+	if(normal_cov < filters.minCovNormal) { 
+		if (FILTER.compare("") == 0) { FILTER = "LowCovNormal"; }
+		else { FILTER += ";LowCovNormal"; }	
+	}
+	if(normal_cov > filters.maxCovNormal) { 
+		if (FILTER.compare("") == 0) { FILTER = "HighCovNormal"; }
+		else { FILTER += ";HighCovNormal"; }	
+	}
+	if(tumor_cov < filters.minCovTumor) { 
+		if (FILTER.compare("") == 0) { FILTER = "LowCovTumor"; }
+		else { FILTER += ";LowCovTumor"; }	
+	}
+	if(tumor_cov > filters.maxCovTumor) { 
+		if (FILTER.compare("") == 0) { FILTER = "HighCovTumor"; }
+		else { FILTER += ";HighCovTumor"; }	
+	}
+	if(tumor_vaf < filters.minVafTumor) { 
+		if (FILTER.compare("") == 0) { FILTER = "LowVafTumor"; }
+		else { FILTER += ";LowVafTumor"; }	
+	}
+	if(normal_vaf > filters.maxVafNormal) { 
+		if (FILTER.compare("") == 0) { FILTER = "HighVafNormal"; }
+		else { FILTER += ";HighVafNormal"; }	
+	}
+	if(alt_cov_tumor < filters.minAltCntTumor) { 
+		if (FILTER.compare("") == 0) { FILTER = "LowAltCntTumor"; }
+		else { FILTER += ";LowAltCntTumor"; }	
+	}
+	if(alt_cov_tumor > filters.maxAltCntNormal) { 
+		if (FILTER.compare("") == 0) { FILTER = "HighAltCntNormal"; }
+		else { FILTER += ";HighAltCntNormal"; }
+	}
+	
+	if(FILTER.compare("") == 0) { FILTER = "PASS"; }
 	
 	string NORMAL = GT_normal + ":" + itos(ref_cov_normal) + "," + itos(alt_cov_normal) + ":" + itos(ref_cov_normal+alt_cov_normal);
 	string TUMOR = GT_tumor + ":" + itos(ref_cov_tumor) + "," + itos(alt_cov_tumor) + ":" + itos(ref_cov_tumor+alt_cov_tumor);

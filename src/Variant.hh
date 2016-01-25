@@ -18,6 +18,20 @@
 
 using namespace std;
 
+struct Filters
+{
+	// filter thresholds
+	double minPhredFisher;
+	double maxVafNormal;
+	int minCovNormal;
+	int maxCovNormal;
+	int minCovTumor;
+	int maxCovTumor;
+	int minVafTumor;
+	int minAltCntTumor;
+	int maxAltCntNormal;
+};
+
 class Variant_t
 {
 public:
@@ -38,11 +52,34 @@ public:
 	string GT_normal;
 	string GT_tumor;
 	double fet_score;
+	
+	// filter thresholds
 	double minPhredFisher;
+	double maxVafNormal;
+	int minCovNormal;
+	int maxCovNormal;
+	int minCovTumor;
+	int maxCovTumor;
+	int minVafTumor;
+	int minAltCntTumor;
+	int maxAltCntNormal;
+	
+	Filters filters; // filter thresholds
 
-	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_, int alt_cov_tumor_, char prev_bp_ref_, char prev_bp_alt_)
+	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_, int alt_cov_tumor_, char prev_bp_ref_, char prev_bp_alt_, Filters &fs)
 	{ 	
-		minPhredFisher = 10;
+		filters = fs;
+		/*
+		minPhredFisher = fs.minPhredFisher;
+		maxVafNormal = fs.maxVafNormal;
+		minCovNormal = fs.minCovNormal;
+		maxCovNormal = fs.maxCovNormal;
+		minCovTumor = fs.minCovTumor;
+		maxCovTumor = fs.maxCovTumor;
+		minVafTumor = fs.minVafTumor;
+		minAltCntTumor = fs.minAltCntTumor;
+		maxAltCntNormal = fs.maxAltCntNormal;
+		*/
 		
 		chr = chr_;
 		pos = pos_;

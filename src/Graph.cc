@@ -10,9 +10,8 @@
 **
 *******************************************************************/
 
-// clear
+// clear edge flags
 //////////////////////////////////////////////////////////////
-
 void Graph_t::clear(bool flag)
 {
 	if(flag) {
@@ -25,7 +24,7 @@ void Graph_t::clear(bool flag)
 	{
 		delete mi->second;
 	}
-
+	
 	nodes_m.clear();
 
 	source_m = NULL;
@@ -527,95 +526,48 @@ void Graph_t::hasCycleRec(Node_t * node, Ori_t dir, bool *ans) {
 	}
 }
 
-// dfs
+// Edmonds–Karp style algorithm to enumarate the minimum number of 
+// paths (source-to-sink) that cover every edge of the graph
 //////////////////////////////////////////////////////////////
-
-bool Graph_t::findRepeatsInGraphPaths(Node_t * source, Node_t * sink, Ori_t dir)
+bool Graph_t::findRepeatsInGraphPaths(Node_t * source, Node_t * sink, Ori_t dir, Ref_t * ref)
 {
-	//cerr << "Check for perfect and near perfect repeats in the graph" << endl;
-	
-	// exit if source or sink are not defined
+	if (verbose) { cerr << endl << "looking for near-percfect repeats:"; }
 	if ( (source_m == NULL) || (sink_m == NULL) ) { return false; }
-
-	bool answer = false;
-	int complete = 0;
-	int deadend = 0;
-	int visit = 0;
-
-	deque<Path_t *> Q;
-
-	Path_t * start = new Path_t(K);
-	start->nodes_m.push_back(source);
-	start->dir_m = dir;
-	start->len_m = K;
-
-	Q.push_back(start);
 	
-	while (!Q.empty())
-	{
-		visit++;
-
-		if ((DFS_LIMIT) && (visit > DFS_LIMIT))
-		{
-			//cerr << "WARNING: DFS_LIMIT (" << DFS_LIMIT << ") exceeded" << endl;
+	if(verbose) { cerr << endl << "searching from " << source->nodeid_m << " to " << sink->nodeid_m << " dir: " << dir << endl; }
+		
+	int complete = 0;
+	bool answer = false;
+	vector<Edge_t *> edges;
+	
+	while(true) {
+		
+		Path_t * path = bfs(source, sink, dir, ref);
+				
+		if (path == NULL) { break; }
+		
+		complete++;
+		
+		if(isAlmostRepeat(path->str(), K, MAX_MISMATCH)) {
+			answer = true;
+			if(verbose) { cerr << "Near-perfect repeat in assembled sequence for kmer " << K << endl; }
 			break;
 		}
-
-		Path_t * path = Q.front();
-		Q.pop_front();
-
-		Node_t * cur = path->curNode();
-
-		if (cur == sink)
-		{
-			// success!
-			complete++;
-			
-			if(isAlmostRepeat(path->str(), K, MAX_MISMATCH)) {
-				answer = true;
-				if(verbose) { cerr << "Near-perfect repeat in assembled sequence for kmer " << K << endl; }
-				break;
-			}
-		}
-		else {
-			int tried = 0;
-
-			for (unsigned int i = 0; i < cur->edges_m.size(); i++)
-			{
-				Edge_t & edge = cur->edges_m[i];
-				if (edge.isDir(path->dir_m))
-				{
-					tried++;
-
-					Node_t * other = getNode(edge);
-
-					Path_t * newpath = new Path_t(path,K);
-
-					newpath->nodes_m.push_back(other);
-					newpath->edgedir_m.push_back(edge.dir_m);
-					newpath->dir_m = edge.destdir();
-					newpath->len_m = path->len_m + other->strlen() - K + 1;
-
-					Q.push_back(newpath);
-				}
-			}
-
-			if (tried == 0)
-			{
-				deadend++;
-				//cerr << "deadend: " <<  cur->nodeid_m << endl;
-			}
+		
+		for (unsigned int i = 0; i < path->edges_m.size(); i++) {
+			(path->edges_m[i])->setFlag(1);
+			edges.push_back(path->edges_m[i]);
 		}
 
+		path->reset();
 		delete path;
 	}
-
-	while (!Q.empty())
-	{
-		Path_t * path = Q.front();
-		delete path;
-		Q.pop_front();
+	
+	// clear edge flags for next call to eka graph traversal
+	for (unsigned int i = 0; i < edges.size(); i++) {
+		edges[i]->setFlag(0);
 	}
+	//edges.clear();
 	
 	return answer;
 }
@@ -669,18 +621,6 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	vector<int> coverageT = path->covDistr('T');
 	assert(coverageN.size() == coverageT.size());
 	
-	//print coverage distribution along the edges of the path
-	/*
-	coverage = path->readCovNodes();
-	num = new char[30];
-	cerr << "e':";
-	for (unsigned int i = 0; i < coverage.size(); i++) {
-		sprintf(num, "%.1f", coverage[i]);
-		cerr << num << " ";
-	}
-	cerr << endl;
-	*/
-	
 	try {
 		// scan aligned sequences for differences
 
@@ -694,9 +634,9 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 
 		vector<Transcript_t> transcript;
 	
+		
 		// cov_window keeps track of the minimum (non-0) coverage in a window of size K
-		//multiset<int> cov_window_N;
-		//multiset<int> cov_window_T;
+		/*
 		CoverageWindow_t cov_window_N;
 		CoverageWindow_t cov_window_T;
 	 			
@@ -704,20 +644,21 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		assert(end >= 0);
 		assert(end < (int)coverageN.size());
 		for (int t=0; t<end; t++) { 
-			//if (coverageN[t]>0) { cov_window_N.insert(coverageN[t]); }
-			//if (coverageT[t]>0) { cov_window_T.insert(coverageT[t]); }
 			if (coverageN[t]>0) { cov_window_N.insert(coverageN[t]); }
 			if (coverageT[t]>0) { cov_window_T.insert(coverageT[t]); }
 		}
+		*/
 		
 		for (unsigned int i = 0; i < ref_aln.length(); i++) {	
 			
+			/*
 			int toadd = min( (int)(pathpos+K-1), (int)(coverageN.size()-1));
 			assert(toadd >= 0);
 			assert(toadd < (int)coverageN.size());
 			if (coverageN[toadd]>0) { cov_window_N.insert(coverageN[toadd]); }
 			if (coverageT[toadd]>0) { cov_window_T.insert(coverageT[toadd]); }
 			unsigned int old_pathpos = pathpos;
+			*/
 			
 			if (ref_aln[i] == '-') {
 				code = '^'; // insertion
@@ -744,11 +685,10 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			spanner->setRead2InfoList(&readid2info);
 
 			// get min coverage in the window
-			int cov_at_pos_N = cov_window_N.getAvg();
-			int cov_at_pos_T = cov_window_T.getAvg();
-			//if(cov_window_N.size() > 0) { cov_at_pos_N = *(cov_window_N.begin()); }
-			//if(cov_window_T.size() > 0) { cov_at_pos_T = *(cov_window_T.begin()); }
-		
+			int cov_at_pos_N = coverageN[i];
+			int cov_at_pos_T = coverageT[i];
+			//int cov_at_pos_N = cov_window_N.getMin();
+			//int cov_at_pos_T = cov_window_T.getMin();
 			//int cov_at_pos_N = path->covAt(pathpos,'N'); 
 			//int cov_at_pos_T = path->covAt(pathpos,'T'); 
 			//int cov_at_pos_N = spanner->avgCovDistr('N'); 
@@ -756,20 +696,15 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			//int cov_at_pos_N = spanner->minNon0Cov('N'); 
 			//int cov_at_pos_T = spanner->minNon0Cov('T'); 
 			
-			
+			/*
 			if(old_pathpos != pathpos) { // remove old coverage only if change in path position
 				assert(pathpos > 0);
 				assert(pathpos <= coverageN.size());
 				
 				cov_window_N.remove(coverageN[pathpos-1]);
-				cov_window_T.remove(coverageT[pathpos-1]);
-				
-				//multiset<int>:: iterator it_N = cov_window_N.find(coverageN[pathpos-1]);
-				//if(it_N != cov_window_N.end()) { cov_window_N.erase(it_N); }
-				//multiset<int>:: iterator it_T = cov_window_T.find(coverageT[pathpos-1]);
-				//if(it_T != cov_window_T.end()) { cov_window_T.erase(it_T); }				
+				cov_window_T.remove(coverageT[pathpos-1]);		
 			}
-			
+			*/
 		
 			if (code != '=')
 			{ 
@@ -817,6 +752,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				}
 				else
 				{
+					// create new transcript for mutation
 					transcript.push_back(Transcript_t(rrpos, pos_in_ref, code, ref_aln[i], path_aln[i], cov_at_pos_N, cov_at_pos_T, ref_aln[pr], path_aln[pa]));
 					//min_cov = 1000000;
 				}
@@ -836,8 +772,8 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			//cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].cov;
 			if(verbose) { cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].getAvgCov('N') << "," << transcript[ti].getAvgCov('T') << "|" << transcript[ti].getMinCov('N') << "," << transcript[ti].getMinCov('T') << "|" << transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt; }
 
-			// save into variant format			
-			vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos, transcript[ti].ref, transcript[ti].qry, ref->getMinCovInKbp(transcript[ti].ref_pos, K, 'N'), ref->getMinCovInKbp(transcript[ti].ref_pos, K, 'T'), transcript[ti].getMinCov('N'), transcript[ti].getMinCov('T'), transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt));
+			// save into variant format
+			vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, ref->getCovAt(transcript[ti].ref_pos, 'N'), ref->getCovAt(transcript[ti].ref_pos, 'T'), transcript[ti].getMinCov('N'), transcript[ti].getMinCov('T'), transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters));
 		}
 		if(verbose) { cerr << endl; }
 

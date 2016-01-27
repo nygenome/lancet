@@ -531,8 +531,11 @@ void Graph_t::hasCycleRec(Node_t * node, Ori_t dir, bool *ans) {
 //////////////////////////////////////////////////////////////
 bool Graph_t::findRepeatsInGraphPaths(Node_t * source, Node_t * sink, Ori_t dir, Ref_t * ref)
 {
-	if (verbose) { cerr << endl << "looking for near-percfect repeats:"; }
-	if ( (source_m == NULL) || (sink_m == NULL) ) { return false; }
+	if (verbose) { cerr << endl << "looking for near-perfect repeats:" << endl; }
+	if ( (source_m == NULL) || (sink_m == NULL) ) { 
+		if(verbose) { cerr << "Missing source or sink" << endl; }
+		return false; 
+	}
 	
 	if(verbose) { cerr << endl << "searching from " << source->nodeid_m << " to " << sink->nodeid_m << " dir: " << dir << endl; }
 		
@@ -743,18 +746,14 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					// extend the indel
 					transcript[ts-1].ref += ref_aln[i];
 					transcript[ts-1].qry += path_aln[i];
+					transcript[ts-1].end_pos = i; // update end position (in the alignment)
 					(transcript[ts-1].cov_distr_N).push_back(cov_at_pos_N);
 					(transcript[ts-1].cov_distr_T).push_back(cov_at_pos_T);
-				
-					//if(code == '^') { // insertion 
-					//	if(cov_at_pos < min_cov) { min_cov = cov_at_pos; } 
-					//}
 				}
 				else
 				{
 					// create new transcript for mutation
-					transcript.push_back(Transcript_t(rrpos, pos_in_ref, code, ref_aln[i], path_aln[i], cov_at_pos_N, cov_at_pos_T, ref_aln[pr], path_aln[pa]));
-					//min_cov = 1000000;
+					transcript.push_back(Transcript_t(rrpos, pos_in_ref, code, ref_aln[i], path_aln[i], cov_at_pos_N, cov_at_pos_T, ref_aln[pr], path_aln[pa],i));
 				}
 			}
 		}
@@ -772,6 +771,15 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			//cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].cov;
 			if(verbose) { cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].getAvgCov('N') << "," << transcript[ti].getAvgCov('T') << "|" << transcript[ti].getMinCov('N') << "," << transcript[ti].getMinCov('T') << "|" << transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt; }
 
+			// if the alignment left-shifts the mutation, coverage and alignment can be out of sinc. 
+			// Fix: add coverage for a few bp after variant end position
+			for (unsigned int j=0; j<NUM_EXTRA_BP; j++) {
+				unsigned int idx = transcript[ti].end_pos + j; 
+				if (idx < coverageN.size()) { // check for out of range
+					(transcript[ti].cov_distr_N).push_back(coverageN[idx]);
+					(transcript[ti].cov_distr_T).push_back(coverageT[idx]);
+				}
+			}
 			// save into variant format
 			vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, ref->getCovAt(transcript[ti].ref_pos, 'N'), ref->getCovAt(transcript[ti].ref_pos, 'T'), transcript[ti].getMinCov('N'), transcript[ti].getMinCov('T'), transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters));
 		}

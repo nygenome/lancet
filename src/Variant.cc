@@ -81,7 +81,7 @@ void Variant_t::printVCF() {
 		if (FILTER.compare("") == 0) { FILTER = "LowAltCntTumor"; }
 		else { FILTER += ";LowAltCntTumor"; }	
 	}
-	if(alt_cov_tumor > filters.maxAltCntNormal) { 
+	if(alt_cov_normal > filters.maxAltCntNormal) { 
 		if (FILTER.compare("") == 0) { FILTER = "HighAltCntNormal"; }
 		else { FILTER += ";HighAltCntNormal"; }
 	}

@@ -23,11 +23,11 @@ struct Filters
 	// filter thresholds
 	double minPhredFisher;
 	double maxVafNormal;
+	double minVafTumor;
 	int minCovNormal;
 	int maxCovNormal;
 	int minCovTumor;
 	int maxCovTumor;
-	int minVafTumor;
 	int minAltCntTumor;
 	int maxAltCntNormal;
 };

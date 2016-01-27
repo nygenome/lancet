@@ -91,6 +91,8 @@ public:
 	int  INSERT_SIZE;
 	int  INSERT_STDEV;
 	int  MAX_MISMATCH;
+	
+	unsigned int NUM_EXTRA_BP; // number of extra bp aftre variant to examine for coverage
 
 	MerTable_t nodes_m;
 	int totalreadbp_m;
@@ -109,6 +111,7 @@ public:
 
 	Graph_t() : ref_m(NULL), is_ref_added(0), readCycles(0) {
 		clear(true); 
+		NUM_EXTRA_BP = 5;
 	}
 
 	void setDB(VariantDB_t *db) { vDB = db; }

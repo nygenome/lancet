@@ -30,9 +30,9 @@ string TUMOR;
 string NORMAL;
 string RG_FILE;
 string REFFILE;
-string PREFIX;
+string REGION;
 
-int minK = 10;
+int minK = 11;
 int maxK = 100;
 int MAX_TIP_LEN = minK;
 unsigned int MIN_THREAD_READS = 3;
@@ -76,7 +76,7 @@ void printConfiguration(ostream & out)
 	out << "tumor BAM: "        << TUMOR << endl;
 	out << "normal BAM: "       << NORMAL << endl;
 	out << "reffile: "          << REFFILE << endl;
-	out << "prefix: "           << PREFIX  << endl;
+	out << "region: "           << REGION  << endl;
 
 	out << "min K: "            << minK << endl;
 	out << "max K: "            << maxK << endl;
@@ -118,74 +118,82 @@ void printConfiguration(ostream & out)
 //////////////////////////////////////////////////////////////
 
 //void loadRefs(const string & filename, map<string, Ref_t *> &reftable, int NUM_THREADS)
-void loadRefs(const string & filename, vector< map<string, Ref_t *> > &reftable, int num_threads)	
+void loadRefs(const string reference, const string region, vector< map<string, Ref_t *> > &reftable, int num_threads)	
 {
-	if(verbose) { cerr << "LoadRef " << filename << endl; }
+	if(verbose) { cerr << "LoadRef " << reference << endl; }
 
-	FILE * fp = xfopen(filename, "r");
-	string s, ss, hdr;
+	// open fasta index
+    faidx_t *fai = fai_load(reference.c_str());
+    if ( !fai ) { cerr << "Could not load fai index of " << reference << endl; }
+
+	// extrat sequence
+    int seq_len;
+    char *seq = fai_fetch(fai, region.c_str(), &seq_len);
+    if ( seq_len < 0 ) { cerr << "Failed to fetch sequence in " << region << endl; }
+		
+	// convert char* to string
+	string s(seq, seq + seq_len);
 	
-	while (Fasta_Read (fp, s, hdr))
-	{
-		// extrat coordinates for header		
-		size_t x     = hdr.find_first_of(':');
-		size_t y     = hdr.find_first_of('-', x);
-		string CHR   = hdr.substr(0,x);
-		string START = hdr.substr(x+1, y-x-1);
-		string END   = hdr.substr(y+1, string::npos);
-		
-		for (unsigned int i = 0; i < s.length(); i++) { s[i] = toupper(s[i]); }
+	string ss;
+	string hdr = region;
 
-		// split into overalpping windoes if sequence is too long
-		int end = s.length();
-		int offset = 0;
-		int delta = 100;
-		
-		int T = 0; // thread counter
-		for (; offset < end; offset+=delta) {
-			
-			// adjust end if 
-			int LEN = WINDOW_SIZE;
-			if( (offset + WINDOW_SIZE) > (int)s.length() ) { 
-				LEN = s.length() - offset;
-				end = offset;
-			}
-			
-			ss = s.substr(offset,LEN);
-			
-			// make new reference entry 
-			Ref_t * ref = new Ref_t(minK);
-		
-			ref->refchr   = CHR;
-			ref->refstart = atoi(START.c_str()) + offset;
-			ref->refend   = ref->refstart + LEN - 1;
-			//ref->refend   = atoi(end.c_str());
-			
-			hdr = ref->refchr;
-			hdr += ":";
-			hdr += itos(ref->refstart);
-			hdr += "-";
-			hdr += itos(ref->refend);
+	// extrat coordinates for header
+	size_t x     = hdr.find_first_of(':');
+	size_t y     = hdr.find_first_of('-', x);
+	string CHR   = hdr.substr(0,x);
+	string START = hdr.substr(x+1, y-x-1);
+	string END   = hdr.substr(y+1, string::npos);
+	
+	for (unsigned int i = 0; i < s.length(); i++) { s[i] = toupper(s[i]); }
 
-			if(verbose) { cerr << "hdr:\t" << hdr << endl; }
-			
-			ref->setHdr(hdr);
-			ref->setSeq(ss);
-			ref->setRawSeq(ss);
-			
-			ref->hdr = hdr;
-			
-			reftable[T].insert(make_pair(hdr, ref));
-			
-			// move to next reftable
-			T++;
-			if( (T%num_threads) == 0) { T=0; }
+	// split into overalpping windoes if sequence is too long
+	int end = s.length();
+	int offset = 0;
+	int delta = 100;
+	
+	int T = 0; // thread counter
+	for (; offset < end; offset+=delta) {
+		
+		// adjust end if 
+		int LEN = WINDOW_SIZE;
+		if( (offset + WINDOW_SIZE) > (int)s.length() ) { 
+			LEN = s.length() - offset;
+			end = offset;
 		}
+		
+		ss = s.substr(offset,LEN);
+		
+		// make new reference entry 
+		Ref_t * ref = new Ref_t(minK);
+	
+		ref->refchr   = CHR;
+		ref->refstart = atoi(START.c_str()) + offset;
+		ref->refend   = ref->refstart + LEN - 1;
+		//ref->refend   = atoi(end.c_str());
+		
+		hdr = ref->refchr;
+		hdr += ":";
+		hdr += itos(ref->refstart);
+		hdr += "-";
+		hdr += itos(ref->refend);
+
+		if(verbose) { cerr << "hdr:\t" << hdr << endl; }
+		
+		ref->setHdr(hdr);
+		ref->setSeq(ss);
+		ref->setRawSeq(ss);
+		
+		ref->hdr = hdr;
+		
+		reftable[T].insert(make_pair(hdr, ref));
+		
+		// move to next reftable
+		T++;
+		if( (T%num_threads) == 0) { T=0; }
 	}
 
-	if(verbose) { cerr << "Loaded " << reftable.size() << " ref sequences" << endl << endl; }
 
-	xfclose(fp);
+	if(verbose) { cerr << "Loaded " << reftable.size() << " ref sequences" << endl << endl; }
 }
 
 static void* execute(void* ptr) {
@@ -208,7 +216,7 @@ int main(int argc, char** argv)
 		"Version: 0.1.1 (beta), October 16 2015\n"
 		"Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>\n";
 	
-	string USAGE = "\nUsage: Lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file>\n [-h for full list of commands]\n\n";
+	string USAGE = "\nUsage: Lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>\n [-h for full list of commands]\n\n";
 
 	if (argc == 1)
 	{
@@ -236,8 +244,8 @@ int main(int argc, char** argv)
 		"Required\n"
 		"   --tumor, -t              <BAM file>    : BAM file of mapped reads for tumor\n"
 		"   --normal, -n             <BAM file>    : BAM file of mapped reads for normal\n"
-		"   --ref, -r                <FASTA file>  : multifasta file of reference regions\n"
-		"   --prefix, -p             <string>      : use prefix (default: mapfile)\n"
+		"   --ref, -r                <FASTA file>  : FASTA file of reference genome\n"
+		"   --reg, -p                <string>      : genomic region (in chr:start-end format)\n"
 		"\nOptional\n"
 		"   --min-k, k                <int>         : min kmersize [default: " << minK << "]\n"
 		"   --max-k, -K               <int>         : max kmersize [default: " << maxK << "]\n"
@@ -290,7 +298,7 @@ int main(int argc, char** argv)
 		{"ref",     required_argument, 0, 'r'},
 		
 		// optional
-		{"prefix",  required_argument, 0, 'p'},
+		{"reg",  required_argument, 0, 'p'},
 		{"rg-file",  required_argument, 0, 'g'},
 		{"min-k",    required_argument, 0, 'k'},
 		{"max-k",    required_argument, 0, 'K'},
@@ -347,7 +355,7 @@ int main(int argc, char** argv)
 			case 'n': NORMAL           = optarg;       break; 
 			case 'r': REFFILE          = optarg;       break;
 			
-			case 'p': PREFIX           = optarg;       break;
+			case 'p': REGION           = optarg;       break;
 			case 'g': RG_FILE          = optarg;       break;
 			case 'k': minK             = atoi(optarg); break;
 			case 'K': maxK             = atoi(optarg); break;
@@ -425,8 +433,9 @@ int main(int argc, char** argv)
 		vector<Microassembler*> assemblers(NUM_THREADS, new Microassembler());
 		vector< map<string, Ref_t *> > reftables(NUM_THREADS, map<string, Ref_t *>()); // table of references to analyze
 		
-		loadRefs(REFFILE,reftables,NUM_THREADS);
+		loadRefs(REFFILE,REGION,reftables,NUM_THREADS);
 
+		// Initialize and set thread joinable
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
@@ -449,7 +458,6 @@ int main(int argc, char** argv)
 			assemblers[i]->NORMAL = NORMAL;
 			assemblers[i]->RG_FILE = RG_FILE;
 			assemblers[i]->REFFILE = REFFILE;
-			assemblers[i]->PREFIX = PREFIX;
 			assemblers[i]->minK = minK;
 			assemblers[i]->maxK = maxK;
 			assemblers[i]->MAX_TIP_LEN = MAX_TIP_LEN;
@@ -464,7 +472,7 @@ int main(int argc, char** argv)
 			assemblers[i]->MAX_INDEL_LEN = MAX_INDEL_LEN;
 			assemblers[i]->MAX_MISMATCH = MAX_MISMATCH;	
 			
-			assemblers[i]->reftable = reftables[i];
+			assemblers[i]->reftable = &reftables[i];
 			assemblers[i]->setFilters(filters);
 			assemblers[i]->setID(i+1);
 	

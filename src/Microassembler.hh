@@ -29,6 +29,7 @@
 
 #include "api/BamReader.h"
 #include "api/BamWriter.h"
+#include "htslib/faidx.h"
 
 #include "align.hh"
 #include "util.hh"
@@ -81,7 +82,7 @@ public:
 	string REFFILE;
 	string READSET;
 
-	string PREFIX;
+	//string PREFIX;
 
 	int minK;
 	int maxK;
@@ -102,7 +103,7 @@ public:
 	int PATH_LIMIT;
 	int MAX_INDEL_LEN;
 	int MAX_MISMATCH;
-	
+		
 	Filters filters; // filter thresholds
 	
 	// data structures
@@ -115,7 +116,7 @@ public:
 	set<string> RG_self;
 	set<string> RG_sibling;
 	
-	map<string, Ref_t *> reftable; // table of references to analyze
+	map<string, Ref_t *> * reftable; // table of references to analyze
 	VariantDB_t vDB; // variants DB
 	
 	Microassembler() { 
@@ -160,15 +161,14 @@ public:
 		DFS_LIMIT = 1000000;
 		PATH_LIMIT = 0;
 		MAX_INDEL_LEN = 250;
-		MAX_MISMATCH = 3;
+		MAX_MISMATCH = 3;		
 	}
 		
 	~Microassembler() { }
 	
 	void loadRefs(const string & filename);
 	void loadRG(const string & filename, int member);
-	void processGraph(Graph_t & g, const string & refname, const string & prefix, int minK, int maxK);
-    void greedyAssemble(Graph_t & g, const string & prefix);
+	void processGraph(Graph_t & g, const string & refname, int minK, int maxK);
 	int run(int argc, char** argv);
 	int processReads();
 	void setFilters(Filters &fs) { filters = fs; }

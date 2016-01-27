@@ -21,14 +21,12 @@ void VariantDB_t::addVar(Variant_t v) {
 		
 		// keep highest supporting coverage found
 		if (it->second.ref_cov_normal < v.ref_cov_normal) { it->second.ref_cov_normal = v.ref_cov_normal; }
-		if (it->second.ref_cov_tumor < v.ref_cov_tumor) { it->second.ref_cov_tumor = v.ref_cov_tumor; }
+		if (it->second.ref_cov_tumor  < v.ref_cov_tumor ) { it->second.ref_cov_tumor = v.ref_cov_tumor;   }
 		if (it->second.alt_cov_normal < v.alt_cov_normal) { it->second.alt_cov_normal = v.alt_cov_normal; }
-		if (it->second.alt_cov_tumor < v.alt_cov_tumor) { it->second.alt_cov_tumor = v.alt_cov_tumor; }
+		if (it->second.alt_cov_tumor  < v.alt_cov_tumor ) { it->second.alt_cov_tumor = v.alt_cov_tumor;   }
 
 		// re-gentype and score
 		it->second.update();
-		// update variant in DB
-		//it->second = old_v;
 	}
 	else { 
 		DB.insert(pair<string,Variant_t>(key,v));

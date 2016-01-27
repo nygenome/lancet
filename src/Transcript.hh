@@ -22,6 +22,7 @@ public:
 	unsigned int pos;
 	unsigned int ref_pos;
 	char code;
+	unsigned int end_pos;
 	string ref;
 	string qry;
 	vector<int> cov_distr_N;
@@ -29,8 +30,8 @@ public:
 	char prev_bp_ref; // base-pair preceding the mutation in reference
 	char prev_bp_alt; // base-pair preceding the mutation in alternative
 
-	Transcript_t(int pos_, int ref_pos_, char code_, char ref_, char qry_, int covN_, int covT_, char prev_bp_ref_, char prev_bp_alt_)
-		: pos(pos_), ref_pos(ref_pos_), code(code_)
+	Transcript_t(int pos_, int ref_pos_, char code_, char ref_, char qry_, int covN_, int covT_, char prev_bp_ref_, char prev_bp_alt_, int end_pos_)
+		: pos(pos_), ref_pos(ref_pos_), code(code_), end_pos(end_pos_)
 	{ 
 		ref = ref_;
 		qry = qry_;

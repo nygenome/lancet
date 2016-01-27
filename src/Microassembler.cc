@@ -18,7 +18,7 @@ void Microassembler::loadRG(const string & filename, int member) {
 
 	FILE * fp;
 	
-	fp = xfopen(PREFIX + "/" + filename, "r");
+	fp = xfopen(filename, "r");
 	
 	char rgbuffer[BUFFER_SIZE];
 	string rg;
@@ -39,7 +39,7 @@ void Microassembler::loadRG(const string & filename, int member) {
 // processGraph
 //////////////////////////////////////////////////////////////////////////
 
-void Microassembler::processGraph(Graph_t & g, const string & refname, const string & prefix, int minkmer, int maxkmer)
+void Microassembler::processGraph(Graph_t & g, const string & refname, int minkmer, int maxkmer)
 {	
 	if (refname != "")
 	{
@@ -59,8 +59,8 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 			cerr << "=====================================================" << endl;
 		}
 		// Load the reference
-		map<string, Ref_t *>::iterator ri = reftable.find(refname);
-		if (ri == reftable.end())
+		map<string, Ref_t *>::iterator ri = reftable->find(refname);
+		if (ri == reftable->end())
 		{
 			cerr << "Can't find ref info for: " << refname << endl;
 			exit(1);
@@ -109,7 +109,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, const str
 			//printReads();
 			if(verbose) { g.printStats(0); }
 	
-			string out_prefix = prefix + "/" + refname;
+			string out_prefix = "./" + refname;
 	
 			g.markRefNodes();
 			if (PRINT_ALL) { g.printDot(out_prefix + ".0.dot",0); }
@@ -285,10 +285,10 @@ int Microassembler::processReads() {
 	int counter = 0;
 	double progress;
 	double old_progress = 0;
-	for ( ri=reftable.begin() ; ri != reftable.end(); ri++ ) {
+	for ( ri=reftable->begin() ; ri != reftable->end(); ri++ ) {
 
 		counter++;
-		progress = floor(100*(double(counter)/(double)reftable.size()));
+		progress = floor(100*(double(counter)/(double)reftable->size()));
 		if (progress > old_progress) {
 			cerr << "Thread " << ID << " is " << progress << "\% done." << endl;
 			old_progress = progress;
@@ -449,7 +449,7 @@ int Microassembler::processReads() {
 		//cout << "Number of unmapped reads: " << num_unmapped << endl;	
 			
 		if(!skip){ 
-			processGraph(g, graphref, PREFIX, minK, maxK);
+			processGraph(g, graphref, minK, maxK);
 		}
 		else { g.clear(true); }
 
@@ -459,7 +459,7 @@ int Microassembler::processReads() {
 	readerN.Close();
 	
 	if(verbose) cerr << "=======" << endl;
-	if(verbose) cerr << "total reads: " << readcnt << " pairs: " << paircnt << " total graphs: " << graphcnt << " ref sequences: " << reftable.size() <<  endl;
+	if(verbose) cerr << "total reads: " << readcnt << " pairs: " << paircnt << " total graphs: " << graphcnt << " ref sequences: " << reftable->size() <<  endl;
 	
 	return 0;
 }

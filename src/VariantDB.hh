@@ -48,7 +48,8 @@ public:
 	VariantDB_t() {}
 	
 	void addVar(Variant_t v);
-	void printToVCF();
+	void printHeader(const string version, const string reference, char * date, Filters &fs);
+	void printToVCF(const string version, const string reference, char * date, Filters &fs);
 };
 
 #endif

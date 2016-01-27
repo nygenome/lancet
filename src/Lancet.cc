@@ -11,6 +11,8 @@
 **
 *******************************************************************/
 
+string VERSION = "1.0.0 (beta), January 27 2016";
+
 /****  configuration parameters ****/
 int NUM_THREADS = 1;
 
@@ -213,7 +215,7 @@ int main(int argc, char** argv)
 	stringstream HEADER;
 	HEADER << 
 		"\nProgram: Lancet (micro-assembly somatic variant caller)\n"
-		"Version: 0.1.1 (beta), October 16 2015\n"
+		"Version: "<< VERSION << "\n"
 		"Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>\n";
 	
 	string USAGE = "\nUsage: Lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>\n [-h for full list of commands]\n\n";
@@ -506,7 +508,17 @@ int main(int argc, char** argv)
 				variantDB.addVar(it->second);
 			}
 		}
-		variantDB.printToVCF();
+		
+		
+		/***** get current time and date *****/
+		
+		time_t rawtime;
+		time (&rawtime);
+		char* DATE = ctime (&rawtime);
+		
+		/***************************************/
+		
+		variantDB.printToVCF(VERSION,REFFILE,DATE,filters);
 	}
 	catch (int e) {
 		cerr << "An exception occurred. Exception Nr. " << e << endl;

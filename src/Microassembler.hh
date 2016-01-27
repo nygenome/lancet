@@ -26,6 +26,7 @@
 #include <cstring>
 #include <getopt.h>
 #include <pthread.h>
+#include <time.h>       /* time_t, struct tm, time, localtime, strftime */
 
 #include "api/BamReader.h"
 #include "api/BamWriter.h"

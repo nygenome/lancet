@@ -18,9 +18,7 @@ int NUM_THREADS = 1;
 
 bool verbose = false;
 bool VERBOSE = false;
-bool PRINT_RAW = true;
 bool PRINT_ALL = false;
-bool PRINT_REFPATH = false;
 bool PRINT_DOT_READS = true;
 int MIN_QV = 10;
 int QV_RANGE = '!';
@@ -108,9 +106,7 @@ void printConfiguration(ostream & out)
 	out << "INSERT_SIZE: "      << INSERT_SIZE << " +/- " << INSERT_STDEV << endl;
 
 	out << "PRINT_ALL: "        << bvalue(PRINT_ALL) << endl;
-	out << "PRINT_RAW: "        << bvalue(PRINT_RAW) << endl;
 
-	out << "PRINT_REFPATH: "    << bvalue(PRINT_REFPATH) << endl;
 	out << "NODE_STRLEN: "      << NODE_STRLEN << endl;
 	
 	out << endl;
@@ -279,9 +275,7 @@ int main(int argc, char** argv)
 		"   --min-phred-fisher, -s     <float>      : minimum fisher exact test score [default: " << filters.minPhredFisher << "]\n"
 		
 		"\nFlags\n"
-		"   -R            : print reference paths\n"
-		"   -A            : print graph after every stage\n"
-		"   -I            : don't print initial graph\n"
+		"   -A            : print graph (in .dot format) after every stage\n"
 		"   -L <len>      : length of sequence to display at graph node (default: " << NODE_STRLEN << ")\n"
 		"   -v            : be verbose\n"
 		"   -V            : be more verbose\n"
@@ -349,7 +343,7 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:t:c:d:x:RAIhSL:T:M:vVF:q:b:Q:P:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:t:c:d:x:AhSL:T:M:vVF:q:b:Q:P:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -392,9 +386,7 @@ int main(int argc, char** argv)
 
 			case 'v': verbose          = 1;            break;
 			case 'V': VERBOSE=1; verbose=1;            break;
-			case 'R': PRINT_REFPATH    = 1;            break;
 			case 'A': PRINT_ALL        = 1;            break;
-			case 'I': PRINT_RAW        = 0;            break;
 
 			case 'h': errflg = 1;                      break;
 
@@ -449,9 +441,7 @@ int main(int argc, char** argv)
 			assemblers[i]->verbose = verbose;
 			assemblers[i]->VERBOSE = VERBOSE;
 			assemblers[i]->PRINT_DOT_READS = PRINT_DOT_READS;
-			assemblers[i]->PRINT_RAW = PRINT_RAW;
 			assemblers[i]->PRINT_ALL = PRINT_ALL;
-			assemblers[i]->PRINT_REFPATH = PRINT_REFPATH;
 			assemblers[i]->MIN_QV = MIN_QV;
 			assemblers[i]->QV_RANGE = QV_RANGE;
 			assemblers[i]->MIN_QUAL = MIN_QUAL;

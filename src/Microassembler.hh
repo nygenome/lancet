@@ -67,10 +67,7 @@ public:
 	bool VERBOSE;
 	bool PRINT_DOT_READS;
 
-	bool PRINT_RAW;
 	bool PRINT_ALL;
-
-	bool PRINT_REFPATH;
 
 	int MIN_QV;
 	int QV_RANGE;
@@ -130,10 +127,7 @@ public:
 		VERBOSE         = false;
 		PRINT_DOT_READS = true;
 
-		PRINT_RAW       = true;
 		PRINT_ALL       = false;
-
-		PRINT_REFPATH   = false;
 
 		MIN_QV         = 10;
 		QV_RANGE       = '!';

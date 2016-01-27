@@ -23,9 +23,9 @@ cleanbamtools:
 	cd $(ABS_BAMTOOLS_DIR)/build; make clean; cd ../../
 	
 .PHONY : htslib
-bamtools:
-	cd $(ABS_BAMTOOLS_DIR)/build; cmake ..; make; cd ../../
+htslib:
+	cd $(ABS_HTSLIB_DIR); ./configure; make; cd ../
 
 #.PHONY : clean
 clean:
-	rm -rf $(ABS_BAMTOOLS_DIR)/build; rm -f src/Lancet; cd ..; cd ..;
+	 rm src/Lancet; rm -rf $(ABS_BAMTOOLS_DIR)/build; cd $(ABS_HTSLIB_DIR); make clean;

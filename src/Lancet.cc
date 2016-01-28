@@ -508,7 +508,7 @@ int main(int argc, char** argv)
 		
 		/***************************************/
 		
-		variantDB.printToVCF(VERSION,REFFILE,DATE,filters);
+		variantDB.printToVCF(VERSION,REFFILE,DATE,filters, assemblers[0]->sample_name_normal, assemblers[0]->sample_name_tumor);
 	}
 	catch (int e) {
 		cerr << "An exception occurred. Exception Nr. " << e << endl;

@@ -30,6 +30,8 @@
 
 #include "api/BamReader.h"
 #include "api/BamWriter.h"
+#include "api/SamReadGroupDictionary.h"
+#include "api/SamReadGroup.h"
 #include "htslib/faidx.h"
 
 #include "align.hh"
@@ -104,6 +106,9 @@ public:
 		
 	Filters filters; // filter thresholds
 	
+	string sample_name_normal;
+	string sample_name_tumor;
+	
 	// data structures
 	//////////////////////////////////////////////////////////////////////////
 	
@@ -168,6 +173,7 @@ public:
 	int processReads();
 	void setFilters(Filters &fs) { filters = fs; }
 	void setID(int i) { ID = i; }
+	string retriveSampleName(SamHeader &header);
 };
 
 #endif

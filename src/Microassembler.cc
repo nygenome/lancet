@@ -35,6 +35,25 @@ void Microassembler::loadRG(const string & filename, int member) {
 	xfclose(fp);
 }
 
+// extract sammple name from SamHeader
+//////////////////////////////////////////////////////////////
+string Microassembler::retriveSampleName(SamHeader &header) {
+	
+	string sample_name = "NA";
+	
+	if(header.HasReadGroups()) {
+		SamReadGroupDictionary RGS = header.ReadGroups;
+		if(!(RGS.IsEmpty())) {
+			SamReadGroup RG = *(RGS.Begin());
+			if(RG.HasSample()) {
+				sample_name = RG.Sample;
+				//cerr << sample_name << endl;
+			}
+		}
+	}
+	return sample_name;
+}
+
 
 // processGraph
 //////////////////////////////////////////////////////////////////////////
@@ -226,6 +245,7 @@ int Microassembler::processReads() {
 	headerT = readerT.GetHeader();
 	referencesT = readerT.GetReferenceData();
 	readerT.LocateIndex(); // locate and load BAM index file
+	sample_name_tumor = retriveSampleName(headerT); // extract sammple name
 
 	if ( !readerN.Open(NORMAL) ) {
 		cerr << "Could not open normal BAM files." << endl;
@@ -235,6 +255,7 @@ int Microassembler::processReads() {
 	headerN = readerN.GetHeader();
 	referencesN = readerN.GetReferenceData();
 	readerN.LocateIndex(); // locate and load BAM index file
+	sample_name_normal = retriveSampleName(headerN); // extract sammple name
 
 	//load the read group information
 	if(RG_FILE.compare("") != 0) {

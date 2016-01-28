@@ -33,7 +33,7 @@ void VariantDB_t::addVar(Variant_t v) {
 	}
 }
 
-void VariantDB_t::printHeader(const string version, const string reference, char * date, Filters &fs) {
+void VariantDB_t::printHeader(const string version, const string reference, char * date, Filters &fs, string &sample_name_N, string &sample_name_T) {
 	
 	cout << "##fileformat=VCFv4.1\n"
 			"##fileDate=" << date << ""
@@ -56,13 +56,13 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
 			"##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Depth\">\n"
 			"##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"depth supporting reference/indel at the site\">\n"
-			"#CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  Normal4 Tumor4\n";
+			"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << sample_name_N << "\t" << sample_name_T << "\n";
 }
 
 // print variant in VCF format
-void VariantDB_t::printToVCF(const string version, const string reference, char * date, Filters &fs) {
+void VariantDB_t::printToVCF(const string version, const string reference, char * date, Filters &fs, string &sample_name_N, string &sample_name_T) {
 	
-	printHeader(version,reference,date,fs);
+	printHeader(version,reference,date,fs, sample_name_N, sample_name_T);
 	
 	// dump map content to vector for custom sorting
 	vector< pair<string,Variant_t> > myVec(DB.begin(), DB.end());

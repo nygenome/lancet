@@ -100,8 +100,10 @@ public:
 			if(cov_distr_N[i] < min_cov_N) { min_cov_N = cov_distr_N[i]; }
 			if(cov_distr_N[i] < min_nonzero_cov_N && cov_distr_N[i] != 0) { min_nonzero_cov_N = cov_distr_N[i]; }
 		}
-		mean_cov_N =(float)sumN/(float)n;
-		mean_cov_N_non0 =(float)sumN_non0/(float)n_non0;
+		if(n>0) { mean_cov_N =(float)sumN/(float)n; }
+		else { mean_cov_N = 0; }
+		if (n_non0 > 0) { mean_cov_N_non0 =(float)sumN_non0/(float)n_non0; }
+		else { mean_cov_N_non0 = 0; }
 		
 		// update coverage stats for tumor
 		n = cov_distr_T.size();
@@ -112,8 +114,10 @@ public:
 			if(cov_distr_T[i] < min_cov_T) { min_cov_T = cov_distr_T[i]; }
 			if(cov_distr_T[i] < min_nonzero_cov_T && cov_distr_T[i] != 0) { min_nonzero_cov_T = cov_distr_T[i]; }
 		}
-		mean_cov_T =(float)sumT/(float)n;
-		mean_cov_T_non0 =(float)sumT_non0/(float)n_non0;
+		if(n>0) { mean_cov_T =(float)sumT/(float)n; }
+		else { mean_cov_T = 0; }
+		if (n_non0 > 0) { mean_cov_T_non0 =(float)sumT_non0/(float)n_non0; }
+		else { mean_cov_T_non0 = 0; }
 		
 		// update coverage stats for reference (normal)
 		n = ref_cov_distr_N.size();
@@ -124,8 +128,10 @@ public:
 			if(ref_cov_distr_N[i] < min_ref_cov_N) { min_ref_cov_N = ref_cov_distr_N[i]; }
 			if(ref_cov_distr_N[i] < min_nonzero_ref_cov_N && ref_cov_distr_N[i] != 0) { min_nonzero_ref_cov_N = ref_cov_distr_N[i]; }
 		}
-		mean_ref_cov_N =(float)sumR/(float)n;
-		mean_ref_cov_N_non0 =(float)sumR_non0/(float)n_non0;
+		if(n>0) { mean_ref_cov_N =(float)sumR/(float)n; }
+		else { mean_ref_cov_N = 0; }
+		if (n_non0 > 0) { mean_ref_cov_N_non0 =(float)sumR_non0/(float)n_non0; }
+		else { mean_ref_cov_N_non0 = 0; }
 		
 		// update coverage stats for reference (normal)
 		n = ref_cov_distr_T.size();
@@ -136,8 +142,10 @@ public:
 			if(ref_cov_distr_T[i] < min_ref_cov_T) { min_ref_cov_T = ref_cov_distr_T[i]; }
 			if(ref_cov_distr_T[i] < min_nonzero_ref_cov_T && ref_cov_distr_T[i] != 0) { min_nonzero_ref_cov_T = ref_cov_distr_T[i]; }
 		}
-		mean_ref_cov_T =(float)sumR/(float)n;
-		mean_ref_cov_T_non0 =(float)sumR_non0/(float)n_non0;
+		if(n>0) { mean_ref_cov_T =(float)sumR/(float)n; }
+		else { mean_ref_cov_T = 0; }
+		if (n_non0 > 0) { mean_ref_cov_T_non0 =(float)sumR_non0/(float)n_non0; }
+		else { mean_ref_cov_T_non0 = 0; }
 	}
 	
 	void addCovN(int c) { cov_distr_N.push_back(c); }	

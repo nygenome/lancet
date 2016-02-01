@@ -74,7 +74,7 @@ public:
 		pos = pos_;
 		if(ref_.at(0) == '-') { type = 'I'; ref_ = ""; len = alt_.length(); }  // deletion
 		if(alt_.at(0) == '-') { type = 'D'; alt_ = ""; len = ref_.length(); }  // insertion
-		if(ref_.size()==1 && alt_.size()==1 && ref_.at(0)!='-' && alt_.at(0)!='-') { type = 'S'; } // snp 
+		if(ref_.size()==1 && alt_.size()==1 && ref_.at(0)!='-' && alt_.at(0)!='-') { type = 'S'; pos++; } // snp 
 		if(type != 'S') {
 			ref = prev_bp_alt_ + ref_;
 			alt = prev_bp_alt_ + alt_;

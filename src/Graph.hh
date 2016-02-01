@@ -111,7 +111,7 @@ public:
 
 	Graph_t() : ref_m(NULL), is_ref_added(0), readCycles(0) {
 		clear(true); 
-		NUM_EXTRA_BP = 5;
+		NUM_EXTRA_BP = 20;
 	}
 
 	void setDB(VariantDB_t *db) { vDB = db; }

@@ -400,8 +400,8 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 	}
 	
 	ref_m->computeCoverage();
-	if (VERBOSE) { ref_m->printKmerCoverage('N'); }
-	if (VERBOSE) { ref_m->printKmerCoverage('T'); }
+	if (verbose) { ref_m->printKmerCoverage('N'); }
+	if (verbose) { ref_m->printKmerCoverage('T'); }
 }
 
 // loadReadsSFA
@@ -686,10 +686,20 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			spanner = path->pathcontig(pathpos);
 			if (spanner == NULL) { cerr << "Error: path position out of range: " << pathpos << endl; break; }
 			spanner->setRead2InfoList(&readid2info);
+			
+			bool within_tumor_node = false;
+			if (spanner->isTumor() && !spanner->isNormal()) { 
+				//cerr << "Within tumor only node" << endl;
+				within_tumor_node = true;
+			}			
 
-			// get min coverage in the window
-			int cov_at_pos_N = coverageN[i];
-			int cov_at_pos_T = coverageT[i];
+			assert(pathpos <= coverageN.size());
+			assert(pathpos <= coverageT.size());
+
+			int cov_at_pos_N = coverageN[pathpos];
+			int cov_at_pos_T = coverageT[pathpos];
+			int ref_cov_at_pos_N = ref->getCovAt(pos_in_ref+ref->trim5, 'N');
+			int ref_cov_at_pos_T = ref->getCovAt(pos_in_ref+ref->trim5, 'T');
 			//int cov_at_pos_N = cov_window_N.getMin();
 			//int cov_at_pos_T = cov_window_T.getMin();
 			//int cov_at_pos_N = path->covAt(pathpos,'N'); 
@@ -714,21 +724,12 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				if(verbose) {
 					cerr << (ref_aln[i] == '-' ? '*' : ref_aln[i]) << " " << (path_aln[i] == '-' ? '*' : path_aln[i]) << " " << code 
 					<< " " << pos_in_ref + ref->refstart + ref->trim5 << " " << pathpos 
-					<< " " << spanner->nodeid_m << " " << spanner->getTotCov() << " (" <<  spanner->avgCovDistr('N') << "," << spanner->avgCovDistr('T') << ") "
-					<< cov_at_pos_N << " " << cov_at_pos_T << " " << spanner->reads_m.size() << " " << spanner->cntReadCode(CODE_BASTARD)
+					<< " " << spanner->nodeid_m << " " << spanner->getTotCov() << " (" <<  spanner->avgCovDistr('N') << "," << spanner->avgCovDistr('T') << ") A:"
+					<< cov_at_pos_N << "n," << cov_at_pos_T << "t R:" << ref_cov_at_pos_N << "n," << ref_cov_at_pos_T << "t " << spanner->reads_m.size() << " " << spanner->cntReadCode(CODE_BASTARD)
 					<< endl;
 				}
 				unsigned int rrpos = pos_in_ref+ref->refstart+ref->trim5;
 				unsigned int ts = transcript.size();
-
-				//if (ts > 0)
-				//{
-				//  cerr << "== " << ts << " "
-				//       << transcript[ts-1].code << " "
-				//       << transcript[ts-1].pos << " " 
-				//       << transcript[ts-1].ref << " "
-				//       << transcript[ts-1].qry << endl;
-				//}
 				
 				// compute previous base to the event for both reference and alternative sequences
 				// [required for VCF output format]
@@ -744,16 +745,25 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					((code == 'v') && (ts > 0) && (transcript[ts-1].code == code) && ((transcript[ts-1].pos + transcript[ts-1].ref.length()) == rrpos)))
 				{
 					// extend the indel
+					if(within_tumor_node) { transcript[ts-1].isSomatic = true; }
 					transcript[ts-1].ref += ref_aln[i];
 					transcript[ts-1].qry += path_aln[i];
-					transcript[ts-1].end_pos = i; // update end position (in the alignment)
-					(transcript[ts-1].cov_distr_N).push_back(cov_at_pos_N);
-					(transcript[ts-1].cov_distr_T).push_back(cov_at_pos_T);
+					transcript[ts-1].end_pos = pathpos; // update end position (in the path)
+					transcript[ts-1].ref_end_pos = pos_in_ref+ref->trim5; // update end position (in the ref)
+					transcript[ts-1].addCovN(cov_at_pos_N);
+					transcript[ts-1].addCovT(cov_at_pos_T);
+					transcript[ts-1].addRefCovN(ref_cov_at_pos_N);
+					transcript[ts-1].addRefCovT(ref_cov_at_pos_T);
 				}
 				else
 				{
 					// create new transcript for mutation
-					transcript.push_back(Transcript_t(rrpos, pos_in_ref, code, ref_aln[i], path_aln[i], cov_at_pos_N, cov_at_pos_T, ref_aln[pr], path_aln[pa],i));
+					transcript.push_back(Transcript_t(rrpos, pos_in_ref+ref->trim5, code, 
+						ref_aln[i], path_aln[i], 
+						cov_at_pos_N, cov_at_pos_T, 
+						ref_cov_at_pos_N, ref_cov_at_pos_T, 
+						ref_aln[pr], path_aln[pa], 
+						pathpos, pos_in_ref+ref->trim5, within_tumor_node));
 				}
 			}
 		}
@@ -768,20 +778,46 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		}
 		for (unsigned int ti = 0; ti < transcript.size(); ti++)
 		{
-			//cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].cov;
-			if(verbose) { cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].getAvgCov('N') << "," << transcript[ti].getAvgCov('T') << "|" << transcript[ti].getMinCov('N') << "," << transcript[ti].getMinCov('T') << "|" << transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt; }
-
 			// if the alignment left-shifts the mutation, coverage and alignment can be out of sinc. 
-			// Fix: add coverage for a few bp after variant end position
-			for (unsigned int j=0; j<NUM_EXTRA_BP; j++) {
-				unsigned int idx = transcript[ti].end_pos + j; 
-				if (idx < coverageN.size()) { // check for out of range
-					(transcript[ti].cov_distr_N).push_back(coverageN[idx]);
-					(transcript[ti].cov_distr_T).push_back(coverageT[idx]);
+			// Fix: add coverage for K-1 bp after variant end position
+			for (int j=0; j<K-1; j++) {	
+				unsigned int idx1 = transcript[ti].end_pos + j; 
+				// add coverage
+				if (idx1 < coverageN.size()) { // check for out of range
+					
+					// chech if within tumor only node
+					spanner = path->pathcontig(idx1);
+					if (spanner == NULL) { cerr << "Error: path position out of range: " << idx1 << endl; break; }
+					if (spanner->isTumor() && !spanner->isNormal()) { 
+						//cerr << "Within tumor only node" << endl;
+						transcript[ti].isSomatic = true;
+					}
+					
+					transcript[ti].addCovN(coverageN[idx1]);
+					transcript[ti].addCovT(coverageT[idx1]);
 				}
+				unsigned int idx2 = transcript[ti].ref_end_pos + j; 
+				transcript[ti].addRefCovN(ref->getCovAt(idx2, 'N'));
+				transcript[ti].addRefCovT(ref->getCovAt(idx2, 'T'));
 			}
+			
+			// updated transcript stats
+			transcript[ti].updateStats();
+			//cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].cov;
+			if(verbose) { cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|R:" << 
+						transcript[ti].getMinRefCovN() << "n," << transcript[ti].getMinRefCovT() << "t|A:" << 
+						((transcript[ti].isSomatic) ? transcript[ti].getMinCovN() : transcript[ti].getAvgNon0CovN()) << "n," << 
+						transcript[ti].getMinCovT() << "t|" << 
+						transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt; 
+			}
+			
 			// save into variant format
-			vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, ref->getCovAt(transcript[ti].ref_pos, 'N'), ref->getCovAt(transcript[ti].ref_pos, 'T'), transcript[ti].getMinCov('N'), transcript[ti].getMinCov('T'), transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters));
+			vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, 
+				transcript[ti].getMinRefCovN(),
+				transcript[ti].getMinRefCovT(),
+				(transcript[ti].isSomatic) ? transcript[ti].getMinCovN() : transcript[ti].getAvgNon0CovN(),
+				transcript[ti].getMinCovT(), 
+				transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters));
 		}
 		if(verbose) { cerr << endl; }
 

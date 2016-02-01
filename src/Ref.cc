@@ -77,6 +77,7 @@ int Ref_t::getCovAt(unsigned pos, char sample) {
 		else if (sample == 'N') { c = normal_coverage.at(pos); }
 		else { cerr << "Error: unknown sample " << sample << endl; }
 	}
+	else { c = -1; }
 	return c;
 }
 
@@ -105,11 +106,11 @@ void Ref_t::printKmerCoverage(char sample) {
 	else if(sample == 'T') { coverage = tumor_coverage; }
 	else { cerr << "Error: unknown sample " << sample << endl; return; }
 	
-    cout << "cov " << sample << ": ";
+    cerr << "cov " << sample << ": ";
 	for (unsigned i=0; i<coverage.size(); i++) {
-	    cout << " " << coverage.at(i);
+	    cerr << " " << coverage.at(i);
 	}
-	cout << " len: " << coverage.size() << endl;
+	cerr << " len: " << coverage.size() << endl;
 }
 
 // reset coverage to 0

@@ -1,18 +1,32 @@
 #ifndef FET_HH
 #define FET_HH 1
 
-/******************************************************************
+/****************************************************************************
 ** FET.hh
 **
-** Implementation of the Fisher Exact Test calss using ideas from 
-** the samtools fet.c code at 
-**
+** Implementation of the Fisher Exact Test calss based on the implementation  
+** in the samtools fet.c code at:
 ** https://github.com/lh3/samtools/blob/master/bcftools/fet.c
+
+** which was originally implemented with ideas from this web page:
+** http://www.langsrud.com/fisher.htm
 **
-**  Authors: Giuseppe Narzisi & Michael C. Schatz
-**    Date: December 18, 2015
+*****************************************************************************/
+
+/************************** COPYRIGHT ***************************************
 **
-*******************************************************************/
+** New York Genome Center
+**
+** SOFTWARE COPYRIGHT NOTICE AGREEMENT
+** This software and its documentation are copyright (2016) by the New York
+** Genome Center. All rights are reserved. This software is supplied without
+** any warranty or guaranteed support whatsoever. The New York Genome Center
+** cannot be responsible for its use, misuse, or functionality.
+**
+** Version: 1.0.0
+** Author: Giuseppe Narzisi
+**
+*************************** /COPYRIGHT **************************************/
 
 #include <math.h>
 #include <stdlib.h>

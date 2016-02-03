@@ -1,15 +1,27 @@
 #ifndef VARIANTDB_HH
 #define VARIANTDB_HH 1
 
-/******************************************************************
+/****************************************************************************
 ** VariantDB.hh
 **
 ** Class for storing multiple variants (DB-style)
 **
-**  Authors: Giuseppe Narzisi
-**    Date: December 21, 2015
+*****************************************************************************/
+
+/************************** COPYRIGHT ***************************************
 **
-*******************************************************************/
+** New York Genome Center
+**
+** SOFTWARE COPYRIGHT NOTICE AGREEMENT
+** This software and its documentation are copyright (2016) by the New York
+** Genome Center. All rights are reserved. This software is supplied without
+** any warranty or guaranteed support whatsoever. The New York Genome Center
+** cannot be responsible for its use, misuse, or functionality.
+**
+** Version: 1.0.0
+** Author: Giuseppe Narzisi
+**
+*************************** /COPYRIGHT **************************************/
 
 #include <map>
 #include <string>

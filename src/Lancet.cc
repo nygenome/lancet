@@ -1,15 +1,27 @@
 #include "Microassembler.hh"
 
-/******************************************************************
+/****************************************************************************
 ** Lancet.cc
 **
-** Tool for localized assembly of genomic regions using
-** the de Bruijn paradigm to detect genetic variants
-** 
-**  Authors: Giuseppe Narzisi 
-**    Date: January 16, 2016
+** Tool for localized colored de Bruijn graph assembly to detect 
+** soamtic genetic variants
 **
-*******************************************************************/
+*****************************************************************************/
+
+/************************** COPYRIGHT ***************************************
+**
+** New York Genome Center
+**
+** SOFTWARE COPYRIGHT NOTICE AGREEMENT
+** This software and its documentation are copyright (2016) by the New York
+** Genome Center. All rights are reserved. This software is supplied without
+** any warranty or guaranteed support whatsoever. The New York Genome Center
+** cannot be responsible for its use, misuse, or functionality.
+**
+** Version: 1.0.0
+** Author: Giuseppe Narzisi
+**
+*************************** /COPYRIGHT **************************************/
 
 string VERSION = "1.0.0 (beta), January 27 2016";
 

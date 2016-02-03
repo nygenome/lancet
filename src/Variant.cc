@@ -1,14 +1,27 @@
 #include "Variant.hh"
 
-/******************************************************************
+/****************************************************************************
 ** Variant.cc
 **
 ** Class for storing basic variant information storage
 **
-**  Authors: Giuseppe Narzisi
-**    Date: November 5, 2015
+*****************************************************************************/
+
+/************************** COPYRIGHT ***************************************
 **
-*******************************************************************/
+** New York Genome Center
+**
+** SOFTWARE COPYRIGHT NOTICE AGREEMENT
+** This software and its documentation are copyright (2016) by the New York
+** Genome Center. All rights are reserved. This software is supplied without
+** any warranty or guaranteed support whatsoever. The New York Genome Center
+** cannot be responsible for its use, misuse, or functionality.
+**
+** Version: 1.0.0
+** Author: Giuseppe Narzisi
+**
+*************************** /COPYRIGHT **************************************/
+
 
 void Variant_t::printVCF() {
 	//CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  Pat4-FF-Normal-DNA      Pat4-FF-Tumor-DNA
@@ -30,18 +43,6 @@ void Variant_t::printVCF() {
 	string FORMAT = "GT:AD:DP";
 	
 	// apply filters
-	/*	
-	##FILTER=<ID=MS,Description="Microsatellite mutation (format: #LEN#MOTIF)">
-	##FILTER=<ID=LowCovNormal,Description="low coverage in the normal (<10)">
-	##FILTER=<ID=HighCovNormal,Description="high coverage in the normal (>1000000000)">
-	##FILTER=<ID=LowCovTumor,Description="low coverage in the tumor (<4)">
-	##FILTER=<ID=HighCovTumor,Description="high coverage in the tumor (>1000000000)">
-	##FILTER=<ID=LowVafTumor,Description="low variant allele frequency in the tumor (<0.05)">
-	##FILTER=<ID=HighVafNormal,Description="high variant allele frequency in the normal (>0)">
-	##FILTER=<ID=LowAltCntTumor,Description="low alternative allele count in the tumor (<4)">
-	##FILTER=<ID=HighAltCntNormal,Description="high alternative allele count in the normal (>0)">
-	##FILTER=<ID=LowFisherScore,Description="low Fisher's exact test score for tumor-normal allele counts (<20)">
-	*/
 	
 	int tumor_cov = ref_cov_tumor + alt_cov_tumor;
 	double tumor_vaf = (tumor_cov == 0) ? 0 : ((double)alt_cov_tumor/(double)tumor_cov);

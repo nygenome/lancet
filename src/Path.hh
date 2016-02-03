@@ -1,16 +1,28 @@
 #ifndef PATH_HH
 #define PATH_HH 1
 
-/******************************************************************
+/****************************************************************************
 ** Path.hh
 **
 ** Path of a de Bruijn graph 
 ** Routines to extract sequence and coverage information
 **
-**  Authors: Giuseppe Narzisi & Michael C. Schatz
-**    Date: December 11, 2013
+*****************************************************************************/
+
+/************************** COPYRIGHT ***************************************
 **
-*******************************************************************/
+** New York Genome Center
+**
+** SOFTWARE COPYRIGHT NOTICE AGREEMENT
+** This software and its documentation are copyright (2016) by the New York
+** Genome Center. All rights are reserved. This software is supplied without
+** any warranty or guaranteed support whatsoever. The New York Genome Center
+** cannot be responsible for its use, misuse, or functionality.
+**
+** Version: 1.0.0
+** Author: Giuseppe Narzisi
+**
+*************************** /COPYRIGHT **************************************/
 
 #include <string>
 #include <sstream>

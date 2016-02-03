@@ -80,7 +80,7 @@ royalty-free rights to sublicense and/or distribute. Such modifications and BUG
 FIXES shall be provided to NYGC promptly upon their creation. LICENSEE further
 agrees to cite its use of the PROGRAM in any publication as follows:
 
-André Corvelo, lancet. New York Genome Center
+Giuseppe Narzisi, lancet. New York Genome Center
 (https://github.com/nygenome/lancet) 
 
 

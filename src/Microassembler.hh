@@ -182,6 +182,7 @@ public:
 	void loadRG(const string & filename, int member);
 	void processGraph(Graph_t & g, const string & refname, int minK, int maxK);
 	int run(int argc, char** argv);
+	bool extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo, BamRegion &region, int &readcnt, int code);
 	int processReads();
 	void setFilters(Filters &fs) { filters = fs; }
 	void setID(int i) { ID = i; }

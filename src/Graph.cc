@@ -288,10 +288,10 @@ int Graph_t::countMappedReads()
 // addRead
 ////////////////////////////////////////////////////////////////
 
-ReadId_t Graph_t::addRead(const string & set, const string & readname, const string & seq, char code, int label)
+ReadId_t Graph_t::addRead(const string & set, const string & readname, const string & seq, char code, int label, unsigned int strand)
 {
 	ReadId_t retval = readid2info.size();
-	readid2info.push_back(ReadInfo_t(label, set, readname, seq, code));
+	readid2info.push_back(ReadInfo_t(label, set, readname, seq, code, strand));
 	return retval;
 }
 
@@ -322,14 +322,14 @@ void Graph_t::addPair(const string & set,
 	const string & readname,
 	const string & seq1, const string & qv1,
 	const string & seq2, const string & qv2,
-	char code, int label)
+	char code, int label, unsigned int strand)
 {
 	if (code == CODE_MAPPED)
 	{
-		int rd1 = addRead(set, readname+"_1", seq1, code, label);
+		int rd1 = addRead(set, readname+"_1", seq1, code, label, strand);
 		trimAndLoad(rd1, seq1, qv1, false);
 
-		int rd2 = addRead(set, readname+"_2", seq2, code, label);
+		int rd2 = addRead(set, readname+"_2", seq2, code, label, strand);
 		trimAndLoad(rd2, seq2, qv2, false);
 
 		addMates(rd1, rd2);
@@ -344,9 +344,10 @@ void Graph_t::addUnpaired(const string & set,
 	const string & seq,
 	const string & qv,
 	char code,
-	int label)
+	int label,
+	unsigned int strand)
 {
-	int rd = addRead(set, readname, seq, code, label);
+	int rd = addRead(set, readname, seq, code, label, strand);
 	//trimAndLoad(rd, seq, qv, false);
 	trim(rd, seq, qv, false);
 	
@@ -361,19 +362,20 @@ void Graph_t::addpaired(const string & set,
 	const string & qv,
 	const int mate_id,
 	char code,
-	int label)
+	int label,
+	unsigned int strand)
 {
 	int rd;
 	if(mate_id == 1) {
-		rd = addRead(set, readname+"_1", seq, code, label);
+		rd = addRead(set, readname+"_1", seq, code, label, strand);
 		trim(rd, seq, qv, false);
 	}
 	else if(mate_id == 2) {
-		rd = addRead(set, readname+"_2", seq, code, label);
+		rd = addRead(set, readname+"_2", seq, code, label, strand);
 		trim(rd, seq, qv, false);
 	}
 	else { // no mate
-		rd = addRead(set, readname+"_0", seq, code, label);
+		rd = addRead(set, readname+"_0", seq, code, label, strand);
 		trim(rd, seq, qv, false);
 	}
 }
@@ -388,7 +390,7 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 	
 	int refid = 0; 
 	if(!is_ref_added) {
-		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, 'R', REF);
+		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, 'R', REF, FWD);
 		is_ref_added = true;
 		if (VERBOSE) { cerr << "refid: " << refid << endl; }
 	}	
@@ -433,7 +435,7 @@ void Graph_t::loadReadsSFA(const string & filename)
 
 	while (fscanf(fp, "%s\t%s", rbuffer, sbuffer) == 2)
 	{
-		readid = addRead("rd", rbuffer, sbuffer, 'L', UNDEFINED);
+		readid = addRead("rd", rbuffer, sbuffer, 'L', UNDEFINED, FWD);
 
 		int l = strlen(sbuffer);
 		for (int i = 0; i < l; i++) { qbuffer[i] = MIN_QUAL; } qbuffer[l] = '\0';
@@ -1686,7 +1688,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	//ref_m = refinfo;
 	int refid = 0; 
 	if(!is_ref_added) {
-		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, 'R', REF);
+		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, 'R', REF, FWD);
 		is_ref_added = true;
 		if (VERBOSE) { cerr << "refid: " << refid << endl; }
 	}

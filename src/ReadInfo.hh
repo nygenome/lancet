@@ -28,6 +28,9 @@
 
 #include "Mer.hh"
 
+#define FWD 1 // forward strand
+#define REV 2 // reverse strand
+
 using namespace std;
 
 // ReadId_t
@@ -41,8 +44,8 @@ typedef int ReadId_t;
 class ReadInfo_t
 {
 public:
-	ReadInfo_t(const int label, const string & set, const string & readname, const string & seq, char code)
-		: label_m(label), set_m(set), readname_m(readname), seq_m(seq), code_m(code), mateid_m(-1), trm5(0), trm3(0), isjunk(false)
+	ReadInfo_t(const int label, const string & set, const string & readname, const string & seq, char code, unsigned int strnd)
+		: label_m(label), set_m(set), readname_m(readname), seq_m(seq), code_m(code), mateid_m(-1), strand(strnd), trm5(0), trm3(0), isjunk(false)
 		{ }
 
 	int          label_m;
@@ -53,6 +56,7 @@ public:
 	ReadId_t     mateid_m;
 	Mer_t        contigid_m;
 	unsigned int readstartidx_m;
+	unsigned int strand; // FWD or REV
 	int trm5;
 	int trm3;
 	bool isjunk;

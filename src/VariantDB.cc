@@ -59,7 +59,7 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##FILTER=<ID=LowCovNormal,Description=\"low coverage in the normal (<" << fs.minCovNormal << ")\">\n"
 			"##FILTER=<ID=HighCovNormal,Description=\"high coverage in the normal (>" << fs.maxCovNormal << ")\">\n"
 			"##FILTER=<ID=LowCovTumor,Description=\"low coverage in the tumor (<" << fs.minCovTumor << ")\">\n"
-			"##FILTER=<ID=HighCovTumor,Description=\"high coverage in the tumor (>" << fs.maxCovTumor << ")\">"
+			"##FILTER=<ID=HighCovTumor,Description=\"high coverage in the tumor (>" << fs.maxCovTumor << ")\">\n"
 			"##FILTER=<ID=LowVafTumor,Description=\"low variant allele frequency in the tumor (<" << fs.minVafTumor << ")\">\n"
 			"##FILTER=<ID=HighVafNormal,Description=\"high variant allele frequency in the normal (>" << fs.maxVafNormal << ")\">\n"
 			"##FILTER=<ID=LowAltCntTumor,Description=\"low alternative allele count in the tumor (<" << fs.minAltCntTumor << ")\">\n"

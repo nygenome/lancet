@@ -66,5 +66,6 @@ bool isRepeat(const std::string & seq, int K);
 bool isAlmostRepeat(const std::string & seq, int K, int max);
 //bool kMismatch(const std::string & p, const std::string & t, int start, int max);
 bool kMismatch(size_t s, size_t e, const std::string & t, size_t start, int max);
+//void findTandems(const std::string & seq, const string & tag);
 
 #endif

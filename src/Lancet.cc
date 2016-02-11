@@ -4,7 +4,7 @@
 ** Lancet.cc
 **
 ** Tool for localized colored de Bruijn graph assembly to detect 
-** soamtic genetic variants
+** somatic genetic variants
 **
 *****************************************************************************/
 

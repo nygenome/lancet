@@ -234,6 +234,81 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 	}
 }
 
+// extract the reads from BAM file
+bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo, BamRegion &region, int &readcnt, int code) {
+	
+	// iterate through all alignments
+	//int num_PCR_duplicates = 0;
+	BamAlignment al;
+	string rg = "";
+	int num_unmapped = 0;
+	int totalreadbp = 0;
+	double avgcov = 0.0;
+	bool skip = false;
+	
+	/*** TUMOR ****/
+	//while ( reader.GetNextAlignment(al) ) { // get next alignment and populate the alignment's string data fields
+	while ( reader.GetNextAlignmentCore(al) ) { // get next alignment and populate the alignment's string data fields
+
+		avgcov = ((double) totalreadbp) / ((double)refinfo->rawseq.length());
+		if(avgcov > MAX_AVG_COV) { 
+			cerr << "WARINING: Skip region " << refinfo->refchr << ":" << refinfo->refstart << "-" << refinfo->refend << ". Too much coverage (>" << MAX_AVG_COV << "x)." << endl;
+			skip = true;
+			break;
+		}
+		
+		int alstart = al.Position;
+		int alend = al.GetEndPosition();
+		if( (alstart < region.LeftPosition) || (alend > region.RightPosition) ) { continue; } // skip alignments outside region
+		
+		if ( (al.MapQuality >= MIN_MAP_QUAL) && !al.IsDuplicate() ) { // only keeping ones with high map quality and skip PCR duplicates
+			
+			al.BuildCharData(); // Populates alignment string fields (read name, bases, qualities, tag data)
+								
+			int mate = 0;
+			int strand = FWD;
+			if(al.IsFirstMate()) { mate = 1; }
+			if(al.IsSecondMate()) { mate = 2; }
+			if(al.IsReverseStrand()) { strand = REV; }
+		
+			al.GetTag("RG", rg); // get the read group information for the read
+			if(rg.empty()) { rg = "null"; }
+			
+			if ( (readgroups.find("null") != readgroups.end())  || (readgroups.find(rg) != readgroups.end()) ) { // select reads in the read group RG
+				
+				//writer.SaveAlignment(al); // save alignment to output bam file
+				
+				if (mate>1) { // mated pair
+					//cerr << "PAIRED!!" << endl;
+					if( !(al.IsMapped()) ) { // unmapped read
+						g.addpaired("tumor", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, code, strand);
+						num_unmapped++; 
+					}
+					else { // mapped reads
+						g.addpaired("tumor", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, code, strand);								
+					}
+				}
+				else { // unpaired
+					//cerr << "UNPAIRED!!" << endl;
+					g.addUnpaired("tumor", al.Name, al.QueryBases, al.Qualities, Graph_t::CODE_MAPPED, code, strand);	
+				}
+				//cout << al.Name << endl;
+				readcnt++;
+				totalreadbp += (al.QueryBases).length();
+				
+				//void addMates(ReadId_t r1, ReadId_t r2)
+				//{
+				//g.readid2info[r1].mateid_m = r2;
+				//g.readid2info[r2].mateid_m = r1;
+				//}
+			}
+		}
+		//else{ num_PCR_duplicates++; }
+	}
+	
+	return skip;
+}
+
 // extract the reads from BAMs and process them
 int Microassembler::processReads() {
 	
@@ -349,140 +424,17 @@ int Microassembler::processReads() {
 			cerr << "Error: not able to jump successfully to the region's left boundary in normal" << endl;
 			return -1;
 		}
-			
-		// iterate through all alignments
-		//int num_PCR_duplicates = 0;
-		BamAlignment al;
-		string rg = "";
-		int num_unmapped = 0;
-		int totalreadbp = 0;
-		double avgcov = 0.0;
-		bool skip = false;
-			
-			
-		/*** TUMOR ****/
-		//while ( reader.GetNextAlignment(al) ) { // get next alignment and populate the alignment's string data fields
-		while ( readerT.GetNextAlignmentCore(al) ) { // get next alignment and populate the alignment's string data fields
 		
-			avgcov = ((double) totalreadbp) / ((double)refinfo->rawseq.length());
-			if(avgcov > MAX_AVG_COV) { 
-				cerr << "WARINING: Skip region " << refinfo->refchr << ":" << refinfo->refstart << "-" << refinfo->refend << ". Too much coverage (>" << MAX_AVG_COV << "x)." << endl;
-				skip = true;
-				break;
-			}
-				
-			int alstart = al.Position;
-			int alend = al.GetEndPosition();
-			if( (alstart < region.LeftPosition) || (alend > region.RightPosition) ) { continue; } // skip alignments outside region
-				
-			if ( (al.MapQuality >= MIN_MAP_QUAL) && !al.IsDuplicate() ) { // only keeping ones with high map quality and skip PCR duplicates
-					
-				al.BuildCharData(); // Populates alignment string fields (read name, bases, qualities, tag data)
-										
-				int mate = 0;
-				if(al.IsFirstMate()) { mate = 1; }
-				if(al.IsSecondMate()) { mate = 2; }
-				
-				al.GetTag("RG", rg); // get the read group information for the read
-				if(rg.empty()) { rg = "null"; }
-					
-				if ( (readgroups.find("null") != readgroups.end())  || (readgroups.find(rg) != readgroups.end()) ) { // select reads in the read group RG
-						
-					//writer.SaveAlignment(al); // save alignment to output bam file
-						
-					if (mate>1) { // mated pair
-						if( !(al.IsMapped()) ) { // unmapped read
-							g.addpaired("tumor", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, TMR);
-							num_unmapped++; 
-						}
-						else { // mapped reads
-							g.addpaired("tumor", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, TMR);								
-						}
-					}
-					else { // unpaired
-						g.addUnpaired("tumor", al.Name, al.QueryBases, al.Qualities, Graph_t::CODE_MAPPED, TMR);	
-					}
-					//cout << al.Name << endl;
-					readcnt++;
-					totalreadbp += (al.QueryBases).length();
-						
-					//void addMates(ReadId_t r1, ReadId_t r2)
-					//{
-					//g.readid2info[r1].mateid_m = r2;
-					//g.readid2info[r2].mateid_m = r1;
-					//}
-				}
-			}
-			//else{ num_PCR_duplicates++; }
-		}
+		bool skipT = false;
+		bool skipN = false;
 			
+		skipT = extractReads(readerT, g, refinfo, region, readcnt, TMR);
+		skipN = extractReads(readerN, g, refinfo, region, readcnt, NML);
 			
-		/*** NORMAL ****/
-		//while ( reader.GetNextAlignment(al) ) { // get next alignment and populate the alignment's string data fields
-		while ( readerN.GetNextAlignmentCore(al) ) { // get next alignment and populate the alignment's string data fields
-				
-			avgcov = ((double) totalreadbp) / ((double)refinfo->rawseq.length());
-			if(avgcov > MAX_AVG_COV) { 
-				cerr << "WARINING: Skip region " << refinfo->refchr << ":" << refinfo->refstart << "-" << refinfo->refend << ". Too much coverage (>" << MAX_AVG_COV << "x)." << endl;
-				skip = true;
-				break;
-			}
-				
-			int alstart = al.Position;
-			int alend = al.GetEndPosition();
-			if( (alstart < region.LeftPosition) || (alend > region.RightPosition) ) { continue; } // skip alignments outside region
-				
-			if ( (al.MapQuality >= MIN_MAP_QUAL) && !al.IsDuplicate() ) { // only keeping ones with high map quality and skip PCR duplicates
-					
-				al.BuildCharData(); // Populates alignment string fields (read name, bases, qualities, tag data)
-										
-				int mate = 0;
-				if(al.IsFirstMate()) { mate = 1; }
-				if(al.IsSecondMate()) { mate = 2; }
-				
-				al.GetTag("RG", rg); // get the read group information for the read
-				if(rg.empty()) { rg = "null"; }
-					
-				if ( (readgroups.find("null") != readgroups.end())  || (readgroups.find(rg) != readgroups.end()) ) { // select reads in the read group RG
-						
-					//writer.SaveAlignment(al); // save alignment to output bam file
-						
-					if (mate>1) { // mated pair
-						if( !(al.IsMapped()) ) { // unmapped read
-							g.addpaired("normal", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, NML);
-							num_unmapped++; 
-						}
-						else { // mapped reads
-							g.addpaired("normal", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, NML);
-						}
-					}
-					else { // unpaired
-						g.addUnpaired("normal", al.Name, al.QueryBases, al.Qualities, Graph_t::CODE_MAPPED, NML);	
-					}
-					//cout << al.Name << endl;
-					readcnt++;
-					totalreadbp += (al.QueryBases).length();
-						
-					//void addMates(ReadId_t r1, ReadId_t r2)
-					//{
-					//g.readid2info[r1].mateid_m = r2;
-					//g.readid2info[r2].mateid_m = r1;
-					//}
-
-				}
-			}
-			//else{ num_PCR_duplicates++; }
-		}
-			
-		// close the reader & writer
-		//cout << "Number of PCR duplicates: " << num_PCR_duplicates << endl;	
-		//cout << "Number of unmapped reads: " << num_unmapped << endl;	
-			
-		if(!skip){ 
+		if(!skipT && !skipN){ 
 			processGraph(g, graphref, minK, maxK);
 		}
 		else { g.clear(true); }
-
 	}
 		
 	readerT.Close();

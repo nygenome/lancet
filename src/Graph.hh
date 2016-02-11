@@ -151,8 +151,8 @@ public:
 	bool hasRepeatsInGraphPaths(Ref_t * ref) { return findRepeatsInGraphPaths(source_m, sink_m, F, ref); }
 
 	void clear(bool flag);
-	void loadSequence(int readid, const string & seq, bool isRef, int trim5);
-	void trimAndLoad(int readid, const string & seq, const string & qv, bool isRef);
+	void loadSequence(int readid, const string & seq, bool isRef, int trim5, unsigned int strand);
+	void trimAndLoad(int readid, const string & seq, const string & qv, bool isRef, unsigned int strand);
 	void trim(int readid, const string & seq, const string & qv, bool isRef);
 	void buildgraph(Ref_t * refinfo);
 

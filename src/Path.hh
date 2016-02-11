@@ -136,9 +136,9 @@ public:
 	Node_t * pathcontig(int pos);
 	int hasCycle(Node_t * node);
 	bool hasTumorOnlyNode();
-	vector<int> covDistr(char sample);
+	vector<int> covDistr(char sample, unsigned int strand);
 	vector<float> readCovNodes();
-	int covAt(int pos, char sample);
+	int covAt(int pos, char sample, unsigned int strand);
 
 };
 

@@ -51,8 +51,10 @@ public:
 	Mer_t nodeid_m;
 
 	string str_m;
-	float cov_tmr_m; // tumor coverage
-	float cov_nml_m; // normal coverage
+	float cov_tmr_m_fwd; // tumor coverage forward
+	float cov_tmr_m_rev; // tumor coverage reverse
+	float cov_nml_m_fwd; // normal coverage forward
+	float cov_nml_m_rev; // normal coverage reverse
 	bool isRef_m;
 	bool isTumor_m;
 	bool isNormal_m;
@@ -64,8 +66,10 @@ public:
 	int  onRefPath_m;
 	int color;
 
-	vector<int> cov_distr_tmr;
-	vector<int> cov_distr_nml;
+	vector<int> cov_distr_tmr_fwd;
+	vector<int> cov_distr_tmr_rev;
+	vector<int> cov_distr_nml_fwd;
+	vector<int> cov_distr_nml_rev;
 	vector<Edge_t> edges_m;
 	unordered_set<ReadId_t> reads_m;
 	vector<ReadStart_t> readstarts_m;
@@ -76,8 +80,10 @@ public:
 	Node_t(Mer_t mer) 
 		: nodeid_m(mer), 
 		str_m(mer), 
-		cov_tmr_m(0), 
-		cov_nml_m(0), 
+		cov_tmr_m_fwd(0), 
+		cov_tmr_m_rev(0), 
+		cov_nml_m_fwd(0), 
+		cov_nml_m_rev(0),
 		isRef_m(false),
 		isTumor_m(false),
 		isNormal_m(false),
@@ -88,7 +94,11 @@ public:
 		touchRef_m(false),
 		onRefPath_m(0),
 		color(0)
-		{ cov_distr_tmr.resize(str_m.size()); cov_distr_nml.resize(str_m.size()); }
+		{ 	cov_distr_tmr_fwd.resize(str_m.size()); 
+			cov_distr_tmr_rev.resize(str_m.size()); 
+			cov_distr_nml_fwd.resize(str_m.size()); 
+			cov_distr_nml_rev.resize(str_m.size()); 
+		}
 
 	friend ostream& operator<<(std::ostream& o, const Node_t & n) { return n.print(o); }
 	friend ostream & operator<<(std::ostream & o, const Node_t * n) { return n->print(o); }
@@ -106,15 +116,17 @@ public:
 	void setIsTumor() { isTumor_m = true; }
 	void setIsNormal() { isNormal_m = true; }
 	
-	void incTmrCov() { cov_tmr_m++; }
-	void incNmlCov() { cov_nml_m++; }
+	void incTmrCov(unsigned int strand) { if(strand == FWD) { cov_tmr_m_fwd++; } if(strand == REV) { cov_tmr_m_rev++; } }
+	void incNmlCov(unsigned int strand) { if(strand == REV) { cov_nml_m_fwd++; } if(strand == REV) { cov_nml_m_rev++; } }
 	//void setTmrCov(int c) { cov_tmr_m = c; }
 	//void setNmlCov(int c) { cov_nml_m = c; }
-	float getTmrCov() { return cov_tmr_m; }
-	float getNmlCov() { return cov_nml_m; }
-	float getTotCov() { return cov_tmr_m+cov_nml_m; }
-	void updateCovDistrTmr(int c);
-	void updateCovDistrNml(int c);
+	float getTmrCov(unsigned int strand);
+	float getNmlCov(unsigned int strand);
+	float getTotTmrCov() { return cov_tmr_m_fwd + cov_tmr_m_rev; }
+	float getTotNmlCov() { return cov_nml_m_fwd + cov_nml_m_rev; }
+	float getTotCov() { return cov_tmr_m_fwd + cov_tmr_m_rev + cov_nml_m_fwd + cov_nml_m_rev; }
+	void updateCovDistrTmr(int c, unsigned int strand);
+	void updateCovDistrNml(int c, unsigned int strand);
 	void revCovDistr();
 	int  minCov();
 	int minNon0Cov(char sample);

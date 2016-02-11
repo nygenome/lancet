@@ -111,7 +111,8 @@ string Path_t::covstr(char sample) {
 	
 	stringstream ss;
 	vector<float> node_coverage;
-	vector<int> C;
+	vector<int> C_fwd;
+	vector<int> C_rev;
 	
 	Ori_t dir = Edge_t::edgedir_start(edgedir_m[0]);
 
@@ -121,17 +122,23 @@ string Path_t::covstr(char sample) {
 		Node_t * n = nodes_m[i]; 
 		ss << " | ";
 			
-		if(sample == 'T') { C = n->cov_distr_tmr; } // tumor coverage
-		else if(sample == 'N') { C = n->cov_distr_nml; } // normal coverage
+		if(sample == 'T') {  // tumor coverage
+			C_fwd = n->cov_distr_tmr_fwd; 
+			C_rev = n->cov_distr_tmr_rev; 
+		}
+		else if(sample == 'N') { // normal coverage
+			C_fwd = n->cov_distr_nml_fwd;
+			C_rev = n->cov_distr_nml_rev;
+		} 
 		
 		if (dir == R) { 
-			for (unsigned int j=C.size(); j>0; j--) { 
-				node_coverage.push_back(C[j-1]); 
+			for (unsigned int j=C_fwd.size(); j>0; j--) { 
+				node_coverage.push_back(C_fwd[j-1] + C_rev[j-1]); 
 			}
 		}
 		else {
-			for (unsigned int j=0; j < C.size(); j++) { 
-				node_coverage.push_back(C[j]); 
+			for (unsigned int j=0; j < C_fwd.size(); j++) { 
+				node_coverage.push_back(C_fwd[j] + C_rev[j]); 
 			}
 		}
 		
@@ -163,7 +170,7 @@ string Path_t::covstr(char sample) {
 // coverage distribution for nodes
 //////////////////////////////////////////////////////////////
 
-vector<int> Path_t::covDistr(char sample)
+vector<int> Path_t::covDistr(char sample, unsigned int strand)
 {
 	vector<int> path_coverage;
 	vector<int> node_coverage;
@@ -179,8 +186,14 @@ vector<int> Path_t::covDistr(char sample)
 		node_coverage.clear();
 		Node_t * n = nodes_m[i]; 
 		
-		if(sample == 'T') { C = n->cov_distr_tmr; } // tumor coverage
-		else if(sample == 'N') { C = n->cov_distr_nml; } // normal coverage
+		if(sample == 'T') {  // tumor coverage
+			if(strand == FWD) { C = n->cov_distr_tmr_fwd; } 
+			if(strand == REV) { C = n->cov_distr_tmr_rev; } 			
+		}
+		else if(sample == 'N') { // normal coverage
+			if(strand == FWD) { C = n->cov_distr_nml_fwd; } 
+			if(strand == REV) { C = n->cov_distr_nml_rev; } 	
+		} 
 		
 		if (dir == R) {
 			for (unsigned int j=C.size(); j>0; j--) { 
@@ -220,7 +233,7 @@ vector<int> Path_t::covDistr(char sample)
 // coverage at position
 //////////////////////////////////////////////////////////////
 
-int Path_t::covAt(int pos, char sample)
+int Path_t::covAt(int pos, char sample, unsigned int strand)
 {
 	int retval = -1; 
 	int p = 0;
@@ -234,8 +247,14 @@ int Path_t::covAt(int pos, char sample)
 		coverage.clear();
 		Node_t * n = nodes_m[i];
 		
-		if(sample == 'T') { C = n->cov_distr_tmr; } // tumor coverage
-		else if(sample == 'N') { C = n->cov_distr_nml; } // normal coverage
+		if(sample == 'T') {  // tumor coverage
+			if(strand == FWD) { C = n->cov_distr_tmr_fwd; } 
+			if(strand == REV) { C = n->cov_distr_tmr_rev; } 			
+		}
+		else if(sample == 'N') { // normal coverage
+			if(strand == FWD) { C = n->cov_distr_nml_fwd; } 
+			if(strand == REV) { C = n->cov_distr_nml_rev; } 	
+		}  
 		
 		if (dir == R) {
 			for (unsigned int j=C.size(); j>0; j--) { 
@@ -305,9 +324,9 @@ float Path_t::cov(char sample)
 	{
 		Node_t * n = nodes_m[i];
 		
-		if(sample == 'T') { C = n->cov_tmr_m; } // tumor coverage
-		else if(sample == 'N') { C = n->cov_nml_m; } // normal coverage
-		else if(sample == 'A') { C = n->cov_tmr_m + n->cov_nml_m; } // normal + tumor coverage
+		if(sample == 'T') { C = n->getTotTmrCov(); } // tumor coverage
+		else if(sample == 'N') { C = n->getTotNmlCov(); } // normal coverage
+		else if(sample == 'A') { C = n->getTotTmrCov() + n->getTotNmlCov(); } // normal + tumor coverage
 
 		if (!n->isSpecial())
 		{
@@ -332,9 +351,9 @@ float Path_t::mincov(char sample)
 	{
 		Node_t * n = nodes_m[i];
 		
-		if(sample == 'T') { C = n->cov_tmr_m; } // tumor coverage
-		else if(sample == 'N') { C = n->cov_nml_m; } // normal coverage
-		else if(sample == 'A') { C = n->cov_tmr_m + n->cov_nml_m; } // normal + tumor coverage
+		if(sample == 'T') { C = n->getTotTmrCov(); } // tumor coverage
+		else if(sample == 'N') { C = n->getTotNmlCov(); } // normal coverage
+		else if(sample == 'A') { C = n->getTotTmrCov() + n->getTotNmlCov(); } // normal + tumor coverage
 
 		if (!n->isSpecial())
 		{
@@ -360,9 +379,9 @@ float Path_t::maxcov(char sample)
 	{
 		Node_t * n = nodes_m[i];
 		
-		if(sample == 'T') { C = n->cov_tmr_m; } // tumor coverage
-		else if(sample == 'N') { C = n->cov_nml_m; } // normal coverage
-		else if(sample == 'A') { C = n->cov_tmr_m + n->cov_nml_m; } // normal + tumor coverage=
+		if(sample == 'T') { C = n->getTotTmrCov(); } // tumor coverage
+		else if(sample == 'N') { C = n->getTotNmlCov(); } // normal coverage
+		else if(sample == 'A') { C = n->getTotTmrCov() + n->getTotNmlCov(); } // normal + tumor coverage
 
 		if (!n->isSpecial())
 		{

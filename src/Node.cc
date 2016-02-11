@@ -222,8 +222,10 @@ ostream & Node_t::print(ostream & out) const
 	out << nodeid_m;
 
 	out << "\t*s\t" << str_m;
-	out << "\t*c\t" << cov_tmr_m;
-	out << "\t*c\t" << cov_nml_m;
+	out << "\t*c\t" << cov_tmr_m_fwd;
+	out << "\t*c\t" << cov_nml_m_fwd;
+	out << "\t*c\t" << cov_tmr_m_rev;
+	out << "\t*c\t" << cov_nml_m_rev;
 	out << "\t*r\t" << isRef();
 
 	for (unsigned int i = 0; i < edges_m.size(); i++)
@@ -320,22 +322,24 @@ int Node_t::cntReadCode(char code)
 // updateCovDistrTmr
 // updated the coverage distribution along the node string for tumor
 //////////////////////////////////////////////////////////////
-void Node_t::updateCovDistrTmr(int c) 
+void Node_t::updateCovDistrTmr(int c, unsigned int strand) 
 {
-	for (unsigned int i = 0; i < cov_distr_tmr.size(); i++)
+	for (unsigned int i = 0; i < cov_distr_tmr_fwd.size(); i++)
 	{
-		cov_distr_tmr[i] = c;
+		if(strand == FWD) { cov_distr_tmr_fwd[i] = c; }
+		if(strand == REV) { cov_distr_tmr_rev[i] = c; }
 	}
 }
 
 // updateCovDistrNml
 // updated the coverage distribution along the node string for normal
 //////////////////////////////////////////////////////////////
-void Node_t::updateCovDistrNml(int c) 
+void Node_t::updateCovDistrNml(int c, unsigned int strand) 
 {
-	for (unsigned int i = 0; i < cov_distr_nml.size(); i++)
+	for (unsigned int i = 0; i < cov_distr_nml_fwd.size(); i++)
 	{
-		cov_distr_nml[i] = c;
+		if(strand == FWD) { cov_distr_nml_fwd[i] = c; }
+		if(strand == REV) { cov_distr_nml_rev[i] = c; }
 	}
 }
 
@@ -344,16 +348,25 @@ void Node_t::updateCovDistrNml(int c)
 //////////////////////////////////////////////////////////////
 int Node_t::avgCovDistr(char sample)
 {
-	vector<int> cov_distr;
-	if(sample == 'T') { cov_distr = cov_distr_tmr; }
-	else if(sample == 'N') { cov_distr = cov_distr_nml; }
+	vector<int> cov_distr_fwd;
+	vector<int> cov_distr_rev;
+	
+	if(sample == 'T') { 
+		cov_distr_fwd = cov_distr_tmr_fwd; 
+		cov_distr_rev = cov_distr_tmr_rev;
+	}
+	else if(sample == 'N') { 
+		cov_distr_fwd = cov_distr_nml_fwd; 
+		cov_distr_rev = cov_distr_nml_rev; 
+	}
 	
 	int sum = 0;
 	int cnt = 0;
-	for (unsigned int i = 0; i < cov_distr.size(); i++)
+	for (unsigned int i = 0; i < cov_distr_fwd.size(); i++)
 	{
-		if(cov_distr[i] !=0 ) {
-			sum += cov_distr[i];
+		int totcov = cov_distr_fwd[i] + cov_distr_rev[i];
+		if(totcov !=0) {
+			sum += cov_distr_fwd[i] + cov_distr_rev[i];
 			cnt++;
 		}
 	}
@@ -370,19 +383,27 @@ int Node_t::avgCovDistr(char sample)
 //////////////////////////////////////////////////////////////
 void Node_t::revCovDistr() 
 {
-	int tmp_tmr;
-	int tmp_nml;
+	int tmp_tmr_fwd;
+	int tmp_nml_fwd;
+	int tmp_tmr_rev;
+	int tmp_nml_rev;
 	int i=0;
-	int j=cov_distr_tmr.size()-1;
+	int j=cov_distr_tmr_fwd.size()-1;
 	while(i<j){
-		tmp_tmr = cov_distr_tmr[i];
-		tmp_nml = cov_distr_nml[i];
+		tmp_tmr_fwd = cov_distr_tmr_fwd[i];
+		tmp_tmr_rev = cov_distr_tmr_rev[i];
+		tmp_nml_fwd = cov_distr_nml_fwd[i];
+		tmp_nml_rev = cov_distr_nml_rev[i];
 		
-		cov_distr_tmr[i] = cov_distr_tmr[j];
-		cov_distr_nml[i] = cov_distr_nml[j];
+		cov_distr_tmr_fwd[i] = cov_distr_tmr_fwd[j];
+		cov_distr_tmr_rev[i] = cov_distr_tmr_rev[j];
+		cov_distr_nml_fwd[i] = cov_distr_nml_fwd[j];
+		cov_distr_nml_rev[i] = cov_distr_nml_rev[j];
 
-		cov_distr_tmr[j] = tmp_tmr;
-		cov_distr_nml[j] = tmp_nml;
+		cov_distr_tmr_fwd[j] = tmp_tmr_fwd;
+		cov_distr_tmr_rev[j] = tmp_tmr_rev;
+		cov_distr_nml_fwd[j] = tmp_nml_fwd;		
+		cov_distr_nml_rev[j] = tmp_nml_rev;
 		
 		i++;j--;
 	}
@@ -394,14 +415,23 @@ void Node_t::revCovDistr()
 int Node_t::minNon0Cov(char sample) 
 {
 	
-	vector<int> cov_distr;
-	if(sample == 'T') { cov_distr = cov_distr_tmr; }
-	else if(sample == 'N') { cov_distr = cov_distr_nml; }
+	vector<int> cov_distr_fwd;
+	vector<int> cov_distr_rev;
+
+	if(sample == 'T') { 
+		cov_distr_fwd = cov_distr_tmr_fwd; 
+		cov_distr_rev = cov_distr_tmr_rev; 
+	}
+	else if(sample == 'N') { 
+		cov_distr_fwd = cov_distr_nml_fwd; 
+		cov_distr_rev = cov_distr_nml_rev; 	
+	}
 	
 	int min = 10000000;
-	for (unsigned int i = 0; i < cov_distr.size(); i++)
+	for (unsigned int i = 0; i < cov_distr_fwd.size(); i++)
 	{
-		if( (cov_distr[i] > 0) && (cov_distr[i] < min) ) { min = cov_distr[i]; }
+		int totcov = cov_distr_fwd[i] + cov_distr_rev[i];
+		if( (totcov > 0) && (totcov < min) ) { min = totcov; }
 	}
 	
 	return min;
@@ -414,9 +444,9 @@ int Node_t::minNon0Cov(char sample)
 int Node_t::minCov() 
 {
 	int min = 10000000;
-	for (unsigned int i = 0; i < cov_distr_tmr.size(); i++)
+	for (unsigned int i = 0; i < cov_distr_tmr_fwd.size(); i++)
 	{
-		int totcov = cov_distr_tmr[i] + cov_distr_nml[i];
+		int totcov = cov_distr_tmr_fwd[i] + cov_distr_tmr_rev[i] + cov_distr_nml_fwd[i] + cov_distr_nml_rev[i];;
 		if(totcov < min) { min = totcov; } 
 	}
 	return min;
@@ -439,4 +469,26 @@ int Node_t::readOverlaps(const Node_t & other)
 	}
 
 	return retval;
+}
+
+// return tumor coverage on the input strand
+//////////////////////////////////////////////////////////////
+float Node_t::getTmrCov(unsigned int strand) { 
+	float ans = 0;
+	
+	if(strand == FWD) { ans = cov_tmr_m_fwd; } 
+	else if(strand == REV) { ans = cov_tmr_m_rev; } 
+	
+	return ans;
+}
+
+// return normal coverage on the input strand
+//////////////////////////////////////////////////////////////
+float Node_t::getNmlCov(unsigned int strand) { 
+	float ans = 0;
+	
+	if(strand == FWD) { ans = cov_nml_m_fwd; } 
+	else if(strand == REV) { ans = cov_nml_m_rev; } 
+	
+	return ans;
 }

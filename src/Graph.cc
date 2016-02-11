@@ -52,7 +52,7 @@ void Graph_t::clear(bool flag)
 // loadSequence
 //////////////////////////////////////////////////////////////
 
-void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5)
+void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5, unsigned int strand)
 {	
 	if (!isRef)
 	{
@@ -118,13 +118,13 @@ void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5
 			if (offset == 0) 
 			{ 
 				if(readid2info[readid].label_m == TMR) {
-					ui->second->incTmrCov();
-					ui->second->updateCovDistrTmr((int)(ui->second->getTmrCov()));
+					ui->second->incTmrCov(strand);
+					ui->second->updateCovDistrTmr((int)(ui->second->getTmrCov(strand)),strand);
 					ref_m->updateCoverage(uc.mer_m, 'T'); // update referecne k-mer coverage for tumor
 				}
 				else if(readid2info[readid].label_m == NML) {
-					ui->second->incNmlCov();
-					ui->second->updateCovDistrNml((int)(ui->second->getNmlCov()));
+					ui->second->incNmlCov(strand);
+					ui->second->updateCovDistrNml((int)(ui->second->getNmlCov(strand)),strand);
 					ref_m->updateCoverage(uc.mer_m, 'N'); // update referecne k-mer coverage for normal
 				}
 
@@ -139,13 +139,13 @@ void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5
 			}
 
 			if(readid2info[readid].label_m == TMR) {
-				vi->second->incTmrCov();
-				vi->second->updateCovDistrTmr((int)(vi->second->getTmrCov()));
+				vi->second->incTmrCov(strand);
+				vi->second->updateCovDistrTmr((int)(vi->second->getTmrCov(strand)),strand);
 				ref_m->updateCoverage(vc.mer_m, 'T'); // update reference k-mer coverage for tumor
 			}
 			else if(readid2info[readid].label_m == NML) {
-				vi->second->incNmlCov();
-				vi->second->updateCovDistrNml((int)(vi->second->getNmlCov()));
+				vi->second->incNmlCov(strand);
+				vi->second->updateCovDistrNml((int)(vi->second->getNmlCov(strand)),strand);
 				ref_m->updateCoverage(vc.mer_m, 'N'); // update reference k-mer coverage for normal
 			}
 		}
@@ -220,7 +220,7 @@ void Graph_t::trim(int readid, const string & seq, const string & qv, bool isRef
 // trimAndLoad
 //////////////////////////////////////////////////////////////
 
-void Graph_t::trimAndLoad(int readid, const string & seq, const string & qv, bool isRef)
+void Graph_t::trimAndLoad(int readid, const string & seq, const string & qv, bool isRef, unsigned int strand)
 {
 	int len = seq.length();
 	string cseq = seq;
@@ -250,7 +250,7 @@ void Graph_t::trimAndLoad(int readid, const string & seq, const string & qv, boo
 		if (cleanRead)
 		{
 			if (trim5 || trim3) { cseq = seq.substr(trim5, len-trim5-trim3); }
-			loadSequence(readid, cseq, isRef, trim5);
+			loadSequence(readid, cseq, isRef, trim5, strand);
 		}
 	}
 }
@@ -327,10 +327,10 @@ void Graph_t::addPair(const string & set,
 	if (code == CODE_MAPPED)
 	{
 		int rd1 = addRead(set, readname+"_1", seq1, code, label, strand);
-		trimAndLoad(rd1, seq1, qv1, false);
+		trimAndLoad(rd1, seq1, qv1, false, strand);
 
 		int rd2 = addRead(set, readname+"_2", seq2, code, label, strand);
-		trimAndLoad(rd2, seq2, qv2, false);
+		trimAndLoad(rd2, seq2, qv2, false, strand);
 
 		addMates(rd1, rd2);
 	}
@@ -402,13 +402,14 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 			int len = seq.length();
 			int t5 = readid2info[i].trm5;
 			int t3 = readid2info[i].trm3;
+			unsigned int strand = readid2info[i].strand;
 			string cseq = seq;
 			if (t5 || t3) { cseq = seq.substr(t5, len-t5-t3); }
 			if(readid2info[i].label_m == REF) {
-				loadSequence(i, cseq, true, t5);
+				loadSequence(i, cseq, true, t5, strand);
 			}
 			else {
-				loadSequence(i, cseq, false, t5);
+				loadSequence(i, cseq, false, t5, strand);
 			}
 		}
 	}
@@ -440,7 +441,7 @@ void Graph_t::loadReadsSFA(const string & filename)
 		int l = strlen(sbuffer);
 		for (int i = 0; i < l; i++) { qbuffer[i] = MIN_QUAL; } qbuffer[l] = '\0';
 
-		trimAndLoad(readid, sbuffer, qbuffer, false);
+		trimAndLoad(readid, sbuffer, qbuffer, false, FWD);
 	}
 
 	xfclose(fp);
@@ -634,9 +635,13 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	if (verbose) { cerr << "t':" << path->covstr('T') << endl; }
 	if (verbose) { cerr << "n':" << path->covstr('N') << endl; }
 	
-	vector<int> coverageN = path->covDistr('N');
-	vector<int> coverageT = path->covDistr('T');
-	assert(coverageN.size() == coverageT.size());
+	vector<int> coverageN_fwd = path->covDistr('N', FWD);
+	vector<int> coverageT_fwd = path->covDistr('T', FWD);
+	vector<int> coverageN_rev = path->covDistr('N', REV);
+	vector<int> coverageT_rev = path->covDistr('T', REV);
+	
+	assert(coverageN_fwd.size() == coverageT_fwd.size());
+	assert(coverageN_rev.size() == coverageT_rev.size());
 	
 	try {
 		// scan aligned sequences for differences
@@ -707,11 +712,16 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				within_tumor_node = true;
 			}			
 
-			assert(pathpos <= coverageN.size());
-			assert(pathpos <= coverageT.size());
-
-			int cov_at_pos_N = coverageN[pathpos];
-			int cov_at_pos_T = coverageT[pathpos];
+			assert(pathpos <= coverageN_fwd.size());
+			assert(pathpos <= coverageT_fwd.size());
+			assert(pathpos <= coverageN_rev.size());
+			assert(pathpos <= coverageT_rev.size());
+			
+			int cov_at_pos_N_fwd = coverageN_fwd[pathpos];
+			int cov_at_pos_T_fwd = coverageT_fwd[pathpos];
+			int cov_at_pos_N_rev = coverageN_rev[pathpos];
+			int cov_at_pos_T_rev = coverageT_rev[pathpos];
+			
 			int ref_cov_at_pos_N = ref->getCovAt(pos_in_ref+ref->trim5, 'N');
 			int ref_cov_at_pos_T = ref->getCovAt(pos_in_ref+ref->trim5, 'T');
 			//int cov_at_pos_N = cov_window_N.getMin();
@@ -738,8 +748,9 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				if(verbose) {
 					cerr << (ref_aln[i] == '-' ? '*' : ref_aln[i]) << " " << (path_aln[i] == '-' ? '*' : path_aln[i]) << " " << code 
 					<< " " << pos_in_ref + ref->refstart + ref->trim5 << " " << pathpos 
-					<< " " << spanner->nodeid_m << " " << spanner->getTotCov() << " (" <<  spanner->avgCovDistr('N') << "," << spanner->avgCovDistr('T') << ") A:"
-					<< cov_at_pos_N << "n," << cov_at_pos_T << "t R:" << ref_cov_at_pos_N << "n," << ref_cov_at_pos_T << "t " << spanner->reads_m.size() << " " << spanner->cntReadCode(CODE_BASTARD)
+					<< " " << spanner->nodeid_m << " " << spanner->getTotCov() << " (" <<  spanner->avgCovDistr('N') << "," << spanner->avgCovDistr('T') << ") A:("
+					<< cov_at_pos_N_fwd << "+," << cov_at_pos_N_rev << "-)n,(" << cov_at_pos_T_fwd << "+," << cov_at_pos_T_rev << "-)t R:" 
+					<< ref_cov_at_pos_N << "n," << ref_cov_at_pos_T << "t " << spanner->reads_m.size() << " " << spanner->cntReadCode(CODE_BASTARD)
 					<< endl;
 				}
 				unsigned int rrpos = pos_in_ref+ref->refstart+ref->trim5;
@@ -763,9 +774,9 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					transcript[ts-1].ref += ref_aln[i];
 					transcript[ts-1].qry += path_aln[i];
 					transcript[ts-1].end_pos = pathpos; // update end position (in the path)
-					transcript[ts-1].ref_end_pos = pos_in_ref+ref->trim5; // update end position (in the ref)
-					transcript[ts-1].addCovN(cov_at_pos_N);
-					transcript[ts-1].addCovT(cov_at_pos_T);
+					transcript[ts-1].ref_end_pos = pos_in_ref + ref->trim5; // update end position (in the ref)
+					transcript[ts-1].addCovN(cov_at_pos_N_fwd + cov_at_pos_N_rev);
+					transcript[ts-1].addCovT(cov_at_pos_T_fwd + cov_at_pos_T_rev);
 					transcript[ts-1].addRefCovN(ref_cov_at_pos_N);
 					transcript[ts-1].addRefCovT(ref_cov_at_pos_T);
 				}
@@ -774,7 +785,8 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					// create new transcript for mutation
 					transcript.push_back(Transcript_t(rrpos, pos_in_ref+ref->trim5, code, 
 						ref_aln[i], path_aln[i], 
-						cov_at_pos_N, cov_at_pos_T, 
+						cov_at_pos_N_fwd+cov_at_pos_N_rev, 
+						cov_at_pos_T_fwd+cov_at_pos_T_rev, 
 						ref_cov_at_pos_N, ref_cov_at_pos_T, 
 						ref_aln[pr], path_aln[pa], 
 						pathpos, pos_in_ref+ref->trim5, within_tumor_node));
@@ -797,7 +809,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			for (int j=0; j<K-1; j++) {	
 				unsigned int idx1 = transcript[ti].end_pos + j; 
 				// add coverage
-				if (idx1 < coverageN.size()) { // check for out of range
+				if (idx1 < coverageN_fwd.size()) { // check for out of range
 					
 					// chech if within tumor only node
 					spanner = path->pathcontig(idx1);
@@ -807,8 +819,8 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 						transcript[ti].isSomatic = true;
 					}
 					
-					transcript[ti].addCovN(coverageN[idx1]);
-					transcript[ti].addCovT(coverageT[idx1]);
+					transcript[ti].addCovN(coverageN_fwd[idx1] + coverageN_rev[idx1]);
+					transcript[ti].addCovT(coverageT_fwd[idx1] + coverageT_rev[idx1]);
 				}
 				unsigned int idx2 = transcript[ti].ref_end_pos + j; 
 				transcript[ti].addRefCovN(ref->getCovAt(idx2, 'N'));
@@ -2228,20 +2240,30 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 		int   amerlen = astr.length() - K + 1;
 		int   bmerlen = bstr.length() - K + 1;
 		
-		float ncov_tmr = node->getTmrCov();
-		float ncov_nml = node->getNmlCov();
+		float ncov_tmr_fwd = node->getTmrCov(FWD);
+		float ncov_nml_fwd = node->getNmlCov(FWD);
+		float ncov_tmr_rev = node->getTmrCov(REV);
+		float ncov_nml_rev = node->getNmlCov(REV);
 		
-		float ccov_tmr = buddy->getTmrCov();
-		float ccov_nml = buddy->getNmlCov();
+		float ccov_tmr_fwd = buddy->getTmrCov(FWD);
+		float ccov_nml_fwd = buddy->getNmlCov(FWD);
+		float ccov_tmr_rev = buddy->getTmrCov(REV);
+		float ccov_nml_rev = buddy->getNmlCov(REV);
+		
 		
 		// add coverage info for the new base-pairs 	
-		for (unsigned int j = (K-1); j < buddy->cov_distr_tmr.size(); j++) {
-			node->cov_distr_tmr.push_back(buddy->cov_distr_tmr[j]);
-			node->cov_distr_nml.push_back(buddy->cov_distr_nml[j]);
+		for (unsigned int j = (K-1); j < buddy->cov_distr_tmr_fwd.size(); j++) {
+			node->cov_distr_tmr_fwd.push_back(buddy->cov_distr_tmr_fwd[j]);
+			node->cov_distr_nml_fwd.push_back(buddy->cov_distr_nml_fwd[j]);
+			node->cov_distr_tmr_rev.push_back(buddy->cov_distr_tmr_rev[j]);
+			node->cov_distr_nml_rev.push_back(buddy->cov_distr_nml_rev[j]);
 		}
-		node->cov_tmr_m = ((ncov_tmr * amerlen) + (ccov_tmr * bmerlen)) / (amerlen + bmerlen);
-		node->cov_nml_m = ((ncov_nml * amerlen) + (ccov_nml * bmerlen)) / (amerlen + bmerlen);
+		node->cov_tmr_m_fwd = ((ncov_tmr_fwd * amerlen) + (ccov_tmr_fwd * bmerlen)) / (amerlen + bmerlen);
+		node->cov_nml_m_fwd = ((ncov_nml_fwd * amerlen) + (ccov_nml_fwd * bmerlen)) / (amerlen + bmerlen);
 
+		node->cov_tmr_m_rev = ((ncov_tmr_rev * amerlen) + (ccov_tmr_rev * bmerlen)) / (amerlen + bmerlen);
+		node->cov_nml_m_rev = ((ncov_nml_rev * amerlen) + (ccov_nml_rev * bmerlen)) / (amerlen + bmerlen);
+		
 		// reads
 		unordered_set<ReadId_t>::const_iterator ri;
 		for (ri = buddy->reads_m.begin(); ri != buddy->reads_m.end(); ri++)

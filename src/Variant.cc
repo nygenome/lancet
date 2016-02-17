@@ -29,7 +29,7 @@ void Variant_t::printVCF() {
 	string FILTER = "";
 
 	string status = "?";
-	char flag = bestState(ref_cov_normal,alt_cov_normal,ref_cov_tumor,alt_cov_tumor);
+	char flag = bestState(ref_cov_normal,(alt_cov_normal_fwd+alt_cov_normal_rev),ref_cov_tumor,(alt_cov_tumor_fwd+alt_cov_tumor_rev));
 	if(flag == 'T') { status = "SOMATIC"; }
 	else if(flag == 'S') { status = "SHARED"; }
 	else if(flag == 'N') { status = "NORMAL"; }
@@ -40,15 +40,17 @@ void Variant_t::printVCF() {
 	if(type=='S') { INFO += ";TYPE=snv"; }
 	
 	double QUAL = fet_score;
-	string FORMAT = "GT:AD:DP";
+	string FORMAT = "GT:AD:SC:DP";
 	
 	// apply filters
 	
-	int tumor_cov = ref_cov_tumor + alt_cov_tumor;
-	double tumor_vaf = (tumor_cov == 0) ? 0 : ((double)alt_cov_tumor/(double)tumor_cov);
+	int tot_alt_cov_tumor = alt_cov_tumor_fwd + alt_cov_tumor_rev;
+	int tumor_cov = ref_cov_tumor + tot_alt_cov_tumor;
+	double tumor_vaf = (tumor_cov == 0) ? 0 : ((double)tot_alt_cov_tumor/(double)tumor_cov);
 	
-	int normal_cov = ref_cov_normal + alt_cov_normal;
-	double normal_vaf = (normal_cov == 0) ? 0 : ((double)alt_cov_normal/(double)normal_cov);
+	int tot_alt_cov_normal = alt_cov_normal_fwd + alt_cov_normal_rev;
+	int normal_cov = ref_cov_normal + tot_alt_cov_normal;
+	double normal_vaf = (normal_cov == 0) ? 0 : ((double)tot_alt_cov_normal/(double)normal_cov);
 	
 	if(fet_score < filters.minPhredFisher) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowFisherScore"; }
@@ -78,19 +80,23 @@ void Variant_t::printVCF() {
 		if (FILTER.compare("") == 0) { FILTER = "HighVafNormal"; }
 		else { FILTER += ";HighVafNormal"; }	
 	}
-	if(alt_cov_tumor < filters.minAltCntTumor) { 
+	if(tot_alt_cov_tumor < filters.minAltCntTumor) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowAltCntTumor"; }
 		else { FILTER += ";LowAltCntTumor"; }	
 	}
-	if(alt_cov_normal > filters.maxAltCntNormal) { 
+	if(tot_alt_cov_normal > filters.maxAltCntNormal) { 
 		if (FILTER.compare("") == 0) { FILTER = "HighAltCntNormal"; }
 		else { FILTER += ";HighAltCntNormal"; }
 	}
-	
+	if( (alt_cov_tumor_fwd < filters.minStrandBias) || (alt_cov_tumor_rev < filters.minStrandBias) ) { 
+		if (FILTER.compare("") == 0) { FILTER = "StrandBias"; }
+		else { FILTER += ";StrandBias"; }
+	}
+		
 	if(FILTER.compare("") == 0) { FILTER = "PASS"; }
 	
-	string NORMAL = GT_normal + ":" + itos(ref_cov_normal) + "," + itos(alt_cov_normal) + ":" + itos(ref_cov_normal+alt_cov_normal);
-	string TUMOR = GT_tumor + ":" + itos(ref_cov_tumor) + "," + itos(alt_cov_tumor) + ":" + itos(ref_cov_tumor+alt_cov_tumor);
+	string NORMAL = GT_normal + ":" + itos(ref_cov_normal) + "," + itos(tot_alt_cov_normal) + ":" + itos(alt_cov_normal_fwd) + "," + itos(alt_cov_normal_rev) + ":" + itos(ref_cov_normal+tot_alt_cov_normal);
+	string TUMOR = GT_tumor + ":" + itos(ref_cov_tumor) + "," + itos(tot_alt_cov_tumor) + ":" + itos(alt_cov_tumor_fwd) + "," + itos(alt_cov_tumor_rev) + ":" + itos(ref_cov_tumor+tot_alt_cov_tumor);
 	
 	cout << chr << "\t" << pos << "\t" << ID << "\t" << ref << "\t" << alt << "\t" << QUAL << "\t" << FILTER << "\t" << INFO << "\t" << FORMAT << "\t" << NORMAL << "\t" << TUMOR << endl;
 }
@@ -120,13 +126,13 @@ void Variant_t::update() {
 	double right = 0;
 	double twotail = 0;
 	FET_t fet;
-	double prob = fet.kt_fisher_exact(ref_cov_normal, ref_cov_tumor, alt_cov_normal, alt_cov_tumor, &left, &right, &twotail);
+	double prob = fet.kt_fisher_exact(ref_cov_normal, ref_cov_tumor, (alt_cov_normal_fwd+alt_cov_normal_rev), (alt_cov_tumor_fwd+alt_cov_tumor_rev), &left, &right, &twotail);
 	if(prob == 1) { fet_score = 0; }
 	else { fet_score = -10*log10(prob); }
 	
 	//compute genotype
-	GT_normal = genotype(ref_cov_normal,alt_cov_normal);
-	GT_tumor = genotype(ref_cov_tumor,alt_cov_tumor);
+	GT_normal = genotype(ref_cov_normal,(alt_cov_normal_fwd+alt_cov_normal_rev));
+	GT_tumor = genotype(ref_cov_tumor,(alt_cov_tumor_fwd+alt_cov_tumor_rev));
 }
 
 // compute best state for the variant

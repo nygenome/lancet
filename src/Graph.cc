@@ -775,8 +775,10 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					transcript[ts-1].qry += path_aln[i];
 					transcript[ts-1].end_pos = pathpos; // update end position (in the path)
 					transcript[ts-1].ref_end_pos = pos_in_ref + ref->trim5; // update end position (in the ref)
-					transcript[ts-1].addCovN(cov_at_pos_N_fwd + cov_at_pos_N_rev);
-					transcript[ts-1].addCovT(cov_at_pos_T_fwd + cov_at_pos_T_rev);
+					transcript[ts-1].addCovNfwd(cov_at_pos_N_fwd);
+					transcript[ts-1].addCovNrev(cov_at_pos_N_rev);
+					transcript[ts-1].addCovTfwd(cov_at_pos_T_fwd);
+					transcript[ts-1].addCovTrev(cov_at_pos_T_rev);
 					transcript[ts-1].addRefCovN(ref_cov_at_pos_N);
 					transcript[ts-1].addRefCovT(ref_cov_at_pos_T);
 				}
@@ -785,8 +787,8 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					// create new transcript for mutation
 					transcript.push_back(Transcript_t(rrpos, pos_in_ref+ref->trim5, code, 
 						ref_aln[i], path_aln[i], 
-						cov_at_pos_N_fwd+cov_at_pos_N_rev, 
-						cov_at_pos_T_fwd+cov_at_pos_T_rev, 
+						cov_at_pos_N_fwd, cov_at_pos_N_rev, 
+						cov_at_pos_T_fwd, cov_at_pos_T_rev, 
 						ref_cov_at_pos_N, ref_cov_at_pos_T, 
 						ref_aln[pr], path_aln[pa], 
 						pathpos, pos_in_ref+ref->trim5, within_tumor_node));
@@ -818,9 +820,10 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 						//cerr << "Within tumor only node" << endl;
 						transcript[ti].isSomatic = true;
 					}
-					
-					transcript[ti].addCovN(coverageN_fwd[idx1] + coverageN_rev[idx1]);
-					transcript[ti].addCovT(coverageT_fwd[idx1] + coverageT_rev[idx1]);
+					transcript[ti].addCovNfwd(coverageN_fwd[idx1]);
+					transcript[ti].addCovNrev(coverageN_rev[idx1]);
+					transcript[ti].addCovTfwd(coverageT_fwd[idx1]);
+					transcript[ti].addCovTrev(coverageT_rev[idx1]);
 				}
 				unsigned int idx2 = transcript[ti].ref_end_pos + j; 
 				transcript[ti].addRefCovN(ref->getCovAt(idx2, 'N'));
@@ -831,9 +834,11 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			transcript[ti].updateStats();
 			//cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].cov;
 			if(verbose) { cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|R:" << 
-						transcript[ti].getMinRefCovN() << "n," << transcript[ti].getMinRefCovT() << "t|A:" << 
-						((transcript[ti].isSomatic) ? transcript[ti].getMinCovN() : transcript[ti].getAvgNon0CovN()) << "n," << 
-						transcript[ti].getMinCovT() << "t|" << 
+						transcript[ti].getMinRefCovN() << "n," << transcript[ti].getMinRefCovT() << "t|A:(" << 
+						((transcript[ti].isSomatic) ? transcript[ti].getMinCovNfwd() : transcript[ti].getAvgNon0CovNfwd()) << "+," << 
+						((transcript[ti].isSomatic) ? transcript[ti].getMinCovNfwd() : transcript[ti].getAvgNon0CovNfwd()) << "-)n,(" << 
+						transcript[ti].getMinCovTfwd() << "+," << 
+						transcript[ti].getMinCovTrev() << "-)t|" <<
 						transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt; 
 			}
 			
@@ -841,8 +846,9 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, 
 				transcript[ti].getMinRefCovN(),
 				transcript[ti].getMinRefCovT(),
-				(transcript[ti].isSomatic) ? transcript[ti].getMinCovN() : transcript[ti].getAvgNon0CovN(),
-				transcript[ti].getMinCovT(), 
+				(transcript[ti].isSomatic) ? transcript[ti].getMinCovNfwd() : transcript[ti].getAvgNon0CovNfwd(),
+				(transcript[ti].isSomatic) ? transcript[ti].getMinCovNrev() : transcript[ti].getAvgNon0CovNrev(),
+				transcript[ti].getMinCovTfwd(), transcript[ti].getMinCovTrev(), 
 				transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters));
 		}
 		if(verbose) { cerr << endl; }

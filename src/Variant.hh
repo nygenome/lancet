@@ -45,6 +45,7 @@ struct Filters
 	int maxCovTumor;
 	int minAltCntTumor;
 	int maxAltCntNormal;
+	int minStrandBias;
 };
 
 class Variant_t
@@ -60,8 +61,10 @@ public:
 	char status; // T=somatic, S=shared
 	int ref_cov_normal;
 	int ref_cov_tumor;
-	int alt_cov_normal;
-	int alt_cov_tumor;
+	int alt_cov_normal_fwd;
+	int alt_cov_normal_rev;
+	int alt_cov_tumor_fwd;
+	int alt_cov_tumor_rev;
 	char prev_bp_ref; // base-pair preceding the mutation in reference
 	char prev_bp_alt; // base-pair preceding the mutation in alternative
 	string GT_normal;
@@ -81,7 +84,7 @@ public:
 	
 	Filters filters; // filter thresholds
 
-	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_, int alt_cov_tumor_, char prev_bp_ref_, char prev_bp_alt_, Filters &fs)
+	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters &fs)
 	{ 	
 		filters = fs;
 		
@@ -98,8 +101,10 @@ public:
 		
 		ref_cov_normal = ref_cov_normal_;
 		ref_cov_tumor = ref_cov_tumor_;
-		alt_cov_normal = alt_cov_normal_;
-		alt_cov_tumor = alt_cov_tumor_;
+		alt_cov_normal_fwd = alt_cov_normal_fwd_;
+		alt_cov_normal_rev = alt_cov_normal_rev_;
+		alt_cov_tumor_fwd = alt_cov_tumor_fwd_;
+		alt_cov_tumor_rev = alt_cov_tumor_rev_;
 		prev_bp_ref = prev_bp_ref_;
 		prev_bp_alt = prev_bp_alt_;
 		

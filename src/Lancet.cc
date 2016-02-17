@@ -248,6 +248,7 @@ int main(int argc, char** argv)
 	filters.maxVafNormal = 0;
 	filters.minAltCntTumor = 4;
 	filters.maxAltCntNormal = 0;
+	filters.minStrandBias = 2;
 	
 	stringstream helptext;
 	helptext << HEADER.str() << USAGE <<

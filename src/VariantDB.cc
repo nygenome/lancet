@@ -34,8 +34,10 @@ void VariantDB_t::addVar(Variant_t v) {
 		// keep highest supporting coverage found
 		if (it->second.ref_cov_normal < v.ref_cov_normal) { it->second.ref_cov_normal = v.ref_cov_normal; }
 		if (it->second.ref_cov_tumor  < v.ref_cov_tumor ) { it->second.ref_cov_tumor = v.ref_cov_tumor;   }
-		if (it->second.alt_cov_normal < v.alt_cov_normal) { it->second.alt_cov_normal = v.alt_cov_normal; }
-		if (it->second.alt_cov_tumor  < v.alt_cov_tumor ) { it->second.alt_cov_tumor = v.alt_cov_tumor;   }
+		if (it->second.alt_cov_normal_fwd < v.alt_cov_normal_fwd) { it->second.alt_cov_normal_fwd = v.alt_cov_normal_fwd; }
+		if (it->second.alt_cov_normal_rev < v.alt_cov_normal_rev) { it->second.alt_cov_normal_rev = v.alt_cov_normal_rev; }		
+		if (it->second.alt_cov_tumor_fwd  < v.alt_cov_tumor_fwd ) { it->second.alt_cov_tumor_fwd = v.alt_cov_tumor_fwd;   }
+		if (it->second.alt_cov_tumor_rev  < v.alt_cov_tumor_rev ) { it->second.alt_cov_tumor_rev = v.alt_cov_tumor_rev;   }
 
 		// re-gentype and score
 		it->second.update();
@@ -55,7 +57,7 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n"
 			"##INFO=<ID=SHARED,Number=0,Type=Flag,Description=\"Shared mutation betweem tumor and normal\">\n"
 			"##INFO=<ID=NORMAL,Number=0,Type=Flag,Description=\"Mutation present only in the normal\">\n"
-			"##FILTER=<ID=MS,Description=\"Microsatellite mutation (format: #LEN#MOTIF)\">\n"
+			//"##FILTER=<ID=MS,Description=\"Microsatellite mutation (format: #LEN#MOTIF)\">\n"
 			"##FILTER=<ID=LowCovNormal,Description=\"low coverage in the normal (<" << fs.minCovNormal << ")\">\n"
 			"##FILTER=<ID=HighCovNormal,Description=\"high coverage in the normal (>" << fs.maxCovNormal << ")\">\n"
 			"##FILTER=<ID=LowCovTumor,Description=\"low coverage in the tumor (<" << fs.minCovTumor << ")\">\n"
@@ -65,9 +67,11 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##FILTER=<ID=LowAltCntTumor,Description=\"low alternative allele count in the tumor (<" << fs.minAltCntTumor << ")\">\n"
 			"##FILTER=<ID=HighAltCntNormal,Description=\"high alternative allele count in the normal (>" << fs.maxAltCntNormal << ")\">\n"
 			"##FILTER=<ID=LowFisherScore,Description=\"low Fisher's exact test score for tumor-normal allele counts (<" << fs.minPhredFisher << ")\">\n"
+			"##FILTER=<ID=StrandBias,Description=\"strand bias: # of non-reference reads in either forward or reverse strand below threshold (<" << fs.minStrandBias << ")\">\n"
 			"##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
 			"##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Depth\">\n"
-			"##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"depth supporting reference/indel at the site\">\n"
+			"##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"allele depth: # of supporting reference,mutation reads at the site\">\n"
+			"##FORMAT=<ID=SC,Number=.,Type=Integer,Description=\"strand counts: # of supporting forward,reverse reads for alterantive allele\">\n"
 			"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << sample_name_N << "\t" << sample_name_T << "\n";
 }
 

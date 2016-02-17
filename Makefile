@@ -28,4 +28,4 @@ htslib:
 
 #.PHONY : clean
 clean:
-	 rm src/Lancet; rm -rf $(ABS_BAMTOOLS_DIR)/build; cd $(ABS_HTSLIB_DIR); make clean;
+	 rm src/Lancet; rm -rf $(ABS_BAMTOOLS_DIR)/build; rm -rf $(ABS_BAMTOOLS_DIR)/include; rm -rf $(ABS_BAMTOOLS_DIR)/lib; rm -rf $(ABS_BAMTOOLS_DIR)/bin; cd $(ABS_HTSLIB_DIR); make clean;

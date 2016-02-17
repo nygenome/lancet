@@ -51,16 +51,16 @@ The previous filter means that a variant flagged as **LowFisherScore** has not m
 
 Below is the current list of filters:
 
-1. **MS**: Microsatellite mutation (format: #LEN#MOTIF)
-2. **LowCovNormal**: low coverage in the normal
-3. **HighCovNormal**: high coverage in the normal
-4. **LowCovTumor**: low coverage in the tumor
-5. **HighCovTumor**: high coverage in the tumor
-6. **LowVafTumor**: low variant allele frequency in the tumor
-7. **HighVafNormal**: high variant allele frequency in the normal
-8. **LowAltCntTumor**: low alternative allele count in the tumor
-9. **HighAltCntNormal**: high alternative allele count in the normal
-10. **LowFisherScore**: low Fisher's exact test score for tumor-normal allele counts
+1. **LowCovNormal**: low coverage in the normal
+2. **HighCovNormal**: high coverage in the normal
+3. **LowCovTumor**: low coverage in the tumor
+4. **HighCovTumor**: high coverage in the tumor
+5. **LowVafTumor**: low variant allele frequency in the tumor
+6. **HighVafNormal**: high variant allele frequency in the normal
+7. **LowAltCntTumor**: low alternative allele count in the tumor
+8. **HighAltCntNormal**: high alternative allele count in the normal
+9. **LowFisherScore**: low Fisher's exact test score for tumor-normal allele counts
+10. **StrandBias**: rejects variants where the vast majority of alternate alleles are seen in a single direction
 
 ### Complete command-line options
 

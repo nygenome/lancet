@@ -117,7 +117,7 @@ public:
 	void setIsNormal() { isNormal_m = true; }
 	
 	void incTmrCov(unsigned int strand) { if(strand == FWD) { cov_tmr_m_fwd++; } if(strand == REV) { cov_tmr_m_rev++; } }
-	void incNmlCov(unsigned int strand) { if(strand == REV) { cov_nml_m_fwd++; } if(strand == REV) { cov_nml_m_rev++; } }
+	void incNmlCov(unsigned int strand) { if(strand == FWD) { cov_nml_m_fwd++; } if(strand == REV) { cov_nml_m_rev++; } }
 	//void setTmrCov(int c) { cov_tmr_m = c; }
 	//void setNmlCov(int c) { cov_nml_m = c; }
 	float getTmrCov(unsigned int strand);

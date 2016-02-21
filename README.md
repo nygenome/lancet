@@ -31,7 +31,7 @@ make
 A simple lancet command should look something like this:
 
 ```
-Lancet --tumor T.bam --normal N.bam --ref ref.fa --reg 22-1-51304566 --num-threads 8
+Lancet --tumor T.bam --normal N.bam --ref ref.fa --reg 22:1-51304566 --num-threads 8
 ```
 
 The command above will detect somatic variants in the tumor/normal pair of bam files (T.bam and N.bam) for chromosome 22 using 8 threads.

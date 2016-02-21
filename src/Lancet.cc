@@ -286,6 +286,7 @@ int main(int argc, char** argv)
 		"   --min-coverage-normal, -z  <int>        : minimum coverage in the normal [default: " << filters.minCovNormal << "]\n"
 		"   --max-coverage-normal, -j  <int>        : maximum coverage in the normal [default: " << filters.maxCovNormal << "]\n"
 		"   --min-phred-fisher, -s     <float>      : minimum fisher exact test score [default: " << filters.minPhredFisher << "]\n"
+		"   --min-strand-bias, -f      <float>      : minimum strand bias threshold [default: " << filters.minStrandBias << "]\n"
 		
 		"\nFlags\n"
 		"   -A            : print graph (in .dot format) after every stage\n"
@@ -330,6 +331,7 @@ int main(int argc, char** argv)
 		
 		//filters
 		{"min-phred-fisher",  required_argument, 0, 's'},
+		{"min-strand-bias",  required_argument, 0, 'f'},
 		{"min-alt-count-tumor",  required_argument, 0, 'a'},
 		{"max-alt-count-normal",  required_argument, 0, 'm'},
 		{"min-vaf-tumor",  required_argument, 0, 'e'},
@@ -356,7 +358,7 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:t:c:d:x:AhSL:T:M:vVF:q:b:Q:P:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:d:x:AhSL:T:M:vVF:q:b:Q:P:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -388,6 +390,7 @@ int main(int argc, char** argv)
 			case 'M': MAX_MISMATCH     = atoi(optarg); break;
 			
 			case 's': filters.minPhredFisher = atoi(optarg); break;
+			case 'f': filters.minStrandBias = atoi(optarg); break;
 			case 'a': filters.minAltCntTumor = atoi(optarg); break;
 			case 'm': filters.maxAltCntNormal = atoi(optarg); break;
 			case 'e': filters.minVafTumor = atoi(optarg); break;

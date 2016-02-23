@@ -32,9 +32,11 @@ bool verbose = false;
 bool VERBOSE = false;
 bool PRINT_ALL = false;
 bool PRINT_DOT_READS = true;
-int MIN_QV = 10;
+int MIN_QV_TRIM = 10;
+int MIN_QV_CALL = 10;
 int QV_RANGE = '!';
-int MIN_QUAL = MIN_QV + QV_RANGE;
+int MIN_QUAL_TRIM = MIN_QV_TRIM + QV_RANGE;
+int MIN_QUAL_CALL = MIN_QV_CALL + QV_RANGE;
 int MIN_MAP_QUAL = 0;
 int WINDOW_SIZE = 600;
 
@@ -54,7 +56,6 @@ int LOW_COV_THRESHOLD = 1;
 int MAX_AVG_COV = 10000;
 int NODE_STRLEN = 100;
 int DFS_LIMIT = 1000000;
-int PATH_LIMIT = 0;
 int MAX_INDEL_LEN = 250;
 int MAX_MISMATCH = 3;
 
@@ -95,8 +96,10 @@ void printConfiguration(ostream & out)
 	out << "MAX_TIP_LEN: "      << MAX_TIP_LEN << endl;
 
 	out << "QV_RANGE: "         << QV_RANGE << endl;
-	out << "MIN_QV: "           << MIN_QV << endl;
-	out << "MIN_QUAL: "         << (char) MIN_QUAL << endl;
+	out << "MIN_QV_CALL: "      << MIN_QV_CALL << endl;
+	out << "MIN_QV_TRIM: "      << MIN_QV_TRIM << endl;
+	out << "MIN_QUAL_TRIM: "    << (char) MIN_QUAL_TRIM << endl;
+	out << "MIN_QUAL_CALL: "    << (char) MIN_QUAL_CALL << endl;
 	out << "MIN_MAP_QUAL: "     << MIN_MAP_QUAL << endl;
 	out << "MAX_AVG_COV: "		<< MAX_AVG_COV << endl;
 
@@ -110,7 +113,6 @@ void printConfiguration(ostream & out)
 	out << "LOW_COV_THRESHOLD: "<< LOW_COV_THRESHOLD << endl;
 	out << "WINDOW_SIZE: "      << WINDOW_SIZE << endl;
 	out << "DFS_LIMIT: "        << DFS_LIMIT << endl;
-	out << "PATH_LIMIT: "       << PATH_LIMIT << endl;
 	out << "MAX_INDEL_LEN: "    << MAX_INDEL_LEN << endl;
 	out << "MAX_MISMATCH: "     << MAX_MISMATCH << endl;
 
@@ -260,7 +262,8 @@ int main(int argc, char** argv)
 		"\nOptional\n"
 		"   --min-k, k                <int>         : min kmersize [default: " << minK << "]\n"
 		"   --max-k, -K               <int>         : max kmersize [default: " << maxK << "]\n"
-		"   --trim-lowqual, -q        <int>         : trim bases below qv at 5' and 3' [default: " << MIN_QV << "]\n"
+		"   --trim-lowqual, -q        <int>         : trim bases below qv at 5' and 3' [default: " << MIN_QV_TRIM << "]\n"
+		"   --min-base-qual, -C       <int>         : minimum base quality required to consider a base for calling snv [default: " << MIN_QV_CALL << "]\n"
 		"   --quality-range, -Q       <char>        : quality value range [default: " << (char) QV_RANGE << "]\n"
 		"   --min-map-qual, -b        <inr>         : minimum read mapping quality in Phred-scale [default: " << MIN_MAP_QUAL << "]\n"
 		"   --tip-len, -l             <int>         : max tip length [default: " << MAX_TIP_LEN << "]\n"
@@ -269,8 +272,7 @@ int main(int argc, char** argv)
 		"   --max-avg-cov, -u         <int>         : maximum average coverage allowed per region [default: " << MAX_AVG_COV << "]\n"
 		"   --low-cov, -d             <int>         : low coverage threshold [default: " << LOW_COV_THRESHOLD << "]\n"
 		"   --window-size, -w         <int>         : window size of the region to assemble (in base-pairs) [default: " << WINDOW_SIZE << "]\n"
-		"   --dfs-limit, -F           <int>         : limit dfs search space [default: " << DFS_LIMIT << "]\n"
-		"   --path-limit, -P          <int>         : limit on number of paths to report [default: " << PATH_LIMIT << "]\n"
+		"   --dfs-limit, -F           <int>         : limit dfs/bfs graph traversal search space [default: " << DFS_LIMIT << "]\n"
 		"   --max-indel-len, -T       <int>         : limit on size of detectable indel [default: " << MAX_INDEL_LEN << "]\n"
 		"   --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: " << MAX_MISMATCH << "]\n"
 		"   --num-threads, -X         <int>         : number of parallel threads [default: " << NUM_THREADS << "]\n"
@@ -319,6 +321,7 @@ int main(int argc, char** argv)
 		{"window-size",  required_argument, 0, 'w'},
 		{"max-avg-cov",  required_argument, 0, 'u'},
 		{"min-map-qual",  required_argument, 0, 'b'},
+		{"min-base-qual",  required_argument, 0, 'C'},
 		{"trim-lowqual",  required_argument, 0, 'q'},
 		{"quality-range",  required_argument, 0, 'Q'},
 
@@ -358,7 +361,7 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:d:x:AhSL:T:M:vVF:q:b:Q:P:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:AhSL:T:M:vVF:q:b:Q:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -378,13 +381,13 @@ int main(int argc, char** argv)
 			case 'w': WINDOW_SIZE      = atoi(optarg); break;
 			case 'u': MAX_AVG_COV      = atoi(optarg); break;
 			
-			case 'q': MIN_QV           = atoi(optarg); break;
+			case 'q': MIN_QV_TRIM      = atoi(optarg); break;
+			case 'C': MIN_QV_CALL      = atoi(optarg); break;
 			case 'b': MIN_MAP_QUAL     = atoi(optarg); break;
 			case 'Q': QV_RANGE         = *optarg;      break;
 
 			case 'L': NODE_STRLEN      = atoi(optarg); break;
 			case 'F': DFS_LIMIT        = atoi(optarg); break;
-			case 'P': PATH_LIMIT       = atoi(optarg); break;
 			case 'X': NUM_THREADS      = atoi(optarg); break;
 			case 'T': MAX_INDEL_LEN    = atoi(optarg); break;
 			case 'M': MAX_MISMATCH     = atoi(optarg); break;
@@ -419,6 +422,10 @@ int main(int argc, char** argv)
 			exit (EXIT_FAILURE);
 		}
 	}
+
+	// update min base quality values
+	MIN_QUAL_TRIM = MIN_QV_TRIM + QV_RANGE;
+	MIN_QUAL_CALL = MIN_QV_CALL + QV_RANGE;
 
 	if (TUMOR == "") { cerr << "ERROR: Must provide the tumor BAM file (-t)" << endl; errflg++; }
 	if (NORMAL == "") { cerr << "ERROR: Must provide the normal BAM file (-n)" << endl; errflg++; }		
@@ -458,9 +465,11 @@ int main(int argc, char** argv)
 			assemblers[i]->VERBOSE = VERBOSE;
 			assemblers[i]->PRINT_DOT_READS = PRINT_DOT_READS;
 			assemblers[i]->PRINT_ALL = PRINT_ALL;
-			assemblers[i]->MIN_QV = MIN_QV;
+			assemblers[i]->MIN_QV_CALL = MIN_QV_CALL;
+			assemblers[i]->MIN_QV_TRIM = MIN_QV_TRIM;
 			assemblers[i]->QV_RANGE = QV_RANGE;
-			assemblers[i]->MIN_QUAL = MIN_QUAL;
+			assemblers[i]->MIN_QUAL_TRIM = MIN_QUAL_TRIM;
+			assemblers[i]->MIN_QUAL_CALL = MIN_QUAL_CALL;
 			assemblers[i]->MIN_MAP_QUAL = MIN_MAP_QUAL;
 			assemblers[i]->TUMOR = TUMOR;
 			assemblers[i]->NORMAL = NORMAL;
@@ -476,7 +485,6 @@ int main(int argc, char** argv)
 			assemblers[i]->MAX_AVG_COV = MAX_AVG_COV;
 			assemblers[i]->NODE_STRLEN = NODE_STRLEN;
 			assemblers[i]->DFS_LIMIT = DFS_LIMIT;
-			assemblers[i]->PATH_LIMIT = PATH_LIMIT;
 			assemblers[i]->MAX_INDEL_LEN = MAX_INDEL_LEN;
 			assemblers[i]->MAX_MISMATCH = MAX_MISMATCH;	
 			

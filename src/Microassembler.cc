@@ -275,9 +275,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			if(rg.empty()) { rg = "null"; }
 			
 			if ( (readgroups.find("null") != readgroups.end())  || (readgroups.find(rg) != readgroups.end()) ) { // select reads in the read group RG
-				
-				//writer.SaveAlignment(al); // save alignment to output bam file
-				
+												
 				if (mate>1) { // mated pair
 					//cerr << "PAIRED!!" << endl;
 					if( !(al.IsMapped()) ) { // unmapped read
@@ -359,10 +357,10 @@ int Microassembler::processReads() {
 	g.setK(minK);
 	g.setVerbose(verbose);
 	g.setMoreVerbose(VERBOSE);
-	g.setMinQual(MIN_QUAL);
+	g.setMinQualTrim(MIN_QUAL_TRIM);
+	g.setMinQualCall(MIN_QUAL_CALL);
 	g.setBufferSize(BUFFER_SIZE);
 	g.setDFSLimit(DFS_LIMIT);
-	g.setPathLimit(PATH_LIMIT);
 	g.setCovThreshold(COV_THRESHOLD);
 	g.setMinCovRatio(MIN_COV_RATIO);
 	g.setLowCovThreshold(LOW_COV_THRESHOLD);

@@ -83,9 +83,11 @@ public:
 
 	bool PRINT_ALL;
 
-	int MIN_QV;
+	int MIN_QV_CALL;
+	int MIN_QV_TRIM;
 	int QV_RANGE;
-	int MIN_QUAL;
+	int MIN_QUAL_CALL;
+	int MIN_QUAL_TRIM;
 	int MIN_MAP_QUAL;
 
 	string TUMOR;
@@ -112,7 +114,6 @@ public:
 	int  NODE_STRLEN;
 
 	int DFS_LIMIT;
-	int PATH_LIMIT;
 	int MAX_INDEL_LEN;
 	int MAX_MISMATCH;
 		
@@ -146,9 +147,11 @@ public:
 
 		PRINT_ALL       = false;
 
-		MIN_QV         = 10;
+		MIN_QV_CALL    = 10;
+		MIN_QV_TRIM    = 10;
 		QV_RANGE       = '!';
-		MIN_QUAL       = MIN_QV + QV_RANGE;
+		MIN_QUAL_CALL  = MIN_QV_CALL + QV_RANGE;
+		MIN_QUAL_CALL  = MIN_QV_TRIM + QV_RANGE;
 		MIN_MAP_QUAL   = 0;
 
 		READSET = "qry";
@@ -171,7 +174,6 @@ public:
 		RG_FILE = "";
 
 		DFS_LIMIT = 1000000;
-		PATH_LIMIT = 0;
 		MAX_INDEL_LEN = 250;
 		MAX_MISMATCH = 3;		
 	}

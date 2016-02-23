@@ -320,26 +320,47 @@ int Node_t::cntReadCode(char code)
 }
 
 // updateCovDistrTmr
-// updated the coverage distribution along the node string for tumor
+// updated the coverage distribution along the node string
 //////////////////////////////////////////////////////////////
-void Node_t::updateCovDistrTmr(int c, unsigned int strand) 
+void Node_t::updateCovDistr(int c, unsigned int strand, char sample) 
 {
-	for (unsigned int i = 0; i < cov_distr_tmr_fwd.size(); i++)
-	{
-		if(strand == FWD) { cov_distr_tmr_fwd[i] = c; }
-		if(strand == REV) { cov_distr_tmr_rev[i] = c; }
+	vector<int> * cov_distr = NULL;
+	
+	if(sample == 'T') {
+		if(strand == FWD) { cov_distr = &cov_distr_tmr_fwd; }
+		if(strand == REV) { cov_distr = &cov_distr_tmr_rev; }
+	}
+	else if(sample == 'N') {
+		if(strand == FWD) { cov_distr = &cov_distr_nml_fwd; }
+		if(strand == REV) { cov_distr = &cov_distr_nml_rev; }
+	}
+	
+	for (unsigned int i = 0; i < cov_distr->size(); i++) {
+		(*cov_distr)[i] = c; 
 	}
 }
 
-// updateCovDistrNml
-// updated the coverage distribution along the node string for normal
+// updateCovDistrMinQv
+// updated the coverage distribution along the node with 
+// base-quality value greater than MIN_QUAL
 //////////////////////////////////////////////////////////////
-void Node_t::updateCovDistrNml(int c, unsigned int strand) 
-{
-	for (unsigned int i = 0; i < cov_distr_nml_fwd.size(); i++)
-	{
-		if(strand == FWD) { cov_distr_nml_fwd[i] = c; }
-		if(strand == REV) { cov_distr_nml_rev[i] = c; }
+void Node_t::updateCovDistrMinQV(const string & qv, unsigned int strand, char sample) {
+	
+	vector<int> * cov_distr = NULL;
+
+	if(sample == 'T') {
+		if(strand == FWD) { cov_distr = &cov_distr_tmr_minqv_fwd; }
+		if(strand == REV) { cov_distr = &cov_distr_tmr_minqv_rev; }
+	}
+	else if(sample == 'N') {
+		if(strand == FWD) { cov_distr = &cov_distr_nml_minqv_fwd; }
+		if(strand == REV) { cov_distr = &cov_distr_nml_minqv_rev; }
+	}
+
+	unsigned int i = 0;
+	for ( string::const_iterator it=qv.begin(); it!=qv.end(); ++it) {
+		if(*it >= MIN_QUAL) { (*cov_distr)[i]++; }
+		i++;
 	}
 }
 

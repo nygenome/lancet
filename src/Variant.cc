@@ -33,6 +33,7 @@ void Variant_t::printVCF() {
 	if(flag == 'T') { status = "SOMATIC"; }
 	else if(flag == 'S') { status = "SHARED"; }
 	else if(flag == 'N') { status = "NORMAL"; }
+	else if(flag == 'E') { status = "NONE"; }
 	
 	string INFO = status + ";FETS=" + dtos(fet_score);
 	if(type=='I') { INFO += ";TYPE=ins"; }
@@ -88,9 +89,12 @@ void Variant_t::printVCF() {
 		if (FILTER.compare("") == 0) { FILTER = "HighAltCntNormal"; }
 		else { FILTER += ";HighAltCntNormal"; }
 	}
-	if( (alt_cov_tumor_fwd < filters.minStrandBias) || (alt_cov_tumor_rev < filters.minStrandBias) ) { 
-		if (FILTER.compare("") == 0) { FILTER = "StrandBias"; }
-		else { FILTER += ";StrandBias"; }
+	// snp specific filters
+	if(type == 'S') { 
+		if( (alt_cov_tumor_fwd < filters.minStrandBias) || (alt_cov_tumor_rev < filters.minStrandBias) ) { 
+			if (FILTER.compare("") == 0) { FILTER = "StrandBias"; }
+			else { FILTER += ";StrandBias"; }
+		}
 	}
 		
 	if(FILTER.compare("") == 0) { FILTER = "PASS"; }
@@ -148,6 +152,9 @@ char Variant_t::bestState(int Rn, int An, int Rt, int At) {
 	}
 	else if ( (An>0) && (At==0) ) { // somatic
 		ans = 'N';
+	}
+	else if ( (An==0) && (At==0) ) { // no support
+		ans = 'E';
 	}
 	return ans;
 }

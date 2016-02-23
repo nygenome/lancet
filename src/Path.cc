@@ -170,7 +170,7 @@ string Path_t::covstr(char sample) {
 // coverage distribution for nodes
 //////////////////////////////////////////////////////////////
 
-vector<int> Path_t::covDistr(char sample, unsigned int strand)
+vector<int> Path_t::covDistr(char sample, unsigned int strand, bool minqv)
 {
 	vector<int> path_coverage;
 	vector<int> node_coverage;
@@ -187,12 +187,24 @@ vector<int> Path_t::covDistr(char sample, unsigned int strand)
 		Node_t * n = nodes_m[i]; 
 		
 		if(sample == 'T') {  // tumor coverage
-			if(strand == FWD) { C = n->cov_distr_tmr_fwd; } 
-			if(strand == REV) { C = n->cov_distr_tmr_rev; } 			
+			if(minqv) {
+				if(strand == FWD) { C = n->cov_distr_tmr_minqv_fwd; } 
+				if(strand == REV) { C = n->cov_distr_tmr_minqv_rev; }
+			}
+			else {
+				if(strand == FWD) { C = n->cov_distr_tmr_fwd; }
+				if(strand == REV) { C = n->cov_distr_tmr_rev; }
+			}
 		}
 		else if(sample == 'N') { // normal coverage
-			if(strand == FWD) { C = n->cov_distr_nml_fwd; } 
-			if(strand == REV) { C = n->cov_distr_nml_rev; } 	
+			if(minqv) {
+				if(strand == FWD) { C = n->cov_distr_nml_minqv_fwd; } 
+				if(strand == REV) { C = n->cov_distr_nml_minqv_rev; }
+			}
+			else {
+				if(strand == FWD) { C = n->cov_distr_nml_fwd; } 
+				if(strand == REV) { C = n->cov_distr_nml_rev; }
+			}
 		} 
 		
 		if (dir == R) {

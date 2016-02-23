@@ -85,11 +85,11 @@ public:
 	bool VERBOSE;
 	bool PRINT_DOT_READS;
 
-	int MIN_QUAL;
+	int MIN_QUAL_TRIM;
+	int MIN_QUAL_CALL;
 	int BUFFER_SIZE;
 
 	int DFS_LIMIT;
-	int PATH_LIMIT;
 	int NODE_STRLEN;
 
 	int K;	
@@ -130,10 +130,10 @@ public:
 	void setK(int k) { K = k; }
 	void setVerbose(bool v) { verbose = v; }
 	void setMoreVerbose(bool v) { VERBOSE = v; }
-	void setMinQual(int mq) { MIN_QUAL = mq; }
+	void setMinQualTrim(int mq) { MIN_QUAL_TRIM = mq; }
+	void setMinQualCall(int mq) { MIN_QUAL_CALL = mq; }
 	void setBufferSize(int bs) { BUFFER_SIZE = bs; }
 	void setDFSLimit(int l) { DFS_LIMIT = l; }
-	void setPathLimit(int l) { PATH_LIMIT = l; }
 	void setCovThreshold(int ct) { COV_THRESHOLD = ct; }
 	void setMinCovRatio(double cr) { MIN_COV_RATIO = cr; }
 	void setLowCovThreshold(int ct) { LOW_COV_THRESHOLD = ct; }
@@ -151,7 +151,7 @@ public:
 	bool hasRepeatsInGraphPaths(Ref_t * ref) { return findRepeatsInGraphPaths(source_m, sink_m, F, ref); }
 
 	void clear(bool flag);
-	void loadSequence(int readid, const string & seq, bool isRef, int trim5, unsigned int strand);
+	void loadSequence(int readid, const string & seq, const string & qv, bool isRef, int trim5, unsigned int strand);
 	void trimAndLoad(int readid, const string & seq, const string & qv, bool isRef, unsigned int strand);
 	void trim(int readid, const string & seq, const string & qv, bool isRef);
 	void buildgraph(Ref_t * refinfo);
@@ -160,7 +160,7 @@ public:
 
 	int countMappedReads();
 
-	ReadId_t addRead(const string & set, const string & readname, const string & seq, char code, int label, unsigned int strand);
+	ReadId_t addRead(const string & set, const string & readname, const string & seq, const string & qv, char code, int label, unsigned int strand);
 
 	void addMates(ReadId_t r1, ReadId_t r2);
 
@@ -188,7 +188,7 @@ public:
 		int label,
 		unsigned int strand);
 
-	void loadReadsSFA(const string & filename);
+	//void loadReadsSFA(const string & filename);
 	void processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPathsToFile, int &complete, int &perfect, int &withsnps, int &withindel, int &withmix);
 	void processShortPath(Node_t * node, Ref_t * ref, FILE * fp, bool printPathsToFile, int &complete, int &perfect, int &withsnps, int &withindel, int &withmix);
 	//Path_t * bfs(Node_t * source, Node_t * sink, Ori_t dir, Ref_t * ref);

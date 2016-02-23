@@ -52,7 +52,7 @@ void Graph_t::clear(bool flag)
 // loadSequence
 //////////////////////////////////////////////////////////////
 
-void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5, unsigned int strand)
+void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bool isRef, int trim5, unsigned int strand)
 {	
 	if (!isRef)
 	{
@@ -61,6 +61,8 @@ void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5
 
 	CanonicalMer_t uc;
 	CanonicalMer_t vc;
+	string uc_qv;
+	string vc_qv;
 	
 	MerTable_t::iterator ui;
 	MerTable_t::iterator vi;
@@ -73,11 +75,15 @@ void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5
 	{
 		if (offset == 0) {
 			uc.set(seq.substr(offset,   K));
-			vc.set(seq.substr(offset+1, K));
+			vc.set(seq.substr(offset+1, K));	
+			uc_qv = qv.substr(offset,   K);
+			vc_qv = qv.substr(offset+1, K);
 		}
 		else {
-			uc = vc;
+			uc = vc; 
+			uc_qv = vc_qv; 
 			vc.set(seq.substr(offset+1, K));
+			vc_qv = qv.substr(offset+1, K);
 		}
 
 		//cerr << readid << "\t" << offset << "\t" << uc << "\t" << vc << endl;
@@ -94,11 +100,13 @@ void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5
 		if (ui == nodes_m.end())
 		{
 			ui = nodes_m.insert(make_pair(uc.mer_m, new Node_t(uc.mer_m))).first; 
+			ui->second->setMinQV(MIN_QUAL_CALL);
 		}
 
 		if (vi == nodes_m.end())
 		{
 			vi = nodes_m.insert(make_pair(vc.mer_m, new Node_t(vc.mer_m))).first; 
+			vi->second->setMinQV(MIN_QUAL_CALL);
 		}
 
 		// set node label
@@ -119,13 +127,15 @@ void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5
 			{ 
 				if(readid2info[readid].label_m == TMR) {
 					ui->second->incTmrCov(strand);
-					ui->second->updateCovDistrTmr((int)(ui->second->getTmrCov(strand)),strand);
+					ui->second->updateCovDistr((int)(ui->second->getTmrCov(strand)),strand,'T');
 					ref_m->updateCoverage(uc.mer_m, 'T'); // update referecne k-mer coverage for tumor
+					ui->second->updateCovDistrMinQV(uc_qv,strand,'T');
 				}
 				else if(readid2info[readid].label_m == NML) {
 					ui->second->incNmlCov(strand);
-					ui->second->updateCovDistrNml((int)(ui->second->getNmlCov(strand)),strand);
+					ui->second->updateCovDistr((int)(ui->second->getNmlCov(strand)),strand,'N');
 					ref_m->updateCoverage(uc.mer_m, 'N'); // update referecne k-mer coverage for normal
+					ui->second->updateCovDistrMinQV(uc_qv,strand,'N');
 				}
 
 				if (uc.ori_m == F)
@@ -140,13 +150,15 @@ void Graph_t::loadSequence(int readid, const string & seq, bool isRef, int trim5
 
 			if(readid2info[readid].label_m == TMR) {
 				vi->second->incTmrCov(strand);
-				vi->second->updateCovDistrTmr((int)(vi->second->getTmrCov(strand)),strand);
+				vi->second->updateCovDistr((int)(vi->second->getTmrCov(strand)),strand,'T');
 				ref_m->updateCoverage(vc.mer_m, 'T'); // update reference k-mer coverage for tumor
+				vi->second->updateCovDistrMinQV(vc_qv,strand,'T');
 			}
 			else if(readid2info[readid].label_m == NML) {
 				vi->second->incNmlCov(strand);
-				vi->second->updateCovDistrNml((int)(vi->second->getNmlCov(strand)),strand);
+				vi->second->updateCovDistr((int)(vi->second->getNmlCov(strand)),strand,'N');
 				ref_m->updateCoverage(vc.mer_m, 'N'); // update reference k-mer coverage for normal
+				vi->second->updateCovDistrMinQV(vc_qv,strand,'N');
 			}
 		}
 
@@ -195,10 +207,10 @@ void Graph_t::trim(int readid, const string & seq, const string & qv, bool isRef
 
 	for (int i = 0; i < len; i++) { cseq[i] = toupper(cseq[i]); }
 
-	while ((!isDNA(seq[trim5]) || (qv[trim5] < MIN_QUAL)) && (trim5 < len)) { trim5++; }
+	while ((!isDNA(seq[trim5]) || (qv[trim5] < MIN_QUAL_TRIM)) && (trim5 < len)) { trim5++; }
 
 	if (trim5 < len) {
-		while ((!isDNA(seq[len-1-trim3]) || (qv[len-1-trim3] < MIN_QUAL)) && (trim3 < len)) { trim3++; }
+		while ((!isDNA(seq[len-1-trim3]) || (qv[len-1-trim3] < MIN_QUAL_TRIM)) && (trim3 < len)) { trim3++; }
 
 		readid2info[readid].isjunk = false;
 		
@@ -228,12 +240,12 @@ void Graph_t::trimAndLoad(int readid, const string & seq, const string & qv, boo
 	for (int i = 0; i < len; i++) { cseq[i] = toupper(cseq[i]); }
 
 	int trim5 = 0;
-	while ((!isDNA(seq[trim5]) || (qv[trim5] < MIN_QUAL)) && (trim5 < len)) { trim5++; }
+	while ((!isDNA(seq[trim5]) || (qv[trim5] < MIN_QUAL_TRIM)) && (trim5 < len)) { trim5++; }
 
 	if (trim5 < len)
 	{
 		int trim3 = 0;
-		while ((!isDNA(seq[len-1-trim3]) || (qv[len-1-trim3] < MIN_QUAL)) && (trim3 < len)) { trim3++; }
+		while ((!isDNA(seq[len-1-trim3]) || (qv[len-1-trim3] < MIN_QUAL_TRIM)) && (trim3 < len)) { trim3++; }
 
 		bool cleanRead = true;
 
@@ -250,7 +262,7 @@ void Graph_t::trimAndLoad(int readid, const string & seq, const string & qv, boo
 		if (cleanRead)
 		{
 			if (trim5 || trim3) { cseq = seq.substr(trim5, len-trim5-trim3); }
-			loadSequence(readid, cseq, isRef, trim5, strand);
+			loadSequence(readid, cseq, qv, isRef, trim5, strand);
 		}
 	}
 }
@@ -288,10 +300,10 @@ int Graph_t::countMappedReads()
 // addRead
 ////////////////////////////////////////////////////////////////
 
-ReadId_t Graph_t::addRead(const string & set, const string & readname, const string & seq, char code, int label, unsigned int strand)
+ReadId_t Graph_t::addRead(const string & set, const string & readname, const string & seq, const string & qv, char code, int label, unsigned int strand)
 {
 	ReadId_t retval = readid2info.size();
-	readid2info.push_back(ReadInfo_t(label, set, readname, seq, code, strand));
+	readid2info.push_back(ReadInfo_t(label, set, readname, seq, qv, code, strand));
 	return retval;
 }
 
@@ -326,10 +338,10 @@ void Graph_t::addPair(const string & set,
 {
 	if (code == CODE_MAPPED)
 	{
-		int rd1 = addRead(set, readname+"_1", seq1, code, label, strand);
+		int rd1 = addRead(set, readname+"_1", seq1, qv1, code, label, strand);
 		trimAndLoad(rd1, seq1, qv1, false, strand);
 
-		int rd2 = addRead(set, readname+"_2", seq2, code, label, strand);
+		int rd2 = addRead(set, readname+"_2", seq2, qv2, code, label, strand);
 		trimAndLoad(rd2, seq2, qv2, false, strand);
 
 		addMates(rd1, rd2);
@@ -347,7 +359,7 @@ void Graph_t::addUnpaired(const string & set,
 	int label,
 	unsigned int strand)
 {
-	int rd = addRead(set, readname, seq, code, label, strand);
+	int rd = addRead(set, readname, seq, qv, code, label, strand);
 	//trimAndLoad(rd, seq, qv, false);
 	trim(rd, seq, qv, false);
 	
@@ -367,15 +379,15 @@ void Graph_t::addpaired(const string & set,
 {
 	int rd;
 	if(mate_id == 1) {
-		rd = addRead(set, readname+"_1", seq, code, label, strand);
+		rd = addRead(set, readname+"_1", seq, qv, code, label, strand);
 		trim(rd, seq, qv, false);
 	}
 	else if(mate_id == 2) {
-		rd = addRead(set, readname+"_2", seq, code, label, strand);
+		rd = addRead(set, readname+"_2", seq, qv, code, label, strand);
 		trim(rd, seq, qv, false);
 	}
 	else { // no mate
-		rd = addRead(set, readname+"_0", seq, code, label, strand);
+		rd = addRead(set, readname+"_0", seq, qv, code, label, strand);
 		trim(rd, seq, qv, false);
 	}
 }
@@ -390,7 +402,8 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 	
 	int refid = 0; 
 	if(!is_ref_added) {
-		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, 'R', REF, FWD);
+		string qv ((ref_m->rawseq).size(), 'K'); // create base-quality value string for reference
+		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, qv, 'R', REF, FWD);
 		is_ref_added = true;
 		if (VERBOSE) { cerr << "refid: " << refid << endl; }
 	}	
@@ -399,17 +412,22 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 	{
 		if ( !(readid2info[i].isjunk) ) { // skip junk (not A,C,G,T)
 			string seq = readid2info[i].seq_m;
+			string qv = readid2info[i].qv_m;
 			int len = seq.length();
 			int t5 = readid2info[i].trm5;
 			int t3 = readid2info[i].trm3;
 			unsigned int strand = readid2info[i].strand;
-			string cseq = seq;
-			if (t5 || t3) { cseq = seq.substr(t5, len-t5-t3); }
+			//string cseq = seq;
+			//string cqv = qv;
+			if (t5 || t3) { 
+				seq = seq.substr(t5, len-t5-t3); 
+				qv = qv.substr(t5, len-t5-t3); 
+			}
 			if(readid2info[i].label_m == REF) {
-				loadSequence(i, cseq, true, t5, strand);
+				loadSequence(i, seq, qv, true, t5, strand);
 			}
 			else {
-				loadSequence(i, cseq, false, t5, strand);
+				loadSequence(i, seq, qv, false, t5, strand);
 			}
 		}
 	}
@@ -418,36 +436,6 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 	if (verbose) { ref_m->printKmerCoverage('N'); }
 	if (verbose) { ref_m->printKmerCoverage('T'); }
 }
-
-// loadReadsSFA
-//////////////////////////////////////////////////////////////
-
-void Graph_t::loadReadsSFA(const string & filename)
-{
-	cerr << "LoadReadsSFA " << filename << endl;
-
-	FILE * fp = xfopen(filename, "r");
-
-	char rbuffer[BUFFER_SIZE];
-	char sbuffer[BUFFER_SIZE];
-	char qbuffer[BUFFER_SIZE];
-
-	int readid;
-
-	while (fscanf(fp, "%s\t%s", rbuffer, sbuffer) == 2)
-	{
-		readid = addRead("rd", rbuffer, sbuffer, 'L', UNDEFINED, FWD);
-
-		int l = strlen(sbuffer);
-		for (int i = 0; i < l; i++) { qbuffer[i] = MIN_QUAL; } qbuffer[l] = '\0';
-
-		trimAndLoad(readid, sbuffer, qbuffer, false, FWD);
-	}
-
-	xfclose(fp);
-}
-
-
 
 // dfs to detect cycles
 //////////////////////////////////////////////////////////////
@@ -635,10 +623,15 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	if (verbose) { cerr << "t':" << path->covstr('T') << endl; }
 	if (verbose) { cerr << "n':" << path->covstr('N') << endl; }
 	
-	vector<int> coverageN_fwd = path->covDistr('N', FWD);
-	vector<int> coverageT_fwd = path->covDistr('T', FWD);
-	vector<int> coverageN_rev = path->covDistr('N', REV);
-	vector<int> coverageT_rev = path->covDistr('T', REV);
+	vector<int> coverageN_fwd = path->covDistr('N', FWD, false);
+	vector<int> coverageT_fwd = path->covDistr('T', FWD, false);
+	vector<int> coverageN_rev = path->covDistr('N', REV, false);
+	vector<int> coverageT_rev = path->covDistr('T', REV, false);
+	
+	vector<int> coverageN_minqv_fwd = path->covDistr('N', FWD, true);
+	vector<int> coverageT_minqv_fwd = path->covDistr('T', FWD, true);
+	vector<int> coverageN_minqv_rev = path->covDistr('N', REV, true);
+	vector<int> coverageT_minqv_rev = path->covDistr('T', REV, true);
 	
 	assert(coverageN_fwd.size() == coverageT_fwd.size());
 	assert(coverageN_rev.size() == coverageT_rev.size());
@@ -652,7 +645,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 
 		Node_t * spanner;
 
-		char code;
+		char code = '?';
 
 		vector<Transcript_t> transcript;
 	
@@ -722,6 +715,11 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			int cov_at_pos_N_rev = coverageN_rev[pathpos];
 			int cov_at_pos_T_rev = coverageT_rev[pathpos];
 			
+			int cov_at_pos_N_minqv_fwd = coverageN_minqv_fwd[pathpos];
+			int cov_at_pos_T_minqv_fwd = coverageT_minqv_fwd[pathpos];
+			int cov_at_pos_N_minqv_rev = coverageN_minqv_rev[pathpos];
+			int cov_at_pos_T_minqv_rev = coverageT_minqv_rev[pathpos];
+			
 			int ref_cov_at_pos_N = ref->getCovAt(pos_in_ref+ref->trim5, 'N');
 			int ref_cov_at_pos_T = ref->getCovAt(pos_in_ref+ref->trim5, 'T');
 			//int cov_at_pos_N = cov_window_N.getMin();
@@ -785,13 +783,24 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				else
 				{
 					// create new transcript for mutation
-					transcript.push_back(Transcript_t(rrpos, pos_in_ref+ref->trim5, code, 
-						ref_aln[i], path_aln[i], 
-						cov_at_pos_N_fwd, cov_at_pos_N_rev, 
-						cov_at_pos_T_fwd, cov_at_pos_T_rev, 
-						ref_cov_at_pos_N, ref_cov_at_pos_T, 
-						ref_aln[pr], path_aln[pa], 
-						pathpos, pos_in_ref+ref->trim5, within_tumor_node));
+					if(code == 'x') { // snv
+						transcript.push_back(Transcript_t(rrpos, pos_in_ref+ref->trim5, code, 
+							ref_aln[i], path_aln[i], 
+							cov_at_pos_N_minqv_fwd, cov_at_pos_N_minqv_rev,
+							cov_at_pos_T_minqv_fwd, cov_at_pos_T_minqv_rev,
+							ref_cov_at_pos_N, ref_cov_at_pos_T, 
+							ref_aln[pr], path_aln[pa], 
+							pathpos, pos_in_ref+ref->trim5, within_tumor_node));
+					}
+					else { // indel
+						transcript.push_back(Transcript_t(rrpos, pos_in_ref+ref->trim5, code, 
+							ref_aln[i], path_aln[i], 
+							cov_at_pos_N_fwd, cov_at_pos_N_rev, 
+							cov_at_pos_T_fwd, cov_at_pos_T_rev, 
+							ref_cov_at_pos_N, ref_cov_at_pos_T, 
+							ref_aln[pr], path_aln[pa], 
+							pathpos, pos_in_ref+ref->trim5, within_tumor_node));
+					}
 				}
 			}
 		}
@@ -820,10 +829,18 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 						//cerr << "Within tumor only node" << endl;
 						transcript[ti].isSomatic = true;
 					}
-					transcript[ti].addCovNfwd(coverageN_fwd[idx1]);
-					transcript[ti].addCovNrev(coverageN_rev[idx1]);
-					transcript[ti].addCovTfwd(coverageT_fwd[idx1]);
-					transcript[ti].addCovTrev(coverageT_rev[idx1]);
+					if(transcript[ti].code == 'x') { // snv
+						transcript[ti].addCovNfwd(coverageN_minqv_fwd[idx1]);
+						transcript[ti].addCovNrev(coverageN_minqv_rev[idx1]);
+						transcript[ti].addCovTfwd(coverageT_minqv_fwd[idx1]);
+						transcript[ti].addCovTrev(coverageT_minqv_rev[idx1]);
+					}
+					else { // indel
+						transcript[ti].addCovNfwd(coverageN_fwd[idx1]);
+						transcript[ti].addCovNrev(coverageN_rev[idx1]);
+						transcript[ti].addCovTfwd(coverageT_fwd[idx1]);
+						transcript[ti].addCovTrev(coverageT_rev[idx1]);
+					}
 				}
 				unsigned int idx2 = transcript[ti].ref_end_pos + j; 
 				transcript[ti].addRefCovN(ref->getCovAt(idx2, 'N'));
@@ -872,13 +889,6 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			Node_t * cur = path->nodes_m[i];
 			cur->onRefPath_m++;
 		}
-
-		//if ((PATH_LIMIT) && (complete > PATH_LIMIT))
-		//{
-		//	cerr << "WARNING: PATH_LIMIT reached: " << PATH_LIMIT << endl;
-		//	break;
-		//}
-	
 	}
 	catch(std::out_of_range& e) {
    		cerr << "An exception occurred: " << e.what( ) << endl;
@@ -1706,7 +1716,8 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	//ref_m = refinfo;
 	int refid = 0; 
 	if(!is_ref_added) {
-		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, 'R', REF, FWD);
+		string qv ((ref_m->rawseq).size(), 'K'); // create base-quality value string for reference
+		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, qv, 'R', REF, FWD);
 		is_ref_added = true;
 		if (VERBOSE) { cerr << "refid: " << refid << endl; }
 	}
@@ -2256,13 +2267,17 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 		float ccov_tmr_rev = buddy->getTmrCov(REV);
 		float ccov_nml_rev = buddy->getNmlCov(REV);
 		
-		
 		// add coverage info for the new base-pairs 	
 		for (unsigned int j = (K-1); j < buddy->cov_distr_tmr_fwd.size(); j++) {
 			node->cov_distr_tmr_fwd.push_back(buddy->cov_distr_tmr_fwd[j]);
 			node->cov_distr_nml_fwd.push_back(buddy->cov_distr_nml_fwd[j]);
 			node->cov_distr_tmr_rev.push_back(buddy->cov_distr_tmr_rev[j]);
 			node->cov_distr_nml_rev.push_back(buddy->cov_distr_nml_rev[j]);
+
+			node->cov_distr_nml_minqv_fwd.push_back(buddy->cov_distr_nml_minqv_fwd[j]);
+			node->cov_distr_tmr_minqv_fwd.push_back(buddy->cov_distr_tmr_minqv_fwd[j]);	
+			node->cov_distr_nml_minqv_rev.push_back(buddy->cov_distr_nml_minqv_rev[j]);
+			node->cov_distr_tmr_minqv_rev.push_back(buddy->cov_distr_tmr_minqv_rev[j]);	
 		}
 		node->cov_tmr_m_fwd = ((ncov_tmr_fwd * amerlen) + (ccov_tmr_fwd * bmerlen)) / (amerlen + bmerlen);
 		node->cov_nml_m_fwd = ((ncov_nml_fwd * amerlen) + (ccov_nml_fwd * bmerlen)) / (amerlen + bmerlen);

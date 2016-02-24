@@ -598,10 +598,11 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	// Get alignment
 	string ref_aln;
 	string path_aln;
-	//string cov_aln;
+	//vector<int> cov_ref_aln;
+	//vector<int> cov_path_aln;
 	
 	global_align_aff(refseq, path->str(), ref_aln, path_aln, 0, 0);
-	//global_cov_align_aff(refseq, path->str(), path->covDistr(), ref_aln, path_aln, cov_aln, 0, 0);
+	//global_cov_align_aff(refseq, path->str(), path->covDistr('T', FWD, false), ref_aln, path_aln, cov_ref_aln, cov_path_aln, 0, 0);
 
 	assert(ref_aln.length() == path_aln.length());
 
@@ -620,8 +621,22 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	}
 	
 	//print coverage distribution along the sequence path
-	if (verbose) { cerr << "t':" << path->covstr('T') << endl; }
-	if (verbose) { cerr << "n':" << path->covstr('N') << endl; }
+	if (verbose) { 
+		vector<int> coverage_array = path->totCovDistr('T');
+		cerr << "t':"; 
+		for (unsigned int i=0; i<coverage_array.size(); i++) {
+			cerr << coverage_array[i] << " ";
+		}
+		cerr << endl;
+	}
+	if (verbose) { 
+		vector<int> coverage_array = path->totCovDistr('N');
+		cerr << "n':"; 
+		for (unsigned int i=0; i<coverage_array.size(); i++) {
+			cerr << coverage_array[i] << " ";
+		}
+		cerr << endl;
+	}
 	
 	vector<int> coverageN_fwd = path->covDistr('N', FWD, false);
 	vector<int> coverageT_fwd = path->covDistr('T', FWD, false);
@@ -737,7 +752,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				assert(pathpos <= coverageN.size());
 				
 				cov_window_N.remove(coverageN[pathpos-1]);
-				cov_window_T.remove(coverageT[pathpos-1]);		
+				cov_window_T.remove(coverageT[pathpos-1]);
 			}
 			*/
 		
@@ -817,6 +832,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		{
 			// if the alignment left-shifts the mutation, coverage and alignment can be out of sinc. 
 			// Fix: add coverage for K-1 bp after variant end position
+			
 			for (int j=0; j<K-1; j++) {	
 				unsigned int idx1 = transcript[ti].end_pos + j; 
 				// add coverage
@@ -852,8 +868,10 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			//cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|" << transcript[ti].cov;
 			if(verbose) { cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|R:" << 
 						transcript[ti].getMinRefCovN() << "n," << transcript[ti].getMinRefCovT() << "t|A:(" << 
-						((transcript[ti].isSomatic) ? transcript[ti].getMinCovNfwd() : transcript[ti].getAvgNon0CovNfwd()) << "+," << 
-						((transcript[ti].isSomatic) ? transcript[ti].getMinCovNfwd() : transcript[ti].getAvgNon0CovNfwd()) << "-)n,(" << 
+						((transcript[ti].isSomatic) ? transcript[ti].getMinCovNfwd() : transcript[ti].getMinNon0CovNfwd()) << "+," << 
+						((transcript[ti].isSomatic) ? transcript[ti].getMinCovNrev() : transcript[ti].getMinNon0CovNrev()) << "-)n,(" << 
+						//transcript[ti].getMinCovNfwd() << "+," << 
+						//transcript[ti].getMinCovNrev() << "-)n,(" << 
 						transcript[ti].getMinCovTfwd() << "+," << 
 						transcript[ti].getMinCovTrev() << "-)t|" <<
 						transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt; 
@@ -863,9 +881,10 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, 
 				transcript[ti].getMinRefCovN(),
 				transcript[ti].getMinRefCovT(),
-				(transcript[ti].isSomatic) ? transcript[ti].getMinCovNfwd() : transcript[ti].getAvgNon0CovNfwd(),
-				(transcript[ti].isSomatic) ? transcript[ti].getMinCovNrev() : transcript[ti].getAvgNon0CovNrev(),
-				transcript[ti].getMinCovTfwd(), transcript[ti].getMinCovTrev(), 
+				(transcript[ti].isSomatic) ? transcript[ti].getMinCovNfwd() : transcript[ti].getMinNon0CovNfwd(),
+				(transcript[ti].isSomatic) ? transcript[ti].getMinCovNrev() : transcript[ti].getMinNon0CovNrev(),
+				//transcript[ti].getMinCovNfwd(), transcript[ti].getMinCovNrev(),
+				transcript[ti].getMinCovTfwd(), transcript[ti].getMinCovTrev(),
 				transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters));
 		}
 		if(verbose) { cerr << endl; }
@@ -2267,18 +2286,38 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 		float ccov_tmr_rev = buddy->getTmrCov(REV);
 		float ccov_nml_rev = buddy->getNmlCov(REV);
 		
-		// add coverage info for the new base-pairs 	
-		for (unsigned int j = (K-1); j < buddy->cov_distr_tmr_fwd.size(); j++) {
-			node->cov_distr_tmr_fwd.push_back(buddy->cov_distr_tmr_fwd[j]);
-			node->cov_distr_nml_fwd.push_back(buddy->cov_distr_nml_fwd[j]);
-			node->cov_distr_tmr_rev.push_back(buddy->cov_distr_tmr_rev[j]);
-			node->cov_distr_nml_rev.push_back(buddy->cov_distr_nml_rev[j]);
+		// add coverage info for the new base-pairs and update coverage of overlapping region	
 
-			node->cov_distr_nml_minqv_fwd.push_back(buddy->cov_distr_nml_minqv_fwd[j]);
-			node->cov_distr_tmr_minqv_fwd.push_back(buddy->cov_distr_tmr_minqv_fwd[j]);	
-			node->cov_distr_nml_minqv_rev.push_back(buddy->cov_distr_nml_minqv_rev[j]);
-			node->cov_distr_tmr_minqv_rev.push_back(buddy->cov_distr_tmr_minqv_rev[j]);	
+		assert(node->cov_distr_tmr_fwd.size() == node->cov_distr_nml_fwd.size());
+		assert(node->cov_distr_tmr_rev.size() == node->cov_distr_nml_rev.size());
+			
+		int p = (node->cov_distr_tmr_fwd.size()-1)-K+2;
+		for (int l = 0; l < K-2; l++) {
+			// tumro
+			if(node->cov_distr_tmr_fwd[p+l] < buddy->cov_distr_tmr_fwd[l]) { node->cov_distr_tmr_fwd[p+l] = buddy->cov_distr_tmr_fwd[l]; }
+			if(node->cov_distr_tmr_rev[p+l] < buddy->cov_distr_tmr_rev[l]) { node->cov_distr_tmr_rev[p+l] = buddy->cov_distr_tmr_rev[l]; }			
+			if(node->cov_distr_tmr_minqv_fwd[p+l] < buddy->cov_distr_tmr_minqv_fwd[l]) { node->cov_distr_tmr_minqv_fwd[p+l] = buddy->cov_distr_tmr_minqv_fwd[l]; }
+			if(node->cov_distr_tmr_minqv_rev[p+l] < buddy->cov_distr_tmr_minqv_rev[l]) { node->cov_distr_tmr_minqv_rev[p+l] = buddy->cov_distr_tmr_minqv_rev[l]; }
+			// normal
+			if(node->cov_distr_nml_fwd[p+l] < buddy->cov_distr_nml_fwd[l]) { node->cov_distr_nml_fwd[p+l] = buddy->cov_distr_nml_fwd[l]; }
+			if(node->cov_distr_nml_rev[p+l] < buddy->cov_distr_nml_rev[l]) { node->cov_distr_nml_rev[p+l] = buddy->cov_distr_nml_rev[l]; }
+			if(node->cov_distr_nml_minqv_fwd[p+l] < buddy->cov_distr_nml_minqv_fwd[l]) { node->cov_distr_nml_minqv_fwd[p+l] = buddy->cov_distr_nml_minqv_fwd[l]; }
+			if(node->cov_distr_nml_minqv_rev[p+l] < buddy->cov_distr_nml_minqv_rev[l]) { node->cov_distr_nml_minqv_rev[p+l] = buddy->cov_distr_nml_minqv_rev[l]; }
 		}
+		
+		for (unsigned int j = (K-1); j < buddy->cov_distr_tmr_fwd.size(); j++) {
+			// tumor
+			node->cov_distr_tmr_fwd.push_back(buddy->cov_distr_tmr_fwd[j]);
+			node->cov_distr_tmr_rev.push_back(buddy->cov_distr_tmr_rev[j]);			
+			node->cov_distr_tmr_minqv_fwd.push_back(buddy->cov_distr_tmr_minqv_fwd[j]);	
+			node->cov_distr_tmr_minqv_rev.push_back(buddy->cov_distr_tmr_minqv_rev[j]);	
+			// normal
+			node->cov_distr_nml_fwd.push_back(buddy->cov_distr_nml_fwd[j]);
+			node->cov_distr_nml_rev.push_back(buddy->cov_distr_nml_rev[j]);			
+			node->cov_distr_nml_minqv_fwd.push_back(buddy->cov_distr_nml_minqv_fwd[j]);
+			node->cov_distr_nml_minqv_rev.push_back(buddy->cov_distr_nml_minqv_rev[j]);
+		}
+		
 		node->cov_tmr_m_fwd = ((ncov_tmr_fwd * amerlen) + (ccov_tmr_fwd * bmerlen)) / (amerlen + bmerlen);
 		node->cov_nml_m_fwd = ((ncov_nml_fwd * amerlen) + (ccov_nml_fwd * bmerlen)) / (amerlen + bmerlen);
 

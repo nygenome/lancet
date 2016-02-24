@@ -104,72 +104,24 @@ string Path_t::str()
 	return retval;
 }
 
-// coverage distribution for nodes in string format
+// total coverage distribution for sample
 //////////////////////////////////////////////////////////////
-
-string Path_t::covstr(char sample) {
+vector<int> Path_t::totCovDistr(char sample) {
+	vector<int> CF = covDistr(sample, FWD, false);
+	vector<int> CR = covDistr(sample, REV, false);
 	
-	stringstream ss;
-	vector<float> node_coverage;
-	vector<int> C_fwd;
-	vector<int> C_rev;
+	assert(CF.size() == CR.size());
 	
-	Ori_t dir = Edge_t::edgedir_start(edgedir_m[0]);
-
-	for (unsigned int i = 0; i < nodes_m.size(); i++)
-	{
-		node_coverage.clear();
-		Node_t * n = nodes_m[i]; 
-		ss << " | ";
-			
-		if(sample == 'T') {  // tumor coverage
-			C_fwd = n->cov_distr_tmr_fwd; 
-			C_rev = n->cov_distr_tmr_rev; 
-		}
-		else if(sample == 'N') { // normal coverage
-			C_fwd = n->cov_distr_nml_fwd;
-			C_rev = n->cov_distr_nml_rev;
-		} 
-		
-		if (dir == R) { 
-			for (unsigned int j=C_fwd.size(); j>0; j--) { 
-				node_coverage.push_back(C_fwd[j-1] + C_rev[j-1]); 
-			}
-		}
-		else {
-			for (unsigned int j=0; j < C_fwd.size(); j++) { 
-				node_coverage.push_back(C_fwd[j] + C_rev[j]); 
-			}
-		}
-		
-		if (!n->isSpecial()) {
-		
-			if ((ss.str()).size() == 0) { // first node
-				for (unsigned int j=0; j < node_coverage.size(); j++) { 
-					if (i != (nodes_m.size()-1)) { ss << node_coverage[j] << " "; }
-					else { ss << node_coverage[j]; }
-				}
-			}
-			else { // not the first node: add coverage info only for the new base-pairs 	
-				for (unsigned int j = (K-1); j < node_coverage.size(); j++) {
-					if (i != (nodes_m.size()-1)) { ss << node_coverage[j] << " "; }
-					else { ss << node_coverage[j]; }
-				}
-			}
-		}
-		
-		if (i < edgedir_m.size())
-		{
-			dir = Edge_t::edgedir_dest(edgedir_m[i]);
-		}
+	vector<int> result;
+	for (unsigned int j=0; j < CF.size(); j++) { 
+		result.push_back(CF[j]+CR[j]); 
 	}
-
-	return ss.str();
+	return result;
 }
+
 
 // coverage distribution for nodes
 //////////////////////////////////////////////////////////////
-
 vector<int> Path_t::covDistr(char sample, unsigned int strand, bool minqv)
 {
 	vector<int> path_coverage;
@@ -219,7 +171,6 @@ vector<int> Path_t::covDistr(char sample, unsigned int strand, bool minqv)
 		}
 		
 		if (!n->isSpecial()) {		
-		
 			if (path_coverage.size() == 0) { // first node
 				for (unsigned int j=0; j < node_coverage.size(); j++) { 
 					path_coverage.push_back(node_coverage[j]); 
@@ -227,9 +178,13 @@ vector<int> Path_t::covDistr(char sample, unsigned int strand, bool minqv)
 			}
 			else { // not the first node: update coverage of overlapping region
 				// add coverage info for the new base-pairs 	
+				int p = (path_coverage.size()-1)-K+2;
+				for (int l = 0; l < K-2; l++) {
+					if(path_coverage[p+l] < node_coverage[l]) { path_coverage[p+l] = node_coverage[l]; }
+				}
 				for (unsigned int j = (K-1); j < node_coverage.size(); j++) {
 					path_coverage.push_back(node_coverage[j]);
-				}	
+				}
 			}
 		}
 		

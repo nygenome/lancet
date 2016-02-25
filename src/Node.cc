@@ -404,27 +404,19 @@ int Node_t::avgCovDistr(char sample)
 //////////////////////////////////////////////////////////////
 void Node_t::revCovDistr() 
 {
-	int tmp_tmr_fwd;
-	int tmp_nml_fwd;
-	int tmp_tmr_rev;
-	int tmp_nml_rev;
 	int i=0;
 	int j=cov_distr_tmr_fwd.size()-1;
 	while(i<j){
-		tmp_tmr_fwd = cov_distr_tmr_fwd[i];
-		tmp_tmr_rev = cov_distr_tmr_rev[i];
-		tmp_nml_fwd = cov_distr_nml_fwd[i];
-		tmp_nml_rev = cov_distr_nml_rev[i];
 		
-		cov_distr_tmr_fwd[i] = cov_distr_tmr_fwd[j];
-		cov_distr_tmr_rev[i] = cov_distr_tmr_rev[j];
-		cov_distr_nml_fwd[i] = cov_distr_nml_fwd[j];
-		cov_distr_nml_rev[i] = cov_distr_nml_rev[j];
-
-		cov_distr_tmr_fwd[j] = tmp_tmr_fwd;
-		cov_distr_tmr_rev[j] = tmp_tmr_rev;
-		cov_distr_nml_fwd[j] = tmp_nml_fwd;		
-		cov_distr_nml_rev[j] = tmp_nml_rev;
+		swap(cov_distr_tmr_fwd[i], cov_distr_tmr_fwd[j]);
+		swap(cov_distr_tmr_rev[i], cov_distr_tmr_rev[j]);
+		swap(cov_distr_nml_fwd[i], cov_distr_nml_fwd[j]);
+		swap(cov_distr_nml_rev[i], cov_distr_nml_rev[j]);
+		
+		swap(cov_distr_tmr_minqv_fwd[i], cov_distr_tmr_minqv_fwd[j]);
+		swap(cov_distr_tmr_minqv_rev[i], cov_distr_tmr_minqv_rev[j]);
+		swap(cov_distr_nml_minqv_fwd[i], cov_distr_nml_minqv_fwd[j]);
+		swap(cov_distr_nml_minqv_rev[i], cov_distr_nml_minqv_rev[j]);
 		
 		i++;j--;
 	}

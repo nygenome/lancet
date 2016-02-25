@@ -96,7 +96,11 @@ public:
 		min_cov_N_rev = covN_rev_;
 		min_cov_T_fwd = covT_fwd_;
 		min_cov_T_rev = covT_rev_;
-		
+
+		min_nonzero_cov_N_fwd = 0;
+		min_nonzero_cov_N_rev = 0;
+		min_nonzero_cov_T_fwd = 0;
+		min_nonzero_cov_T_rev = 0;
 		if(min_cov_N_fwd != 0) { min_nonzero_cov_N_fwd = min_cov_N_fwd; }
 		if(min_cov_N_rev != 0) { min_nonzero_cov_N_rev = min_cov_N_rev; }
 		if(min_cov_T_fwd != 0) { min_nonzero_cov_T_fwd = min_cov_T_fwd; }
@@ -104,6 +108,9 @@ public:
 				
 		min_ref_cov_N = ref_covN_;
 		min_ref_cov_T = ref_covT_;
+
+		min_nonzero_ref_cov_N = 0;
+		min_nonzero_ref_cov_T = 0;				
 		if(ref_covN_ != 0) { min_nonzero_ref_cov_N = ref_covN_; }
 		if(ref_covT_ != 0) { min_nonzero_ref_cov_T = ref_covT_; }
 		

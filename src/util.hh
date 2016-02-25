@@ -58,6 +58,7 @@ void xfclose(FILE * fp);
 std::string itos(int i);
 std::string dtos(double d);
 bool isDNA(char b);
+void swap(int & a, int & b);
 char rrc(char b);
 std::string rc_str(const std::string & str);
 bool Fasta_Read(FILE * fp, std::string & s, std::string & hdr);

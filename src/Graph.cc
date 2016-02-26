@@ -599,11 +599,19 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	string ref_aln;
 	string path_aln;
 	//vector<int> cov_ref_aln;
-	//vector<int> cov_path_aln;
+	//vector<cov_t> cov_path_aln;
+	
+	vector<cov_t> coverageN = path->covDistr('N');
+	vector<cov_t> coverageT = path->covDistr('T');
+	
+	assert(coverageN.size() == coverageT.size());
 	
 	global_align_aff(refseq, path->str(), ref_aln, path_aln, 0, 0);
-	//global_cov_align_aff(refseq, path->str(), path->covDistr('T', FWD, false), ref_aln, path_aln, cov_ref_aln, cov_path_aln, 0, 0);
-
+	
+	/*
+	global_cov_align_aff(refseq, path->str(), coverageT_fwd, ref_aln, path_aln, cov_path_aln, 0, 0);
+	coverageT = cov_path_aln;
+	*/
 	assert(ref_aln.length() == path_aln.length());
 
 	if(verbose) { cerr << "r':" << ref_aln << endl; }  
@@ -622,34 +630,30 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	
 	//print coverage distribution along the sequence path
 	if (verbose) { 
-		vector<int> coverage_array = path->totCovDistr('T');
-		cerr << "t':"; 
-		for (unsigned int i=0; i<coverage_array.size(); i++) {
-			cerr << coverage_array[i] << " ";
+		cerr << "t+':"; 
+		for (unsigned int i=0; i<coverageT.size(); i++) {
+			cerr << coverageT[i].fwd << " ";
+		}
+		cerr << endl;
+
+		cerr << "t-':"; 
+		for (unsigned int i=0; i<coverageT.size(); i++) {
+			cerr << coverageT[i].rev << " ";
+		}
+		cerr << endl;
+		
+		cerr << "n+':"; 
+		for (unsigned int i=0; i<coverageN.size(); i++) {
+			cerr << coverageN[i].fwd << " ";
+		}
+		cerr << endl;
+
+		cerr << "n-':"; 
+		for (unsigned int i=0; i<coverageN.size(); i++) {
+			cerr << coverageN[i].rev << " ";
 		}
 		cerr << endl;
 	}
-	if (verbose) { 
-		vector<int> coverage_array = path->totCovDistr('N');
-		cerr << "n':"; 
-		for (unsigned int i=0; i<coverage_array.size(); i++) {
-			cerr << coverage_array[i] << " ";
-		}
-		cerr << endl;
-	}
-	
-	vector<int> coverageN_fwd = path->covDistr('N', FWD, false);
-	vector<int> coverageT_fwd = path->covDistr('T', FWD, false);
-	vector<int> coverageN_rev = path->covDistr('N', REV, false);
-	vector<int> coverageT_rev = path->covDistr('T', REV, false);
-	
-	vector<int> coverageN_minqv_fwd = path->covDistr('N', FWD, true);
-	vector<int> coverageT_minqv_fwd = path->covDistr('T', FWD, true);
-	vector<int> coverageN_minqv_rev = path->covDistr('N', REV, true);
-	vector<int> coverageT_minqv_rev = path->covDistr('T', REV, true);
-	
-	assert(coverageN_fwd.size() == coverageT_fwd.size());
-	assert(coverageN_rev.size() == coverageT_rev.size());
 	
 	try {
 		// scan aligned sequences for differences
@@ -663,7 +667,6 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		char code = '?';
 
 		vector<Transcript_t> transcript;
-	
 		
 		// cov_window keeps track of the minimum (non-0) coverage in a window of size K
 		/*
@@ -708,7 +711,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				pathpos++;
 			}
 
-			// pathpos is a 1-based coordinate, need to substruc 1 to correctly search 
+			// pathpos is a 1-based coordinate, need to subtract 1 to correctly search 
 			// into the sequence path which is indexed using 0-based coordinates
 			spanner = path->pathcontig(pathpos);
 			if (spanner == NULL) { cerr << "Error: path position out of range: " << pathpos << endl; break; }
@@ -720,20 +723,23 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				within_tumor_node = true;
 			}			
 
-			assert(pathpos <= coverageN_fwd.size());
-			assert(pathpos <= coverageT_fwd.size());
-			assert(pathpos <= coverageN_rev.size());
-			assert(pathpos <= coverageT_rev.size());
+			assert(pathpos <= coverageN.size());
+			assert(pathpos <= coverageT.size());
 			
-			int cov_at_pos_N_fwd = coverageN_fwd[pathpos-1];
-			int cov_at_pos_T_fwd = coverageT_fwd[pathpos-1];
-			int cov_at_pos_N_rev = coverageN_rev[pathpos-1];
-			int cov_at_pos_T_rev = coverageT_rev[pathpos-1];
+			int P = pathpos;
+			if (code == 'x') { P = pathpos-1; } // snv
+			else if(code == 'v') { P = pathpos; } // del
+			else if(code == '^') { P = pathpos-1; } //ins
 			
-			int cov_at_pos_N_minqv_fwd = coverageN_minqv_fwd[pathpos-1];
-			int cov_at_pos_T_minqv_fwd = coverageT_minqv_fwd[pathpos-1];
-			int cov_at_pos_N_minqv_rev = coverageN_minqv_rev[pathpos-1];
-			int cov_at_pos_T_minqv_rev = coverageT_minqv_rev[pathpos-1];
+			int cov_at_pos_N_fwd = coverageN[P].fwd;
+			int cov_at_pos_T_fwd = coverageT[P].fwd;
+			int cov_at_pos_N_rev = coverageN[P].rev;
+			int cov_at_pos_T_rev = coverageT[P].rev;
+			
+			int cov_at_pos_N_minqv_fwd = coverageN[P].minqv_fwd;
+			int cov_at_pos_T_minqv_fwd = coverageT[P].minqv_fwd;
+			int cov_at_pos_N_minqv_rev = coverageN[P].minqv_rev;
+			int cov_at_pos_T_minqv_rev = coverageT[P].minqv_rev;
 			
 			int ref_cov_at_pos_N = ref->getCovAt(pos_in_ref+ref->trim5, 'N');
 			int ref_cov_at_pos_T = ref->getCovAt(pos_in_ref+ref->trim5, 'T');
@@ -847,7 +853,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				for (int j=0; j<K-1; j++) {	
 					unsigned int idx1 = transcript[ti].end_pos + j; 
 					// add coverage
-					if (idx1 < coverageN_fwd.size()) { // check for out of range
+					if (idx1 < coverageN.size()) { // check for out of range
 					
 						// chech if within tumor only node
 						spanner = path->pathcontig(idx1);
@@ -857,12 +863,12 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 							transcript[ti].isSomatic = true;
 						}
 					
-						transcript[ti].addCovNfwd(coverageN_fwd[idx1]);
-						transcript[ti].addCovNrev(coverageN_rev[idx1]);
-						transcript[ti].addCovTfwd(coverageT_fwd[idx1]);
-						transcript[ti].addCovTrev(coverageT_rev[idx1]);
+						transcript[ti].addCovNfwd(coverageN[idx1].fwd);
+						transcript[ti].addCovNrev(coverageN[idx1].rev);
+						transcript[ti].addCovTfwd(coverageT[idx1].fwd);
+						transcript[ti].addCovTrev(coverageT[idx1].rev);
 					}
-					unsigned int idx2 = transcript[ti].ref_end_pos + j; 
+					unsigned int idx2 = transcript[ti].ref_end_pos + j;
 					transcript[ti].addRefCovN(ref->getCovAt(idx2, 'N'));
 					transcript[ti].addRefCovT(ref->getCovAt(idx2, 'T'));
 				}
@@ -2304,34 +2310,28 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 		
 		// add coverage info for the new base-pairs and update coverage of overlapping region	
 
-		assert(node->cov_distr_tmr_fwd.size() == node->cov_distr_nml_fwd.size());
-		assert(node->cov_distr_tmr_rev.size() == node->cov_distr_nml_rev.size());
-			
-		int p = (node->cov_distr_tmr_fwd.size()-1)-K+2;
-		for (int l = 0; l < K-2; l++) {
-			// tumro
-			if(node->cov_distr_tmr_fwd[p+l] < buddy->cov_distr_tmr_fwd[l]) { node->cov_distr_tmr_fwd[p+l] = buddy->cov_distr_tmr_fwd[l]; }
-			if(node->cov_distr_tmr_rev[p+l] < buddy->cov_distr_tmr_rev[l]) { node->cov_distr_tmr_rev[p+l] = buddy->cov_distr_tmr_rev[l]; }			
-			if(node->cov_distr_tmr_minqv_fwd[p+l] < buddy->cov_distr_tmr_minqv_fwd[l]) { node->cov_distr_tmr_minqv_fwd[p+l] = buddy->cov_distr_tmr_minqv_fwd[l]; }
-			if(node->cov_distr_tmr_minqv_rev[p+l] < buddy->cov_distr_tmr_minqv_rev[l]) { node->cov_distr_tmr_minqv_rev[p+l] = buddy->cov_distr_tmr_minqv_rev[l]; }
-			// normal
-			if(node->cov_distr_nml_fwd[p+l] < buddy->cov_distr_nml_fwd[l]) { node->cov_distr_nml_fwd[p+l] = buddy->cov_distr_nml_fwd[l]; }
-			if(node->cov_distr_nml_rev[p+l] < buddy->cov_distr_nml_rev[l]) { node->cov_distr_nml_rev[p+l] = buddy->cov_distr_nml_rev[l]; }
-			if(node->cov_distr_nml_minqv_fwd[p+l] < buddy->cov_distr_nml_minqv_fwd[l]) { node->cov_distr_nml_minqv_fwd[p+l] = buddy->cov_distr_nml_minqv_fwd[l]; }
-			if(node->cov_distr_nml_minqv_rev[p+l] < buddy->cov_distr_nml_minqv_rev[l]) { node->cov_distr_nml_minqv_rev[p+l] = buddy->cov_distr_nml_minqv_rev[l]; }
-		}
+		assert(node->cov_distr_tmr.size() == node->cov_distr_nml.size());
 		
-		for (unsigned int j = (K-1); j < buddy->cov_distr_tmr_fwd.size(); j++) {
+		/*
+		int p = (node->cov_distr_tmr.size())-K+1;
+		assert(p>0);
+		for (int l = 0; l < K-1; l++) {
 			// tumor
-			node->cov_distr_tmr_fwd.push_back(buddy->cov_distr_tmr_fwd[j]);
-			node->cov_distr_tmr_rev.push_back(buddy->cov_distr_tmr_rev[j]);			
-			node->cov_distr_tmr_minqv_fwd.push_back(buddy->cov_distr_tmr_minqv_fwd[j]);	
-			node->cov_distr_tmr_minqv_rev.push_back(buddy->cov_distr_tmr_minqv_rev[j]);	
+			int node_cov_tmr = node->cov_distr_tmr[p+l].fwd + node->cov_distr_tmr[p+l].rev;
+			int buddy_cov_tmr = buddy->cov_distr_tmr[l].fwd + buddy->cov_distr_tmr[l].rev;
+			if(node_cov_tmr < buddy_cov_tmr) { node->cov_distr_tmr[p+l] = buddy->cov_distr_tmr[l]; }
 			// normal
-			node->cov_distr_nml_fwd.push_back(buddy->cov_distr_nml_fwd[j]);
-			node->cov_distr_nml_rev.push_back(buddy->cov_distr_nml_rev[j]);			
-			node->cov_distr_nml_minqv_fwd.push_back(buddy->cov_distr_nml_minqv_fwd[j]);
-			node->cov_distr_nml_minqv_rev.push_back(buddy->cov_distr_nml_minqv_rev[j]);
+			int node_cov_nml = node->cov_distr_nml[p+l].fwd + node->cov_distr_nml[p+l].rev;
+			int buddy_cov_nml = buddy->cov_distr_nml[l].fwd + buddy->cov_distr_nml[l].rev;
+			if(node_cov_nml < buddy_cov_nml) { node->cov_distr_nml[p+l] = buddy->cov_distr_nml[l]; }
+		}
+		*/
+		
+		for (unsigned int j = (K-1); j < buddy->cov_distr_tmr.size(); j++) {
+			// tumor
+			node->cov_distr_tmr.push_back(buddy->cov_distr_tmr[j]);
+			// normal
+			node->cov_distr_nml.push_back(buddy->cov_distr_nml[j]);
 		}
 		
 		node->cov_tmr_m_fwd = ((ncov_tmr_fwd * amerlen) + (ccov_tmr_fwd * bmerlen)) / (amerlen + bmerlen);

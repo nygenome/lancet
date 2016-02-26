@@ -135,10 +135,9 @@ public:
 	Node_t * pathcontig(int pos);
 	int hasCycle(Node_t * node);
 	bool hasTumorOnlyNode();
-	vector<int> covDistr(char sample, unsigned int strand, bool minqv);
-	vector<int> totCovDistr(char sample);
+	vector<cov_t> covDistr(char sample);
 	vector<float> readCovNodes();
-	int covAt(int pos, char sample, unsigned int strand);
+	//int covAt(int pos, char sample, unsigned int strand);
 
 };
 

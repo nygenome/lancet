@@ -351,14 +351,13 @@ void global_align_aff(const string & S, const string & T,
   }
 }
 
-/*
-void global_cov_align_aff(const string & S, const string & T, const vector<int> & CS, const vector<int> & CT, 
-	string & S_aln, string & T_aln, vector<int> & CS_aln, vector<int> & CT_aln,
+
+void global_cov_align_aff(const string & S, const string & T, const vector<int> & CT, 
+	string & S_aln, string & T_aln, vector<int> & CT_aln,
 	int endfree, int V)
 {
   S_aln.clear();
   T_aln.clear();
-  CS_aln.clear();
   CT_aln.clear();
 
   //if (endfree) { V = 1; }
@@ -440,19 +439,19 @@ void global_cov_align_aff(const string & S, const string & T, const vector<int> 
 
     if      (t == '*')  { break; }
 
-    else if (forcex)    { a.s = S[i-1]; a.cs = CS[i-1]; a.t = '-'; a.ct = -1; z=x; if (X[i][j].tb == '<') { forcex = false; } i--; }
-    else if (t == '<')  { a.s = S[i-1]; a.cs = CS[i-1]; a.t = '-'; a.ct = -1; z=x; if (X[i][j].tb == '-') { forcex = true;  } i--; }
+    else if (forcex)    { a.s = S[i-1]; a.t = '-'; a.ct = CT[j]; z=x; if (X[i][j].tb == '<') { forcex = false; } i--; }
+    else if (t == '<')  { a.s = S[i-1]; a.t = '-'; a.ct = CT[j]; z=x; if (X[i][j].tb == '-') { forcex = true;  } i--; }
 
-    else if (forcey)    { a.s = '-'; a.cs = -1; a.t = T[j-1]; a.ct = CT[j-1]; z=y; if (Y[i][j].tb == '^') { forcey = false; } j--; }
-    else if (t == '^')  { a.s = '-'; a.cs = -1; a.t = T[j-1]; a.ct = CT[j-1]; z=y; if (Y[i][j].tb == '|') { forcey = true;  } j--; }
+    else if (forcey)    { a.s = '-'; a.t = T[j-1]; a.ct = CT[j-1]; z=y; if (Y[i][j].tb == '^') { forcey = false; } j--; }
+    else if (t == '^')  { a.s = '-'; a.t = T[j-1]; a.ct = CT[j-1]; z=y; if (Y[i][j].tb == '|') { forcey = true;  } j--; }
 
-	else if (t == '\\') { a.s = S[i-1]; a.t = T[j-1]; a.c = C[j-1]; i--; j--; }
+	else if (t == '\\') { a.s = S[i-1]; a.t = T[j-1]; a.ct = CT[j-1]; i--; j--; }
     
     else { cerr << "WTF!" << endl; exit(1); }
 
     if (V) { cerr << "M[" << i << "," << j << "]:\t" 
                   << s << " " << t << "," << x << (forcex ? '*' : ' ') << "," << y << (forcey ? '*' : ' ') << "," << z
-                  << " | " << a.s << " " << a.t << " " << a.c << endl; }
+                  << " | " << a.s << " " << a.t << endl; }
 
     trace.push_back(a);
   }
@@ -477,13 +476,6 @@ void global_cov_align_aff(const string & S, const string & T, const vector<int> 
     CT_aln.push_back(trace[k].ct);
   }
   if (V) { cout << endl; }
-
-  for (int k = trace.size() - 1; k >= 0; k--)
-  {
-    if (V) { cout << "   " << trace[k].cs; }
-    CS_aln.push_back(trace[k].cs);
-  }
-  if (V) { cout << endl; }
   
   if (V) 
   {
@@ -495,9 +487,9 @@ void global_cov_align_aff(const string & S, const string & T, const vector<int> 
 
     cout << "S': " << S_aln << endl;
     cout << "T': " << T_aln << endl;
-    //cout << "C': " << C_aln << endl;
+    //cout << "C': " << CT_aln << endl;
 
   }
 }
-*/
+
 

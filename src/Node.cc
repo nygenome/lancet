@@ -324,19 +324,15 @@ int Node_t::cntReadCode(char code)
 //////////////////////////////////////////////////////////////
 void Node_t::updateCovDistr(int c, unsigned int strand, char sample) 
 {
-	vector<int> * cov_distr = NULL;
+	vector<cov_t> * cov_distr = NULL;
 	
-	if(sample == 'T') {
-		if(strand == FWD) { cov_distr = &cov_distr_tmr_fwd; }
-		if(strand == REV) { cov_distr = &cov_distr_tmr_rev; }
-	}
-	else if(sample == 'N') {
-		if(strand == FWD) { cov_distr = &cov_distr_nml_fwd; }
-		if(strand == REV) { cov_distr = &cov_distr_nml_rev; }
-	}
+	if(sample == 'T')      { cov_distr = &cov_distr_tmr; }
+	else if(sample == 'N') { cov_distr = &cov_distr_nml; }
+	else { cerr << "Error: unrecognized sample " << sample << endl; }
 	
 	for (unsigned int i = 0; i < cov_distr->size(); i++) {
-		(*cov_distr)[i] = c; 
+		if(strand == FWD) { ((*cov_distr)[i]).fwd = c; }
+		if(strand == REV) { ((*cov_distr)[i]).rev = c; }
 	}
 }
 
@@ -346,20 +342,17 @@ void Node_t::updateCovDistr(int c, unsigned int strand, char sample)
 //////////////////////////////////////////////////////////////
 void Node_t::updateCovDistrMinQV(const string & qv, unsigned int strand, char sample) {
 	
-	vector<int> * cov_distr = NULL;
-
-	if(sample == 'T') {
-		if(strand == FWD) { cov_distr = &cov_distr_tmr_minqv_fwd; }
-		if(strand == REV) { cov_distr = &cov_distr_tmr_minqv_rev; }
-	}
-	else if(sample == 'N') {
-		if(strand == FWD) { cov_distr = &cov_distr_nml_minqv_fwd; }
-		if(strand == REV) { cov_distr = &cov_distr_nml_minqv_rev; }
-	}
+	vector<cov_t> * cov_distr = NULL;
+	
+	if(sample == 'T')      { cov_distr = &cov_distr_tmr; }
+	else if(sample == 'N') { cov_distr = &cov_distr_nml; }
+	else { cerr << "Error: unrecognized sample " << sample << endl; }
 
 	unsigned int i = 0;
 	for ( string::const_iterator it=qv.begin(); it!=qv.end(); ++it) {
-		if(*it >= MIN_QUAL) { (*cov_distr)[i]++; }
+		
+		if( (*it >= MIN_QUAL) && (strand == FWD)) { ((*cov_distr)[i]).minqv_fwd++; }
+		if( (*it >= MIN_QUAL) && (strand == REV)) { ((*cov_distr)[i]).minqv_rev++; }
 		i++;
 	}
 }
@@ -369,25 +362,19 @@ void Node_t::updateCovDistrMinQV(const string & qv, unsigned int strand, char sa
 //////////////////////////////////////////////////////////////
 int Node_t::avgCovDistr(char sample)
 {
-	vector<int> cov_distr_fwd;
-	vector<int> cov_distr_rev;
+	vector<cov_t> cov_distr;
 	
-	if(sample == 'T') { 
-		cov_distr_fwd = cov_distr_tmr_fwd; 
-		cov_distr_rev = cov_distr_tmr_rev;
-	}
-	else if(sample == 'N') { 
-		cov_distr_fwd = cov_distr_nml_fwd; 
-		cov_distr_rev = cov_distr_nml_rev; 
-	}
+	if(sample == 'T')      { cov_distr = cov_distr_tmr; }
+	else if(sample == 'N') { cov_distr = cov_distr_nml; }
+	else { cerr << "Error: unrecognized sample " << sample << endl; }
 	
 	int sum = 0;
 	int cnt = 0;
-	for (unsigned int i = 0; i < cov_distr_fwd.size(); i++)
+	for (unsigned int i = 0; i < cov_distr.size(); i++)
 	{
-		int totcov = cov_distr_fwd[i] + cov_distr_rev[i];
+		int totcov = cov_distr[i].fwd + cov_distr[i].rev;
 		if(totcov !=0) {
-			sum += cov_distr_fwd[i] + cov_distr_rev[i];
+			sum += totcov;
 			cnt++;
 		}
 	}
@@ -405,19 +392,10 @@ int Node_t::avgCovDistr(char sample)
 void Node_t::revCovDistr() 
 {
 	int i=0;
-	int j=cov_distr_tmr_fwd.size()-1;
+	int j=cov_distr_tmr.size()-1;
 	while(i<j){
-		
-		swap(cov_distr_tmr_fwd[i], cov_distr_tmr_fwd[j]);
-		swap(cov_distr_tmr_rev[i], cov_distr_tmr_rev[j]);
-		swap(cov_distr_nml_fwd[i], cov_distr_nml_fwd[j]);
-		swap(cov_distr_nml_rev[i], cov_distr_nml_rev[j]);
-		
-		swap(cov_distr_tmr_minqv_fwd[i], cov_distr_tmr_minqv_fwd[j]);
-		swap(cov_distr_tmr_minqv_rev[i], cov_distr_tmr_minqv_rev[j]);
-		swap(cov_distr_nml_minqv_fwd[i], cov_distr_nml_minqv_fwd[j]);
-		swap(cov_distr_nml_minqv_rev[i], cov_distr_nml_minqv_rev[j]);
-		
+		swap(cov_distr_tmr[i], cov_distr_tmr[j]);
+		swap(cov_distr_nml[i], cov_distr_nml[j]);
 		i++;j--;
 	}
 }
@@ -428,22 +406,16 @@ void Node_t::revCovDistr()
 int Node_t::minNon0Cov(char sample) 
 {
 	
-	vector<int> cov_distr_fwd;
-	vector<int> cov_distr_rev;
+	vector<cov_t> cov_distr;
 
-	if(sample == 'T') { 
-		cov_distr_fwd = cov_distr_tmr_fwd; 
-		cov_distr_rev = cov_distr_tmr_rev; 
-	}
-	else if(sample == 'N') { 
-		cov_distr_fwd = cov_distr_nml_fwd; 
-		cov_distr_rev = cov_distr_nml_rev; 	
-	}
+	if(sample == 'T')      { cov_distr = cov_distr_tmr; }
+	else if(sample == 'N') { cov_distr = cov_distr_nml; }
+	else { cerr << "Error: unrecognized sample " << sample << endl; }
 	
 	int min = 10000000;
-	for (unsigned int i = 0; i < cov_distr_fwd.size(); i++)
+	for (unsigned int i = 0; i < cov_distr.size(); i++)
 	{
-		int totcov = cov_distr_fwd[i] + cov_distr_rev[i];
+		int totcov = cov_distr[i].fwd + cov_distr[i].rev;
 		if( (totcov > 0) && (totcov < min) ) { min = totcov; }
 	}
 	
@@ -457,9 +429,9 @@ int Node_t::minNon0Cov(char sample)
 int Node_t::minCov() 
 {
 	int min = 10000000;
-	for (unsigned int i = 0; i < cov_distr_tmr_fwd.size(); i++)
+	for (unsigned int i = 0; i < cov_distr_tmr.size(); i++)
 	{
-		int totcov = cov_distr_tmr_fwd[i] + cov_distr_tmr_rev[i] + cov_distr_nml_fwd[i] + cov_distr_nml_rev[i];;
+		int totcov = cov_distr_tmr[i].fwd + cov_distr_tmr[i].rev + cov_distr_nml[i].fwd + cov_distr_nml[i].rev;;
 		if(totcov < min) { min = totcov; } 
 	}
 	return min;

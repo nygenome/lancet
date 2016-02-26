@@ -41,6 +41,14 @@ using namespace std;
 // Node_t
 //////////////////////////////////////////////////////////////////////////
 
+typedef struct cov_t
+{
+  int fwd;
+  int rev;
+  int minqv_fwd;
+  int minqv_rev;
+} cov_t;
+
 class Node_t
 {
 public:
@@ -67,14 +75,9 @@ public:
 	int color;
 	int MIN_QUAL;
 
-	vector<int> cov_distr_tmr_fwd;
-	vector<int> cov_distr_tmr_rev;
-	vector<int> cov_distr_tmr_minqv_fwd;
-	vector<int> cov_distr_tmr_minqv_rev;	
-	vector<int> cov_distr_nml_fwd;
-	vector<int> cov_distr_nml_rev;
-	vector<int> cov_distr_nml_minqv_fwd;
-	vector<int> cov_distr_nml_minqv_rev;
+	vector<cov_t> cov_distr_tmr;
+	vector<cov_t> cov_distr_nml;
+	
 	vector<Edge_t> edges_m;
 	unordered_set<ReadId_t> reads_m;
 	vector<ReadStart_t> readstarts_m;
@@ -100,14 +103,9 @@ public:
 		onRefPath_m(0),
 		color(0),
 		MIN_QUAL(0)
-		{ 	cov_distr_tmr_fwd.resize(str_m.size()); 
-			cov_distr_tmr_rev.resize(str_m.size()); 
-			cov_distr_tmr_minqv_fwd.resize(str_m.size()); 
-			cov_distr_tmr_minqv_rev.resize(str_m.size()); 
-			cov_distr_nml_fwd.resize(str_m.size());
-			cov_distr_nml_rev.resize(str_m.size());
-			cov_distr_nml_minqv_fwd.resize(str_m.size()); 
-			cov_distr_nml_minqv_rev.resize(str_m.size()); 
+		{ 	
+			cov_distr_tmr.resize(str_m.size()); 
+			cov_distr_nml.resize(str_m.size()); 
 		}
 
 	friend ostream& operator<<(std::ostream& o, const Node_t & n) { return n.print(o); }

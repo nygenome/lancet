@@ -38,8 +38,8 @@ void global_align_aff(const std::string & S, const std::string & T,
                       std::string & S_aln, std::string & T_aln,
                       int endfree, int verbose);
  
-//void global_cov_align_aff(const std::string & S, const std::string & T, const std::vector<int> & C,
-//	                  std::string & S_aln, std::string & T_aln, std::vector<int> & CS_aln, std::vector<int> & CT_aln,
-//					  int endfree, int verbose);
+void global_cov_align_aff(const std::string & S, const std::string & T, const std::vector<int> & CT,
+	                  std::string & S_aln, std::string & T_aln, std::vector<int> & CT_aln,
+					  int endfree, int verbose);
 
 #endif

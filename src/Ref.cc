@@ -60,7 +60,7 @@ void Ref_t::computeCoverage() {
 	CanonicalMer_t cmer;
 
 	for (unsigned i = 0; i < seq.length() - K + 1; i++) 
-	{
+	{	
 		cmer.set(seq.substr(i, K));			
 		std::map<string,std::pair<int,int>>::iterator it = mertable.find(cmer.mer_m);
 		if (it != mertable.end()) {
@@ -76,13 +76,17 @@ void Ref_t::computeCoverage() {
 				normal_coverage.at(i+K-1) = n_cov;
 				tumor_coverage.at(i+K-1) = t_cov;
 				
-				for (int l = 0; l < K-2; l++) {
+				for (int l = 1; l < K-2; l++) {
 					if(normal_coverage.at(i+l) < n_cov) { normal_coverage.at(i+l) = n_cov; }
 					if(tumor_coverage.at(i+l) < t_cov) { tumor_coverage.at(i+l) = t_cov; }
 					
 				}
 			}
-		}		
+		}
+		else {
+			normal_coverage.at(i) = 0;
+			tumor_coverage.at(i) = 0;
+		}
 	}
 }
 

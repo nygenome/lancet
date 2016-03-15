@@ -350,9 +350,8 @@ void Node_t::updateCovDistrMinQV(const string & qv, unsigned int strand, char sa
 
 	unsigned int i = 0;
 	for ( string::const_iterator it=qv.begin(); it!=qv.end(); ++it) {
-		
-		if( (*it >= MIN_QUAL) && (strand == FWD)) { ((*cov_distr)[i]).minqv_fwd++; }
-		if( (*it >= MIN_QUAL) && (strand == REV)) { ((*cov_distr)[i]).minqv_rev++; }
+		if( (*it >= MIN_QUAL) && (strand == FWD)) { (((*cov_distr)[i]).minqv_fwd)++; }
+		if( (*it >= MIN_QUAL) && (strand == REV)) { (((*cov_distr)[i]).minqv_rev)++; }
 		i++;
 	}
 }
@@ -384,6 +383,16 @@ int Node_t::avgCovDistr(char sample)
 	if (sum>0) { ans = floor(float(sum)/float(cnt)); }
 	
 	return ans;
+}
+
+// swap two cov_t
+//////////////////////////////////////////////////////////////////////////
+
+void Node_t::swap(cov_t & a, cov_t & b) 
+{
+	cov_t tmp = a;
+	a = b;
+	b = tmp;
 }
 
 // revCovDistr

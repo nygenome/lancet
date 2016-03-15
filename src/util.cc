@@ -78,16 +78,6 @@ void xfclose(FILE * fp)
 	}
 }
 
-// swap two integers
-//////////////////////////////////////////////////////////////////////////
-
-void swap(int & a, int & b) 
-{
-	int tmp = a;
-	a = b;
-	b = tmp;
-}
-
 // isDNA
 //////////////////////////////////////////////////////////////////////////
 
@@ -267,6 +257,17 @@ bool Fasta_Read (FILE * fp, string & s, string & hdr)
 
 	return  true;
 }
+
+// returns true if all bases have phred quality >= Q 
+//////////////////////////////////////////////////////////////////////////
+bool seqAboveQual(string qv, int Q) 
+{
+	for ( string::const_iterator it=qv.begin(); it!=qv.end(); ++it) {
+		if( *it < Q ) { return false; }
+	}
+	return true;
+}
+
 
 // Fasta_Read
 // By default, it finds all microsatellites that are at least 8bp long (total length), 

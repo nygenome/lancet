@@ -270,7 +270,13 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			if(al.IsFirstMate()) { mate = 1; }
 			if(al.IsSecondMate()) { mate = 2; }
 			if(al.IsReverseStrand()) { strand = REV; }
-		
+			
+			/*
+			string oq;
+			al.GetTag("OQ", oq); // get original base quality scores
+			cerr << oq << endl;
+			*/
+			
 			al.GetTag("RG", rg); // get the read group information for the read
 			if(rg.empty()) { rg = "null"; }
 			
@@ -280,15 +286,18 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 					//cerr << "PAIRED!!" << endl;
 					if( !(al.IsMapped()) ) { // unmapped read
 						g.addpaired("tumor", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, code, strand);
+						//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_BASTARD, code, strand);
 						num_unmapped++; 
 					}
 					else { // mapped reads
 						g.addpaired("tumor", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, code, strand);								
+						//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_MAPPED, code, strand);								
 					}
 				}
 				else { // unpaired
 					//cerr << "UNPAIRED!!" << endl;
 					g.addUnpaired("tumor", al.Name, al.QueryBases, al.Qualities, Graph_t::CODE_MAPPED, code, strand);	
+					//g.addUnpaired("tumor", al.Name, al.QueryBases, oq, Graph_t::CODE_MAPPED, code, strand);	
 				}
 				//cout << al.Name << endl;
 				readcnt++;

@@ -41,6 +41,7 @@ using namespace std;
 // Node_t
 //////////////////////////////////////////////////////////////////////////
 
+
 typedef struct cov_t
 {
   int fwd;
@@ -162,6 +163,8 @@ public:
 	int cntReadCode(char code);
 
 	int readOverlaps(const Node_t & other);
+	
+	void swap(cov_t & a, cov_t & b);
 };
 
 

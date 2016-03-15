@@ -27,7 +27,6 @@
 #include <set>
 #include <sstream>
 
-
 //-- Include hash_map
 #ifdef __GNUC__
 #if __GNUC__ < 3
@@ -58,7 +57,6 @@ void xfclose(FILE * fp);
 std::string itos(int i);
 std::string dtos(double d);
 bool isDNA(char b);
-void swap(int & a, int & b);
 char rrc(char b);
 std::string rc_str(const std::string & str);
 bool Fasta_Read(FILE * fp, std::string & s, std::string & hdr);
@@ -66,6 +64,7 @@ bool isNseq(const std::string & seq);
 bool isRepeat(const std::string & seq, int K);
 bool isAlmostRepeat(const std::string & seq, int K, int max);
 bool kMismatch(size_t s, size_t e, const std::string & t, size_t start, int max);
+bool seqAboveQual(std::string qv, int Q);
 //void findTandems(const std::string & seq, const string & tag);
 
 #endif

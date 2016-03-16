@@ -33,7 +33,7 @@ bool VERBOSE = false;
 bool PRINT_ALL = false;
 bool PRINT_DOT_READS = true;
 int MIN_QV_TRIM = 10;
-int MIN_QV_CALL = 10;
+int MIN_QV_CALL = 17;
 int QV_RANGE = '!';
 int MIN_QUAL_TRIM = MIN_QV_TRIM + QV_RANGE;
 int MIN_QUAL_CALL = MIN_QV_CALL + QV_RANGE;
@@ -263,7 +263,7 @@ int main(int argc, char** argv)
 		"   --min-k, k                <int>         : min kmersize [default: " << minK << "]\n"
 		"   --max-k, -K               <int>         : max kmersize [default: " << maxK << "]\n"
 		"   --trim-lowqual, -q        <int>         : trim bases below qv at 5' and 3' [default: " << MIN_QV_TRIM << "]\n"
-		"   --min-base-qual, -C       <int>         : minimum base quality required to consider a base for calling snv [default: " << MIN_QV_CALL << "]\n"
+		"   --min-base-qual, -C       <int>         : minimum base quality required to consider a base for calling [default: " << MIN_QV_CALL << "]\n"
 		"   --quality-range, -Q       <char>        : quality value range [default: " << (char) QV_RANGE << "]\n"
 		"   --min-map-qual, -b        <inr>         : minimum read mapping quality in Phred-scale [default: " << MIN_MAP_QUAL << "]\n"
 		"   --tip-len, -l             <int>         : max tip length [default: " << MAX_TIP_LEN << "]\n"

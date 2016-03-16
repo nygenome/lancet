@@ -78,8 +78,8 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 
 // print variant in VCF format
 void VariantDB_t::printToVCF(const string version, const string reference, char * date, Filters &fs, string &sample_name_N, string &sample_name_T) {
-	
-	printHeader(version,reference,date,fs, sample_name_N, sample_name_T);
+		
+	printHeader(version,reference,date,fs,sample_name_N,sample_name_T);
 	
 	// dump map content to vector for custom sorting
 	vector< pair<string,Variant_t> > myVec(DB.begin(), DB.end());

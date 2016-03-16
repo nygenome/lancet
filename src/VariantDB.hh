@@ -45,7 +45,7 @@ struct byPos
 		int cmp = chr1.compare(chr2);
 		if (cmp == 0) { ans = (pos1 < pos2); }
 		else if (cmp < 0) { ans = true; }
-		else if (cmp < 0) { ans = false; }
+		else if (cmp > 0) { ans = false; }
 	
 		return ans;
 	}

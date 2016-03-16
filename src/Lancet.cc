@@ -44,6 +44,7 @@ string TUMOR;
 string NORMAL;
 string RG_FILE;
 string REFFILE;
+string BEDFILE;
 string REGION;
 
 int minK = 11;
@@ -56,12 +57,14 @@ int LOW_COV_THRESHOLD = 1;
 int MAX_AVG_COV = 10000;
 int NODE_STRLEN = 100;
 int DFS_LIMIT = 1000000;
-int MAX_INDEL_LEN = 250;
+int MAX_INDEL_LEN = 500;
 int MAX_MISMATCH = 2;
 
 bool SCAFFOLD_CONTIGS = 0;
 int INSERT_SIZE = 150;
 int INSERT_STDEV = 15;
+
+int num_windows = 0;
 
 // constants
 //////////////////////////////////////////////////////////////////////////
@@ -81,58 +84,65 @@ const string Graph_t::COLOR_TOUCH  = "magenta";
 
 /***********************************/
 
-void printConfiguration(ostream & out)
+void printConfiguration(ostream & out, Filters & filters)
 {
-	out << "VERBOSE: "          << verbose << endl;
-	out << "MORE VERBOSE: "     << VERBOSE << endl;
-
 	out << "tumor BAM: "        << TUMOR << endl;
 	out << "normal BAM: "       << NORMAL << endl;
-	out << "reffile: "          << REFFILE << endl;
+	out << "reference: "        << REFFILE << endl;
 	out << "region: "           << REGION  << endl;
+	out << "BED file: "         << BEDFILE  << endl;
 
-	out << "min K: "            << minK << endl;
-	out << "max K: "            << maxK << endl;
-	out << "MAX_TIP_LEN: "      << MAX_TIP_LEN << endl;
+	out << "min-K: "            << minK << endl;
+	out << "max-K: "            << maxK << endl;
+	out << "tip-len: "          << MAX_TIP_LEN << endl;
 
-	out << "QV_RANGE: "         << QV_RANGE << endl;
-	out << "MIN_QV_CALL: "      << MIN_QV_CALL << endl;
-	out << "MIN_QV_TRIM: "      << MIN_QV_TRIM << endl;
-	out << "MIN_QUAL_TRIM: "    << (char) MIN_QUAL_TRIM << endl;
-	out << "MIN_QUAL_CALL: "    << (char) MIN_QUAL_CALL << endl;
-	out << "MIN_MAP_QUAL: "     << MIN_MAP_QUAL << endl;
-	out << "MAX_AVG_COV: "		<< MAX_AVG_COV << endl;
-
-	out << "MIN_THREAD_READS: " << MIN_THREAD_READS << endl;
-	out << "COV_THRESHOLD: "    << COV_THRESHOLD << endl;
+	//out << "MIN_THREAD_READS: " << MIN_THREAD_READS << endl;
+	out << "cov-thr: "          << COV_THRESHOLD << endl;
 	cerr.unsetf(ios::floatfield); // floatfield not set
 	cerr.precision(5);
-	out << "MIN_COV_RATIO: "    << MIN_COV_RATIO << endl;
+	out << "cov-ratio: "        << MIN_COV_RATIO << endl;
 	cerr.setf(ios::fixed,ios::floatfield);
 	cerr.precision(1);
-	out << "LOW_COV_THRESHOLD: "<< LOW_COV_THRESHOLD << endl;
-	out << "WINDOW_SIZE: "      << WINDOW_SIZE << endl;
-	out << "DFS_LIMIT: "        << DFS_LIMIT << endl;
-	out << "MAX_INDEL_LEN: "    << MAX_INDEL_LEN << endl;
-	out << "MAX_MISMATCH: "     << MAX_MISMATCH << endl;
-
-	out << "SCAFFOLD_CONTIGS: " << bvalue(SCAFFOLD_CONTIGS) << endl;
-	out << "INSERT_SIZE: "      << INSERT_SIZE << " +/- " << INSERT_STDEV << endl;
-
-	out << "PRINT_ALL: "        << bvalue(PRINT_ALL) << endl;
-
-	out << "NODE_STRLEN: "      << NODE_STRLEN << endl;
+	out << "low-cov: "          << LOW_COV_THRESHOLD << endl;
+	out << "window-size: "      << WINDOW_SIZE << endl;
+	out << "max-avg-cov: "      << MAX_AVG_COV << endl;
+	out << "min-map-qual: "     << MIN_MAP_QUAL << endl;
+	out << "min-base-qual: "    << MIN_QV_CALL << endl;
+	out << "trim-lowqual: "     << MIN_QV_TRIM << endl;
+	out << "quality-range: "    << QV_RANGE << endl;	
+	out << "node-str-len: "     << NODE_STRLEN << endl;
+	out << "dfs-limit: "        << DFS_LIMIT << endl;
+	out << "max-indel-len: "    << MAX_INDEL_LEN << endl;
+	out << "max-mismatch: "     << MAX_MISMATCH << endl;
+	out << "num-threads: "      << NUM_THREADS << endl;	
+	//out << "SCAFFOLD_CONTIGS: " << bvalue(SCAFFOLD_CONTIGS) << endl;
+	//out << "INSERT_SIZE: "      << INSERT_SIZE << " +/- " << INSERT_STDEV << endl;
+	
+	//filters
+	out << "min-phred-fisher: "     << filters.minPhredFisher << endl;
+	out << "min-strand-bias: "      << filters.minStrandBias << endl;
+	out << "min-alt-count-tumor: "  << filters.minAltCntTumor << endl;
+	out << "max-alt-count-normal: " << filters.maxAltCntNormal << endl;
+	out << "min-vaf-tumor: "        << filters.minVafTumor << endl;
+	out << "max-vaf-normal: "       << filters.maxVafNormal << endl;
+	out << "min-coverage-tumor: "   << filters.minCovTumor << endl;
+	out << "max-coverage-tumor: "   << filters.maxCovTumor << endl;
+	out << "min-coverage-normal: "  << filters.minCovNormal << endl;
+	out << "max-coverage-normal: "  << filters.maxCovNormal << endl;
+	
+	out << "print graphs: "     << bvalue(PRINT_ALL) << endl;
+	out << "verbose: "          << bvalue(verbose) << endl;
+	out << "more verbose: "     << bvalue(VERBOSE) << endl;
 	
 	out << endl;
 }
 
+
 // loadRef
 //////////////////////////////////////////////////////////////
-
-//void loadRefs(const string & filename, map<string, Ref_t *> &reftable, int NUM_THREADS)
-void loadRefs(const string reference, const string region, vector< map<string, Ref_t *> > &reftable, int num_threads)	
+int loadRefs(const string reference, const string region, vector< map<string, Ref_t *> > &reftable, int num_threads, int thread)	
 {
-	if(verbose) { cerr << "LoadRef " << reference << endl; }
+	//if(verbose) { cerr << "LoadRef " << reference << endl; }
 
 	// open fasta index
     faidx_t *fai = fai_load(reference.c_str());
@@ -158,12 +168,12 @@ void loadRefs(const string reference, const string region, vector< map<string, R
 	
 	for (unsigned int i = 0; i < s.length(); i++) { s[i] = toupper(s[i]); }
 
-	// split into overalpping windoes if sequence is too long
+	// split into overalpping windows if sequence is too long
 	int end = s.length();
 	int offset = 0;
 	int delta = 100;
 	
-	int T = 0; // thread counter
+	int T = thread; // thread counter
 	for (; offset < end; offset+=delta) {
 		
 		// adjust end if 
@@ -198,14 +208,55 @@ void loadRefs(const string reference, const string region, vector< map<string, R
 		ref->hdr = hdr;
 		
 		reftable[T].insert(make_pair(hdr, ref));
+		num_windows++;
 		
 		// move to next reftable
 		T++;
-		if( (T%num_threads) == 0) { T=0; }
+		if( (num_windows%num_threads) == 0) { T=0; }
+		cerr << T << endl;
 	}
+	
+	return T;
+}
 
+// loadbed : load regions from BED file
+//////////////////////////////////////////////////////////////
+void loadBed(const string bedfile, vector< map<string, Ref_t *> > &reftable, int num_threads) { 
+	
+	int num_regions = 0;
+	string line;
+	string region;
+	vector<std::string> tokens;
+	ifstream bfile (bedfile);
+	int t = 0;
+	if (bfile.is_open()) {
+		while ( getline (bfile,line) ) {
+			
+			size_t x = line.find_first_of('#');
+			if(x == 0) { continue; } // skip comments
+			
+			num_regions++;
+			//cerr << line << '\n';
+			
+			// extrat coordinates			
+		    istringstream iss(line);
+		    string token;
+			tokens.clear();
+		    while(std::getline(iss, token, '\t')) {  // but we can specify a different one
+				tokens.push_back(token);
+			}
 
-	if(verbose) { cerr << "Loaded " << reftable.size() << " ref sequences" << endl << endl; }
+			region = tokens[0] + ":" + tokens[1] + "-" + tokens[2];			
+			t = loadRefs(REFFILE,region,reftable,num_threads, t);
+		}
+		bfile.close();
+		
+		cerr << "Loaded " << num_regions << " from bedfile" << endl;
+	}
+	else {
+		cerr << "Couldn't open " << bedfile << endl;
+		exit(1);
+	}
 }
 
 static void* execute(void* ptr) {
@@ -259,6 +310,8 @@ int main(int argc, char** argv)
 		"   --normal, -n             <BAM file>    : BAM file of mapped reads for normal\n"
 		"   --ref, -r                <FASTA file>  : FASTA file of reference genome\n"
 		"   --reg, -p                <string>      : genomic region (in chr:start-end format)\n"
+		"   --bed, -B                <string>      : genomic regions from file (BED format)\n"
+
 		"\nOptional\n"
 		"   --min-k, k                <int>         : min kmersize [default: " << minK << "]\n"
 		"   --max-k, -K               <int>         : max kmersize [default: " << maxK << "]\n"
@@ -308,6 +361,7 @@ int main(int argc, char** argv)
 		{"tumor",   required_argument, 0, 't'},
 		{"normal",  required_argument, 0, 'n'},
 		{"ref",     required_argument, 0, 'r'},
+		{"bed",     required_argument, 0, 'B'},
 		
 		// optional
 		{"reg",  required_argument, 0, 'p'},
@@ -327,7 +381,7 @@ int main(int argc, char** argv)
 
 		{"node-str-len",  required_argument, 0, 'L'},
 		{"dfs-limit",  required_argument, 0, 'F'},
-		{"path-limit",  required_argument, 0, 'P'},
+		//{"path-limit",  required_argument, 0, 'P'},
 		{"num-threads",  required_argument, 0, 'X'},
 		{"max-indel-len",  required_argument, 0, 'T'},
 		{"max-mismatch",  required_argument, 0, 'M'},
@@ -347,13 +401,7 @@ int main(int argc, char** argv)
 		{"erroflag", no_argument,      0, 'h'},		
 		{"verbose", no_argument,       0, 'v'},
 		{"more-verbose", no_argument,  0, 'V'},
-		{"print-denovo", no_argument,  0, 'D'},
-		{"print-refpath", no_argument, 0, 'R'},
 		{"print-all", no_argument,     0, 'A'},
-		{"print-raw", no_argument,     0, 'I'},
-		{"include-unmapped", no_argument, 0, 'B'},
-		{"input-bam", no_argument,     0, 'C'},
-		{"input-fastq", no_argument,   0, 'E'},
 		
 		{0, 0, 0, 0}
 	};
@@ -361,15 +409,16 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:AhSL:T:M:vVF:q:b:Q:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:AhSL:T:M:vVF:q:b:B:Q:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
 			case 't': TUMOR            = optarg;       break; 
 			case 'n': NORMAL           = optarg;       break; 
 			case 'r': REFFILE          = optarg;       break;
-			
+			case 'B': BEDFILE          = optarg;       break;
 			case 'p': REGION           = optarg;       break;
+			
 			case 'g': RG_FILE          = optarg;       break;
 			case 'k': minK             = atoi(optarg); break;
 			case 'K': maxK             = atoi(optarg); break;
@@ -430,10 +479,16 @@ int main(int argc, char** argv)
 	if (TUMOR == "") { cerr << "ERROR: Must provide the tumor BAM file (-t)" << endl; errflg++; }
 	if (NORMAL == "") { cerr << "ERROR: Must provide the normal BAM file (-n)" << endl; errflg++; }		
 	if (REFFILE == "") { cerr << "ERROR: Must provide a reference genome file (-r)" << endl; errflg++; }
+	if ( (BEDFILE == "") && (REGION == "") ) { cerr << "ERROR: Must provide region (-p) or BED file (-B)" << endl; errflg++; }
 
 	if (errflg) { exit(EXIT_FAILURE); }
+	
+    ofstream params_file;
+    params_file.open ("config.txt");
+	printConfiguration(params_file, filters); // save parameters setting to file
+    params_file.close();
 
-	if(verbose) { printConfiguration(cerr); }
+	if(verbose) { printConfiguration(cerr, filters); }
 	
 	// run the assembler on each region
 	try {
@@ -450,8 +505,15 @@ int main(int argc, char** argv)
 		vector<Microassembler*> assemblers(NUM_THREADS, new Microassembler());
 		vector< map<string, Ref_t *> > reftables(NUM_THREADS, map<string, Ref_t *>()); // table of references to analyze
 		
-		loadRefs(REFFILE,REGION,reftables,NUM_THREADS);
-
+		if (BEDFILE != "") {
+			loadBed(BEDFILE,reftables,NUM_THREADS);
+		}
+		if (REGION != "") {
+			loadRefs(REFFILE,REGION,reftables,NUM_THREADS, 0);
+		}
+		
+		cerr << num_windows << " windows to process" << endl << endl;
+		
 		// Initialize and set thread joinable
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -515,24 +577,21 @@ int main(int argc, char** argv)
 		//merge variant from all threads
 		cerr << "Merge variants" << endl;
 		VariantDB_t variantDB; // variants DB
-		for( i=0; i < NUM_THREADS; i++ ) {		
+		for( i=0; i < NUM_THREADS; i++ ) {
 			map<string,Variant_t> db = (assemblers[i]->vDB).DB;
 			map<string,Variant_t>::iterator it;			
 			for (it=db.begin(); it!=db.end(); ++it) {
 				variantDB.addVar(it->second);
 			}
 		}
-		
-		
+				
 		/***** get current time and date *****/
-		
 		time_t rawtime;
 		time (&rawtime);
 		char* DATE = ctime (&rawtime);
-		
 		/***************************************/
 		
-		variantDB.printToVCF(VERSION,REFFILE,DATE,filters, assemblers[0]->sample_name_normal, assemblers[0]->sample_name_tumor);
+		variantDB.printToVCF(VERSION, REFFILE, DATE, filters, assemblers[0]->sample_name_normal, assemblers[0]->sample_name_tumor);		
 	}
 	catch (int e) {
 		cerr << "An exception occurred. Exception Nr. " << e << endl;

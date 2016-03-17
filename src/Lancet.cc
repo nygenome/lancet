@@ -213,7 +213,6 @@ int loadRefs(const string reference, const string region, vector< map<string, Re
 		// move to next reftable
 		T++;
 		if( (num_windows%num_threads) == 0) { T=0; }
-		cerr << T << endl;
 	}
 	
 	return T;

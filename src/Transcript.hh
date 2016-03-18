@@ -24,6 +24,7 @@
 *************************** /COPYRIGHT **************************************/
 
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
@@ -60,6 +61,11 @@ public:
 	int min_cov_T_fwd;
 	int min_cov_T_rev;
 	
+	int median_cov_N_fwd;
+	int median_cov_N_rev;
+	int median_cov_T_fwd;
+	int median_cov_T_rev;
+	
 	int min_nonzero_cov_N_fwd;
 	int min_nonzero_cov_N_rev;
 	int min_nonzero_cov_T_fwd;
@@ -67,6 +73,8 @@ public:
 	
 	int min_ref_cov_N;
 	int min_ref_cov_T;
+	int median_ref_cov_N;
+	int median_ref_cov_T;
 	int min_nonzero_ref_cov_N;
 	int min_nonzero_ref_cov_T;
 	
@@ -122,25 +130,27 @@ public:
 	void updateStats() {				
 
 		// normal
-		computeStats(cov_distr_N_fwd, min_cov_N_fwd, min_nonzero_cov_N_fwd, mean_cov_N_fwd, mean_cov_N_non0_fwd);
-		computeStats(cov_distr_N_rev, min_cov_N_rev, min_nonzero_cov_N_rev, mean_cov_N_rev, mean_cov_N_non0_rev);
+		computeStats(cov_distr_N_fwd, min_cov_N_fwd, min_nonzero_cov_N_fwd, mean_cov_N_fwd, mean_cov_N_non0_fwd, median_cov_N_fwd);
+		computeStats(cov_distr_N_rev, min_cov_N_rev, min_nonzero_cov_N_rev, mean_cov_N_rev, mean_cov_N_non0_rev, median_cov_N_rev);
 		
 		//tumor
-		computeStats(cov_distr_T_fwd, min_cov_T_fwd, min_nonzero_cov_T_fwd, mean_cov_T_fwd, mean_cov_T_non0_fwd);
-		computeStats(cov_distr_T_rev, min_cov_T_rev, min_nonzero_cov_T_rev, mean_cov_T_rev, mean_cov_T_non0_rev);
+		computeStats(cov_distr_T_fwd, min_cov_T_fwd, min_nonzero_cov_T_fwd, mean_cov_T_fwd, mean_cov_T_non0_fwd, median_cov_T_fwd);
+		computeStats(cov_distr_T_rev, min_cov_T_rev, min_nonzero_cov_T_rev, mean_cov_T_rev, mean_cov_T_non0_rev, median_cov_T_rev);
 		
 		// normal and tumor reference coverage
-		computeStats(ref_cov_distr_N, min_ref_cov_N, min_nonzero_ref_cov_N, mean_ref_cov_N, mean_ref_cov_N_non0);
-		computeStats(ref_cov_distr_T, min_ref_cov_T, min_nonzero_ref_cov_T, mean_ref_cov_T, mean_ref_cov_T_non0);
+		computeStats(ref_cov_distr_N, min_ref_cov_N, min_nonzero_ref_cov_N, mean_ref_cov_N, mean_ref_cov_N_non0, median_ref_cov_N);
+		computeStats(ref_cov_distr_T, min_ref_cov_T, min_nonzero_ref_cov_T, mean_ref_cov_T, mean_ref_cov_T_non0, median_ref_cov_T);
 	}
 	
 	// compute coverage stats
-	void computeStats(vector<int> &cov_distr, int &min_cov, int &min_nonzero_cov, float &mean_cov, float &mean_cov_non0) {
+	void computeStats(vector<int> &cov_distr, int &min_cov, int &min_nonzero_cov, float &mean_cov, float &mean_cov_non0, int &median_cov) {
 		float sum= 0;
 		unsigned int n = cov_distr.size();
 		unsigned int n_non0 = 0;
 		float sum_non0 = 0;
-		
+
+		sort (cov_distr.begin(), cov_distr.end());  
+				
 		for (unsigned int i = 0; i < n; i++) {
 			sum += cov_distr[i];
 			if(cov_distr[i] != 0) { sum_non0 += cov_distr[i]; n_non0++; }
@@ -151,6 +161,8 @@ public:
 		else { mean_cov = 0; }
 		if (n_non0 > 0) { mean_cov_non0 =(float)sum_non0/(float)n_non0; }
 		else { mean_cov_non0 = 0; }
+		
+		median_cov = cov_distr[int(ceil(n/2))];
 	}
 	
 	void addCovNfwd(int c) { cov_distr_N_fwd.push_back(c); }	
@@ -176,9 +188,15 @@ public:
 	int getMinCovNfwd() { return min_cov_N_fwd; }
 	int getMinCovNrev() { return min_cov_N_rev; }
 	
+	int getMedianCovNfwd() { return median_cov_N_fwd; }
+	int getMedianCovNrev() { return median_cov_N_rev; }
+	
 	int getMinCovTfwd() { return min_cov_T_fwd; }
 	int getMinCovTrev() { return min_cov_T_rev; }
 
+	int getMedianCovTfwd() { return median_cov_T_fwd; }
+	int getMedianCovTrev() { return median_cov_T_rev; }
+	
 	int getMinNon0CovNfwd() { return min_nonzero_cov_N_fwd; }
 	int getMinNon0CovNrev() { return min_nonzero_cov_N_rev; }
 
@@ -187,6 +205,10 @@ public:
 
 	int getMinRefCovN() { return min_ref_cov_N; }
 	int getMinRefCovT() { return min_ref_cov_T; }
+	
+	int getMedianRefCovN() { return median_ref_cov_N; }
+	int getMedianRefCovT() { return median_ref_cov_T; }
+	
 	int getMinNon0RefCovN() { return min_nonzero_ref_cov_N; }
 	int getMinNon0RefCovT() { return min_nonzero_ref_cov_T; }
 	

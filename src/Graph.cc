@@ -888,12 +888,12 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			
 			if(verbose) { cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|R:" << 
 						transcript[ti].getMinRefCovN() << "n," << transcript[ti].getMinRefCovT() << "t|A:(" << 
-						((transcript[ti].isSomatic) ? transcript[ti].getMinCovNfwd() : transcript[ti].getMinNon0CovNfwd()) << "+," << 
-						((transcript[ti].isSomatic) ? transcript[ti].getMinCovNrev() : transcript[ti].getMinNon0CovNrev()) << "-)n,(" << 
+						((transcript[ti].isSomatic) ? transcript[ti].getMedianCovNfwd() : transcript[ti].getMinNon0CovNfwd()) << "+," << 
+						((transcript[ti].isSomatic) ? transcript[ti].getMedianCovNrev() : transcript[ti].getMinNon0CovNrev()) << "-)n,(" << 
 						//transcript[ti].getMinCovNfwd() << "+," << 
 						//transcript[ti].getMinCovNrev() << "-)n,(" << 
-						transcript[ti].getMinCovTfwd() << "+," << 
-						transcript[ti].getMinCovTrev() << "-)t|" <<
+						transcript[ti].getMedianCovTfwd() << "+," << 
+						transcript[ti].getMedianCovTrev() << "-)t|" <<
 						transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt; 
 			}
 			
@@ -901,10 +901,10 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, 
 				transcript[ti].getMinRefCovN(),
 				transcript[ti].getMinRefCovT(),
-				(transcript[ti].isSomatic) ? transcript[ti].getMinCovNfwd() : transcript[ti].getMinNon0CovNfwd(),
-				(transcript[ti].isSomatic) ? transcript[ti].getMinCovNrev() : transcript[ti].getMinNon0CovNrev(),
+				(transcript[ti].isSomatic) ? transcript[ti].getMedianCovNfwd() : transcript[ti].getMinNon0CovNfwd(),
+				(transcript[ti].isSomatic) ? transcript[ti].getMedianCovNrev() : transcript[ti].getMinNon0CovNrev(),
 				//transcript[ti].getMinCovNfwd(), transcript[ti].getMinCovNrev(),
-				transcript[ti].getMinCovTfwd(), transcript[ti].getMinCovTrev(),
+				transcript[ti].getMedianCovTfwd(), transcript[ti].getMedianCovTrev(),
 				transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters));
 		}
 		if(verbose) { cerr << endl; }

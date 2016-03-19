@@ -59,13 +59,27 @@ void Ref_t::updateCoverage(const string & cmer, char sample) {
 void Ref_t::computeCoverage() {
 	CanonicalMer_t cmer;
 
-	for (unsigned i = 0; i < seq.length() - K + 1; i++) 
+	unsigned int end = seq.length() - K + 1;
+	for (unsigned i = 0; i < end; i++) 
 	{	
 		cmer.set(seq.substr(i, K));			
 		std::map<string,std::pair<int,int>>::iterator it = mertable.find(cmer.mer_m);
 		if (it != mertable.end()) {
 			int n_cov = ((*it).second).first;
 			int t_cov = ((*it).second).second;
+			
+			/*
+			normal_coverage.at(i) = n_cov;			
+			tumor_coverage.at(i) = t_cov;
+			
+			if( i==(end-1) ) {
+				for (int l = 0; l < K; l++) {
+					normal_coverage.at(i+l) = n_cov;
+					tumor_coverage.at(i+l) = t_cov;
+				}
+			}
+			*/
+			
 			if(i==0) {
 				for (int j=i; j<K; j++) { 
 					normal_coverage.at(j) = n_cov; 				
@@ -77,10 +91,11 @@ void Ref_t::computeCoverage() {
 				tumor_coverage.at(i+K-1) = t_cov;
 				
 				for (int l = 0; l < K-1; l++) {
-					if(normal_coverage.at(i+l) < n_cov) { normal_coverage.at(i+l) = n_cov; }
-					if(tumor_coverage.at(i+l) < t_cov) { tumor_coverage.at(i+l) = t_cov; }
-					
-				}
+					//if(normal_coverage.at(i+l) < n_cov) { normal_coverage.at(i+l) = n_cov; }
+					//if(tumor_coverage.at(i+l) < t_cov) { tumor_coverage.at(i+l) = t_cov; }
+					normal_coverage.at(i+l) = n_cov;
+					tumor_coverage.at(i+l) = t_cov;
+				}	
 			}
 		}
 		else {

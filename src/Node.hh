@@ -44,10 +44,12 @@ using namespace std;
 
 typedef struct cov_t
 {
-  int fwd;
-  int rev;
-  int minqv_fwd;
-  int minqv_rev;
+  int fwd; // total fwd coverage
+  int rev; // total rev coverage 
+  int minqv_fwd; // min base quality fwd coverage
+  int minqv_rev; // min base quality rev coverage
+  //int minmq_fwd; // min mapping quality fwd coverage
+  //int minmq_rev; // min mapping quality rev coverage
 } cov_t;
 
 class Node_t

@@ -493,3 +493,4 @@ void global_cov_align_aff(const string & S, const string & T, const vector<int> 
 }
 
 
+

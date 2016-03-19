@@ -148,7 +148,6 @@ vector<cov_t> Path_t::covDistr(char sample)
 			}
 			else { // not the first node: update coverage of overlapping region
 				// add coverage info for the new base-pairs 
-				
 				/*
 				int p = (path_coverage.size())-K+1;
 				assert(p>0); 
@@ -157,6 +156,12 @@ vector<cov_t> Path_t::covDistr(char sample)
 					int path_cov = path_coverage[p+l].fwd + path_coverage[p+l].rev;
 					int node_cov = node_coverage[l].fwd + node_coverage[l].rev;
 					if(path_cov < node_cov) { path_coverage[p+l] = node_coverage[l]; }					
+				}
+			
+				int p = (path_coverage.size())-K+1;
+				assert(p>0); 
+				for (int l = 0; l < K-1; l++) {
+					path_coverage[p+l] = node_coverage[l];
 				}
 				*/
 				for (unsigned int j = (K-1); j < node_coverage.size(); j++) {

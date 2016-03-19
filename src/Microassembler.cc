@@ -261,7 +261,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 		int alend = al.GetEndPosition();
 		if( (alstart < region.LeftPosition) || (alend > region.RightPosition) ) { continue; } // skip alignments outside region
 		
-		if ( (al.MapQuality >= MIN_MAP_QUAL) && !al.IsDuplicate() ) { // only keeping ones with high map quality and skip PCR duplicates
+		if ( (al.MapQuality >= MIN_MAP_QUAL) && !al.IsDuplicate() ) { // only keep reads with high map quality and skip PCR duplicates
 			
 			al.BuildCharData(); // Populates alignment string fields (read name, bases, qualities, tag data)
 								

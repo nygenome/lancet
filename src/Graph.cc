@@ -895,9 +895,11 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			int RCT = transcript[ti].getMinRefCovT(); // ref cov tumor
 			int ACNF = (transcript[ti].isSomatic) ? transcript[ti].getMinCovNfwd() : transcript[ti].getMinNon0CovNfwd(); // alt normal cov fwd
 			int ACNR = (transcript[ti].isSomatic) ? transcript[ti].getMinCovNrev() : transcript[ti].getMinNon0CovNrev(); // alt normal cov ref
-			int ACTF = (transcript[ti].code=='x') ? transcript[ti].getMinCovTfwd() : transcript[ti].getMedianCovTfwd(); // alt tumor cov fwd
-			int ACTR = (transcript[ti].code=='x') ? transcript[ti].getMinCovTrev() : transcript[ti].getMedianCovTrev(); // alt tumor cov rev
-				
+			int ACTF = transcript[ti].getMinCovTfwd(); // alt tumor cov fwd
+			int ACTR = transcript[ti].getMinCovTrev(); // alt tumor cov rev
+			//int ACTF = (transcript[ti].code=='x') ? transcript[ti].getMinCovTfwd() : transcript[ti].getMedianCovTfwd(); // alt tumor cov fwd
+			//int ACTR = (transcript[ti].code=='x') ? transcript[ti].getMinCovTrev() : transcript[ti].getMedianCovTrev(); // alt tumor cov rev
+					
 			if(verbose) { cerr << " " << transcript[ti].pos << ":" << transcript[ti].ref << "|" << transcript[ti].qry << "|R:" << 
 						RCN << "n," << RCT << "t|A:(" << 
 						ACNF << "+," << ACNR << "-)n,(" << 

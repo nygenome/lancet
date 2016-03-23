@@ -245,6 +245,10 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	int totalreadbp = 0;
 	double avgcov = 0.0;
 	bool skip = false;
+	int MQ = MIN_MAP_QUAL;
+	
+	// more sensitive in normal (extract all reads)
+	if (code == NML) { MQ = 0; }
 	
 	/*** TUMOR ****/
 	//while ( reader.GetNextAlignment(al) ) { // get next alignment and populate the alignment's string data fields
@@ -261,7 +265,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 		int alend = al.GetEndPosition();
 		if( (alstart < region.LeftPosition) || (alend > region.RightPosition) ) { continue; } // skip alignments outside region
 		
-		if ( (al.MapQuality >= MIN_MAP_QUAL) && !al.IsDuplicate() ) { // only keep reads with high map quality and skip PCR duplicates
+		if ( (al.MapQuality >= MQ) && !al.IsDuplicate() ) { // only keep reads with high map quality and skip PCR duplicates
 			
 			al.BuildCharData(); // Populates alignment string fields (read name, bases, qualities, tag data)
 								

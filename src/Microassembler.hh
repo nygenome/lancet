@@ -59,6 +59,7 @@
 #include "Path.hh"
 #include "Graph.hh"
 #include "VariantDB.hh"
+#include "ErrorCorrector.hh"
 
 using namespace std;
 using namespace HASHMAP;
@@ -80,7 +81,7 @@ public:
 	bool verbose;
 	bool VERBOSE;
 	bool PRINT_DOT_READS;
-
+	bool KMER_RECOVERY;
 	bool PRINT_ALL;
 
 	int MIN_QV_CALL;
@@ -144,7 +145,7 @@ public:
 		verbose			= false;
 		VERBOSE         = false;
 		PRINT_DOT_READS = true;
-
+		KMER_RECOVERY	= false;
 		PRINT_ALL       = false;
 
 		MIN_QV_CALL    = 10;

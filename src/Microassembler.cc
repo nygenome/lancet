@@ -130,6 +130,12 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 			//if no repeats in the reference build graph			
 			g.buildgraph(refinfo);
 			
+			// error correct reads (just singletons)
+			if(KMER_RECOVERY) {
+				ErrorCorrector EC;
+				EC.mersRecovery(g.nodes_m, 2);
+			}
+			
 			double avgcov = ((double) g.totalreadbp_m) / ((double)refinfo->rawseq.length());	
 			if(verbose) {
 				cerr << "reads: "   << g.readid2info.size()

@@ -30,6 +30,7 @@ int NUM_THREADS = 1;
 
 bool verbose = false;
 bool VERBOSE = false;
+bool KMER_RECOVERY = false;
 bool PRINT_ALL = false;
 bool PRINT_DOT_READS = true;
 int MIN_QV_TRIM = 10;
@@ -130,6 +131,7 @@ void printConfiguration(ostream & out, Filters & filters)
 	out << "min-coverage-normal: "  << filters.minCovNormal << endl;
 	out << "max-coverage-normal: "  << filters.maxCovNormal << endl;
 	
+	out << "kmer recovery: "     << bvalue(KMER_RECOVERY) << endl;
 	out << "print graphs: "     << bvalue(PRINT_ALL) << endl;
 	out << "verbose: "          << bvalue(verbose) << endl;
 	out << "more verbose: "     << bvalue(VERBOSE) << endl;
@@ -343,6 +345,7 @@ int main(int argc, char** argv)
 		"   --min-strand-bias, -f      <float>      : minimum strand bias threshold [default: " << filters.minStrandBias << "]\n"
 		
 		"\nFlags\n"
+		"   -R            : turn on k-mer recovery\n"
 		"   -A            : print graph (in .dot format) after every stage\n"
 		"   -L <len>      : length of sequence to display at graph node (default: " << NODE_STRLEN << ")\n"
 		"   -v            : be verbose\n"
@@ -397,6 +400,7 @@ int main(int argc, char** argv)
 		{"min-coverage-normal",  required_argument, 0, 'z'},
 		{"max-coverage-normal",  required_argument, 0, 'j'},
 
+		{"kmer-recovery", no_argument,      0, 'R'},		
 		{"erroflag", no_argument,      0, 'h'},		
 		{"verbose", no_argument,       0, 'v'},
 		{"more-verbose", no_argument,  0, 'V'},
@@ -408,7 +412,7 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:AhSL:T:M:vVF:q:b:B:Q:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSL:T:M:vVF:q:b:B:Q:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -451,6 +455,7 @@ int main(int argc, char** argv)
 			case 'z': filters.minCovNormal = atoi(optarg); break;
 			case 'j': filters.maxCovNormal = atoi(optarg); break;
 
+			case 'R': KMER_RECOVERY    = 1;            break;
 			case 'v': verbose          = 1;            break;
 			case 'V': VERBOSE=1; verbose=1;            break;
 			case 'A': PRINT_ALL        = 1;            break;
@@ -521,7 +526,8 @@ int main(int argc, char** argv)
 			cerr << "starting thread " << (i+1) << " on " << reftables[i].size() << " windows" << endl;
 		
 			assemblers[i] = new Microassembler();
-						
+
+			assemblers[i]->KMER_RECOVERY = KMER_RECOVERY;
 			assemblers[i]->verbose = verbose;
 			assemblers[i]->VERBOSE = VERBOSE;
 			assemblers[i]->PRINT_DOT_READS = PRINT_DOT_READS;

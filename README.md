@@ -94,13 +94,13 @@ An exemplary graph for a short region containing a somatic variant would look li
 
 ![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/initial.png)
 
-where the blue nodes are k-mers shared by both tumor and normal; the white nodes are k-mer wiht low support (e.g., sequencing errors); the red nodes are k-mers only present in the tumor node.
+where the blue nodes are k-mers shared by both tumor and normal; the white nodes are k-mer with low support (e.g., sequencing errors); the red nodes are k-mers only present in the tumor node.
 
 The same graph after low coverage nodes removal is:
 
 ![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/low_cov_removal.png)
 
-The final graph after compression is:
+The final graph after compression is below. Yellow and orange nodes are the source and sink respectively 
 
 ![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/final.png)
 

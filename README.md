@@ -66,7 +66,7 @@ Below is the current list of filters:
 
 The DeBruijn graph representation of a genomic region can be exported to file in [DOT](http://www.graphviz.org/doc/info/lang.html) format using the -A flag. 
 
-**NOTE:** *The following procedure does not scale well when applied to larger graphs. Please render a graph only to inspect a small genomic region of a few hundred basepairs. The -A must not be used for WGS variant calling.*
+**NOTE:** *The following procedure does not scale well when applied to larger graphs. Please render a graph only to inspect a small genomic region of a few hundred basepairs. The -A flag must not be used during regular variant calling over the whole genome.*
 
 For example the following command:
 

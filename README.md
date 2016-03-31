@@ -38,7 +38,7 @@ The command above will detect somatic variants in the tumor/normal pair of bam f
 
 ### Output
 
-Lancet generates in output the list of variants in VCF format (v4.1). All variants (SNVs and indels either shared, specific to the tumor, or specific to the normal) are exported in output. Following VCF conventions, high quality variants are flaged as **PASS** in the FILTER column. For non-PASS variants the FILTER info reports the list of filters that were not satified by the variant.
+Lancet generates in output the list of variants in VCF format (v4.1). All variants (SNVs and indels either shared, specific to the tumor, or specific to the normal) are exported in output. Following VCF conventions, high quality variants are flagged as **PASS** in the FILTER column. For non-PASS variants the FILTER info reports the list of filters that were not satisfied by the variant.
 
 ### Filters
 
@@ -62,6 +62,38 @@ Below is the current list of filters:
 9. **LowFisherScore**: low Fisher's exact test score for tumor-normal allele counts
 10. **StrandBias**: rejects variants where the vast majority of alternate alleles are seen in a single direction
 
+### Visual inspection of the DeBruijn graphs
+
+The DeBruijn graph representation of a genomic region can be exported to file in [DOT](http://www.graphviz.org/doc/info/lang.html) format using the -A flag. 
+
+**NOTE:** *The following procedure does not scale well when applied to larger graphs. Please render a graph only to inspect a small genomic region of a few hundred basepairs. The -A must not be used for WGS variant calling.*
+
+For example the following command:
+
+```
+Lancet -A --tumor T.bam --normal N.bam --ref ref.fa --reg chr:start-end
+```
+
+will export the DeBruijn graph after every stage of the assembly (low covergae removal, tips removal, compression) to the follwoing set of files:
+
+1. chr:start-end.0.dot (initial graph)
+2. chr:start-end.1l.cX.dot (after first low coverage nodes removal)
+3. chr:start-end.2c.cX.dot (after compression)
+4. chr:start-end.3l.cX.dot (after second low coverage nodes removal)
+5. chr:start-end.4t.cX.dot (after tips removal)
+6. chr:start-end.final.cX.dot (final graph)
+
+Where X is the number of the correspending connected component (in most cases only one). 
+These file can be rendered using the utilities available in the [Graphviz](http://www.graphviz.org/) visualization software package. Specifically we reccomand using the **sfdp** utlity which draws undirected graphs using the ``spring'' model and it uses a multi-scale approach to produce layouts of large graphs in a reasonably short time.
+
+```
+sfdp -Tpdf file.dot -O
+```
+
+An exemplary graph for a short region containing a somatic variant is:
+
+![Markdown preferences pane](/pics/final.tiff)
+
 ### Complete command-line options
 
 ```
@@ -73,23 +105,24 @@ Required
    --normal, -n             <BAM file>    : BAM file of mapped reads for normal
    --ref, -r                <FASTA file>  : FASTA file of reference genome
    --reg, -p                <string>      : genomic region (in chr:start-end format)
+   --bed, -B                <string>      : genomic regions from file (BED format)
 
 Optional
    --min-k, k                <int>         : min kmersize [default: 11]
    --max-k, -K               <int>         : max kmersize [default: 100]
    --trim-lowqual, -q        <int>         : trim bases below qv at 5' and 3' [default: 10]
+   --min-base-qual, -C       <int>         : minimum base quality required to consider a base for SNV calling [default: 17]
    --quality-range, -Q       <char>        : quality value range [default: !]
-   --min-map-qual, -b        <inr>         : minimum read mapping quality in Phred-scale [default: 0]
+   --min-map-qual, -b        <inr>         : minimum read mapping quality in Phred-scale [default: 15]
    --tip-len, -l             <int>         : max tip length [default: 11]
    --cov-thr, -c             <int>         : coverage threshold [default: 5]
    --cov-ratio, -x           <float>       : minimum coverage ratio [default: 0.01]
    --max-avg-cov, -u         <int>         : maximum average coverage allowed per region [default: 10000]
    --low-cov, -d             <int>         : low coverage threshold [default: 1]
    --window-size, -w         <int>         : window size of the region to assemble (in base-pairs) [default: 600]
-   --dfs-limit, -F           <int>         : limit dfs search space [default: 1000000]
-   --path-limit, -P          <int>         : limit on number of paths to report [default: 0]
-   --max-indel-len, -T       <int>         : limit on size of detectable indel [default: 250]
-   --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: 3]
+   --dfs-limit, -F           <int>         : limit dfs/bfs graph traversal search space [default: 1000000]
+   --max-indel-len, -T       <int>         : limit on size of detectable indel [default: 500]
+   --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: 2]
    --num-threads, -X         <int>         : number of parallel threads [default: 1]
    --rg-file, -g             <string>      : read group file
 
@@ -103,8 +136,10 @@ Filters
    --min-coverage-normal, -z  <int>        : minimum coverage in the normal [default: 10]
    --max-coverage-normal, -j  <int>        : maximum coverage in the normal [default: 1000000]
    --min-phred-fisher, -s     <float>      : minimum fisher exact test score [default: 10]
+   --min-strand-bias, -f      <float>      : minimum strand bias threshold [default: 2]
 
 Flags
+   -R            : turn on k-mer recovery
    -A            : print graph (in .dot format) after every stage
    -L <len>      : length of sequence to display at graph node (default: 100)
    -v            : be verbose

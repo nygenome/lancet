@@ -92,7 +92,7 @@ sfdp -Tpdf file.dot -O
 
 An exemplary graph for a short region containing a somatic variant is:
 
-![Markdown preferences pane](/pics/final.tiff)
+![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/initial.png)
 
 ### Complete command-line options
 

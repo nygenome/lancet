@@ -102,7 +102,7 @@ The same graph after low coverage nodes removal is:
 
 The final graph after compression is below. Yellow and orange nodes are the source and sink respectively 
 
-![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/final.png)
+<img src="https://github.com/nygenome/lancet/blob/master/doc/img/final.png" width="400">
 
 ### Complete command-line options
 

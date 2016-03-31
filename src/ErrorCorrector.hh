@@ -35,9 +35,9 @@ public:
 
 	ErrorCorrector() { }
 	
-	void mersRecovery(MerTable_t & nodes_m, int MIN_SUPPORT) {
+	void mersRecovery(MerTable_t & nodes_m, int MIN_SUPPORT, int MIN_QV) {
 		
-		cerr << "mers recovery" << endl;
+		//cerr << "mers recovery" << endl;
 	
 		char BP[4] = { 'A', 'C', 'G', 'T'};
 		
@@ -49,44 +49,48 @@ public:
 						
 			if(nodeA->getTotTmrCov() == 1) { // only process tumor singletons
 			
+				string qv = nodeA->qv_m;				
 				Mer_t merA = mi->first;
 				Mer_t merA_original = merA;
 				char old_bp;
 				// test changing each bp in the mer
 				for (unsigned int i=0; i<merA.size(); i++) {
-					// change bp to any of the 3 other possibile bp
-					old_bp = merA[i]; // save old bp
-					for (unsigned int j=0; j<4; j++) {
-						if(BP[j] != merA[i]) { merA[i] = BP[j]; }
 					
-						mj = nodes_m.find(merA); // search for the modified mer
+					if(qv[i] < MIN_QV) { // if quality below threshold
 					
-						if(mj != nodes_m.end() && mj != mi) { 
-							Mer_t merB = mj->first;
-							Node_t * nodeB = mj->second;
+						// change bp to any of the 3 other possibile bp
+						old_bp = merA[i]; // save old bp
+						for (unsigned int j=0; j<4; j++) {
+							if(BP[j] != merA[i]) { merA[i] = BP[j]; }
 					
-							// merB has only 1 difference form merA
-							// only use mers with support >= 2
-							if(nodeB->getTotTmrCov() >= MIN_SUPPORT) {
-								//if( oneMismatch(merA,merB) ) {
-									cerr << merA_original << "(" << nodeA->getTotTmrCov() << ")\t" << merB << "(" << nodeB->getTotTmrCov() << ")" << endl;
+							mj = nodes_m.find(merA); // search for the modified mer
+					
+							if(mj != nodes_m.end() && mj != mi) { 
+								Mer_t merB = mj->first;
+								Node_t * nodeB = mj->second;
+					
+								// merB has only 1 difference form merA
+								// only use mers with support >= 2
+								if(nodeB->getTotTmrCov() >= MIN_SUPPORT) {
+									//if( oneMismatch(merA,merB) ) {
+										//cerr << merA_original << "(" << nodeA->getTotTmrCov() << ")\t" << merB << "(" << nodeB->getTotTmrCov() << ")" << endl;
 							
-									// retrive strand info
+										// retrive strand info
+										unsigned int strand;
+										if(nodeA->getTmrCov(FWD)>0) { strand = FWD; }
+										else { strand = REV; }
 									
-									unsigned int strand;
-									if(nodeA->getTmrCov(FWD)>0) { strand = FWD; }
-									else { strand = REV; }
+										nodeB->incTmrCov(strand);
+										nodeB->updateCovDistr((int)(nodeB->getTmrCov(strand)),strand,'T');
+										//ref_m->updateCoverage(merB, 'T'); // update referecne k-mer coverage for tumor
+										//nodeB->updateCovDistrMinQV(uc_qv,strand,'T');
 									
-									nodeB->incTmrCov(strand);
-									nodeB->updateCovDistr((int)(nodeB->getTmrCov(strand)),strand,'T');
-									//ref_m->updateCoverage(merB, 'T'); // update referecne k-mer coverage for tumor
-									//nodeB->updateCovDistrMinQV(uc_qv,strand,'T');
-									
-								//}
+									//}
+								}
 							}
 						}
-					}
-					merA[i] = old_bp; //revert changed bp		
+						merA[i] = old_bp; //revert changed bp
+					}		
 				}
 			}
 		}

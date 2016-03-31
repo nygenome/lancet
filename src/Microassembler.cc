@@ -133,7 +133,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 			// error correct reads (just singletons)
 			if(KMER_RECOVERY) {
 				ErrorCorrector EC;
-				EC.mersRecovery(g.nodes_m, 2);
+				EC.mersRecovery(g.nodes_m, 2, MIN_QUAL_CALL);
 			}
 			
 			double avgcov = ((double) g.totalreadbp_m) / ((double)refinfo->rawseq.length());	

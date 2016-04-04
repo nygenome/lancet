@@ -340,7 +340,7 @@ void Node_t::updateCovDistr(int c, unsigned int strand, char sample)
 // updated the coverage distribution along the node with 
 // base-quality value greater than MIN_QUAL
 //////////////////////////////////////////////////////////////
-void Node_t::updateCovDistrMinQV(const string & qv, unsigned int strand, char sample) {
+void Node_t::updateCovDistrMinQV(unsigned int strand, char sample) {
 	
 	vector<cov_t> * cov_distr = NULL;
 	
@@ -349,7 +349,7 @@ void Node_t::updateCovDistrMinQV(const string & qv, unsigned int strand, char sa
 	else { cerr << "Error: unrecognized sample " << sample << endl; }
 
 	unsigned int i = 0;
-	for ( string::const_iterator it=qv.begin(); it!=qv.end(); ++it) {
+	for ( string::const_iterator it=qv_m.begin(); it!=qv_m.end(); ++it) {
 		if( (*it >= MIN_QUAL) && (strand == FWD)) { (((*cov_distr)[i]).minqv_fwd)++; }
 		if( (*it >= MIN_QUAL) && (strand == REV)) { (((*cov_distr)[i]).minqv_rev)++; }
 		i++;

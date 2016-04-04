@@ -126,6 +126,25 @@ string rc_str(const string & str)
 	return retval;
 }
 
+// reverse
+// reverse the content of a string
+//////////////////////////////////////////////////////////////
+string reverse(const string & str) 
+{
+	string retval = str;
+	
+	int i=0;
+	int j=retval.size()-1;
+	while(i<j){
+		char tmp = retval[i];
+		retval[i] = retval[j];
+		retval[j] = tmp; 
+		i++;j--;
+	}
+	
+	return retval;
+}
+
 // isNseq
 // returns true if the input sequence contains only Ns
 //////////////////////////////////////////////////////////////////////////

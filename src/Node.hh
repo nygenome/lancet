@@ -140,7 +140,7 @@ public:
 	float getTotNmlCov() { return cov_nml_m_fwd + cov_nml_m_rev; }
 	float getTotCov() { return cov_tmr_m_fwd + cov_tmr_m_rev + cov_nml_m_fwd + cov_nml_m_rev; }
 	void updateCovDistr(int c, unsigned int strand, char sample);
-	void updateCovDistrMinQV(const string & qv, unsigned int strand, char sample);
+	void updateCovDistrMinQV(unsigned int strand, char sample);
 	void revCovDistr();
 	int  minCov();
 	int minNon0Cov(char sample);

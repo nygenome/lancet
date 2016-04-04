@@ -84,7 +84,7 @@ will export the DeBruijn graph after every stage of the assembly (low covergae r
 6. chr:start-end.final.cX.dot (final graph)
 
 Where X is the number of the correspending connected component (in most cases only one). 
-These file can be rendered using the utilities available in the [Graphviz](http://www.graphviz.org/) visualization software package. Specifically we reccomand using the **sfdp** utlity which draws undirected graphs using the ``spring'' model and it uses a multi-scale approach to produce layouts of large graphs in a reasonably short time.
+These files can be rendered using the utilities available in the [Graphviz](http://www.graphviz.org/) visualization software package. Specifically we reccomand using the **sfdp** utlity which draws undirected graphs using the ``spring'' model and it uses a multi-scale approach to produce layouts of large graphs in a reasonably short time.
 
 ```
 sfdp -Tpdf file.dot -O

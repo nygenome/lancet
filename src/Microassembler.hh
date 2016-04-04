@@ -108,6 +108,7 @@ public:
 	int LOW_COV_THRESHOLD;
 	int MAX_AVG_COV;
 
+	bool ACTIVE_REGION_MODULE;
 	bool SCAFFOLD_CONTIGS;
 	int  INSERT_SIZE;
 	int  INSERT_STDEV;
@@ -127,6 +128,7 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	
 	int graphCnt;
+	int num_skip; // number of regions/windows skipped 
 	set<string> readgroups;
 	set<string> RG_father;
 	set<string> RG_mother;
@@ -138,6 +140,9 @@ public:
 	
 	Microassembler() { 
 		graphCnt = 0;
+		num_skip = 0;
+		
+		ACTIVE_REGION_MODULE = true;
 		
 		BUFFER_SIZE = 10*1024;
 		WINDOW_SIZE = 600;
@@ -186,6 +191,7 @@ public:
 	void processGraph(Graph_t & g, const string & refname, int minK, int maxK);
 	int run(int argc, char** argv);
 	bool extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo, BamRegion &region, int &readcnt, int code);
+	bool isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion &region, int code);
 	int processReads();
 	void setFilters(Filters &fs) { filters = fs; }
 	void setID(int i) { ID = i; }

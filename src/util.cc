@@ -268,6 +268,45 @@ bool seqAboveQual(string qv, int Q)
 	return true;
 }
 
+// parse MD string 
+// extract SNVs locations and add them to map M
+//////////////////////////////////////////////////////////////////////////
+void parseMD(string & md, map<int,int> & M, int start) {
+	// String for mismatching positions. Regex : [0-9]+(([A-Z]|\^[A-Z]+)[0-9]+)*10
+	// example: 6G4C20G1A5C5A1^C3A15G1G15
+    map<int,int>::iterator mit;
+	size_t p = md.find_first_of("ACGT^");
+	size_t p_old = -1;
+	size_t p2;
+	string del;
+	string num;
+	int pos = start;
+	while(p!=string::npos) {
+		num = md.substr(p_old+1,p-(p_old+1));
+		pos += atoi(num.c_str());
+		//cerr << num << "|";
+		if(md[p]=='^') { 
+			p2 = md.find_first_not_of("ACGT^",p+1); // find next number
+			del = md.substr(p,p2-p);
+			pos += del.size();
+			//cerr << del << "|";
+			p = md.find_first_of("ACGT^",p2);
+			p_old = p2-1;
+		}
+		else {
+			pos++;
+			mit = M.find(pos);
+			if (mit != M.end()) { ((*mit).second)++; }
+			else { M.insert(std::pair<int,int>(pos,1)); }
+			
+			//cerr << md[p] << "|";
+			p_old = p;
+			p = md.find_first_of("ACGT^",p_old+1);
+		}
+	}
+	num = md.substr(p_old+1);				
+	//cerr << num << endl;
+}
 
 // Fasta_Read
 // By default, it finds all microsatellites that are at least 8bp long (total length), 

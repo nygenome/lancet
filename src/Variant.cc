@@ -33,7 +33,7 @@ void Variant_t::printVCF() {
 	if(flag == 'T') { status = "SOMATIC"; }
 	else if(flag == 'S') { status = "SHARED"; }
 	else if(flag == 'N') { status = "NORMAL"; }
-	else if(flag == 'E') { status = "NONE"; }
+	else if(flag == 'E') { status = "NONE"; return; } // do not print varaints without support
 	
 	string INFO = status + ";FETS=" + dtos(fet_score);
 	if(type=='I') { INFO += ";TYPE=ins"; }

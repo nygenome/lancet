@@ -627,7 +627,17 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	vector<cov_t> coverageT = path->covDistr('T');
 	
 	assert(coverageN.size() == coverageT.size());
-	global_align_aff(refseq, path->str(), ref_aln, path_aln, 0, 0);
+	
+	string pathseq = path->str();
+	
+	// perform SW alignment only if the two strings are different
+	if(refseq == pathseq) {
+		ref_aln = refseq;
+		path_aln = pathseq;
+	}
+	else {
+		global_align_aff(refseq, path->str(), ref_aln, path_aln, 0, 0);
+	}
 	/*
 	global_cov_align_aff(refseq, path->str(), coverageT_fwd, ref_aln, path_aln, cov_path_aln, 0, 0);
 	coverageT = cov_path_aln;

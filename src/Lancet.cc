@@ -28,6 +28,7 @@ string VERSION = "1.0.0 (beta), January 27 2016";
 /****  configuration parameters ****/
 int NUM_THREADS = 1;
 
+bool ACTIVE_REGIONS = true;
 bool verbose = false;
 bool VERBOSE = false;
 bool KMER_RECOVERY = false;
@@ -131,7 +132,8 @@ void printConfiguration(ostream & out, Filters & filters)
 	out << "min-coverage-normal: "  << filters.minCovNormal << endl;
 	out << "max-coverage-normal: "  << filters.maxCovNormal << endl;
 	
-	out << "kmer recovery: "     << bvalue(KMER_RECOVERY) << endl;
+	out << "active regions: "   << bvalue(ACTIVE_REGIONS) << endl;
+	out << "kmer recovery: "    << bvalue(KMER_RECOVERY) << endl;
 	out << "print graphs: "     << bvalue(PRINT_ALL) << endl;
 	out << "verbose: "          << bvalue(verbose) << endl;
 	out << "more verbose: "     << bvalue(VERBOSE) << endl;
@@ -331,6 +333,7 @@ int main(int argc, char** argv)
 		"   --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: " << MAX_MISMATCH << "]\n"
 		"   --num-threads, -X         <int>         : number of parallel threads [default: " << NUM_THREADS << "]\n"
 		"   --rg-file, -g             <string>      : read group file\n"
+		"   --ode-str-len, -L          <int>         : length of sequence to display at graph node (default: " << NODE_STRLEN << ")\n"
 
 		"\nFilters\n"
 		"   --min-alt-count-tumor, -a  <int>        : minimum alternative count in the tumor [default: " << filters.minAltCntTumor << "]\n"
@@ -345,11 +348,11 @@ int main(int argc, char** argv)
 		"   --min-strand-bias, -f      <float>      : minimum strand bias threshold [default: " << filters.minStrandBias << "]\n"
 		
 		"\nFlags\n"
-		"   -R            : turn on k-mer recovery\n"
-		"   -A            : print graph (in .dot format) after every stage\n"
-		"   -L <len>      : length of sequence to display at graph node (default: " << NODE_STRLEN << ")\n"
-		"   -v            : be verbose\n"
-		"   -V            : be more verbose\n"
+		"   --active-region-off, -W    : turn off active region module\n"		
+		"   --kmer-recovery-on, -R     : turn on k-mer recovery\n"
+		"   --print-graph, -A          : print graph (in .dot format) after every stage\n"
+		"   --verbose, -v              : be verbose\n"
+		"   --more-verbose, -V         : be more verbose\n"
 		"\n";
 
 	bool errflg = false;
@@ -400,11 +403,12 @@ int main(int argc, char** argv)
 		{"min-coverage-normal",  required_argument, 0, 'z'},
 		{"max-coverage-normal",  required_argument, 0, 'j'},
 
-		{"kmer-recovery", no_argument,      0, 'R'},		
+		{"active-region-off", no_argument,      0, 'W'},		
+		{"kmer-recovery-on", no_argument,      0, 'R'},		
 		{"erroflag", no_argument,      0, 'h'},		
 		{"verbose", no_argument,       0, 'v'},
 		{"more-verbose", no_argument,  0, 'V'},
-		{"print-all", no_argument,     0, 'A'},
+		{"print-graph", no_argument,     0, 'A'},
 		
 		{0, 0, 0, 0}
 	};
@@ -412,7 +416,7 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSL:T:M:vVF:q:b:B:Q:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSWL:T:M:vVF:q:b:B:Q:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -455,6 +459,7 @@ int main(int argc, char** argv)
 			case 'z': filters.minCovNormal = atoi(optarg); break;
 			case 'j': filters.maxCovNormal = atoi(optarg); break;
 
+			case 'W': ACTIVE_REGIONS   = 0;            break;
 			case 'R': KMER_RECOVERY    = 1;            break;
 			case 'v': verbose          = 1;            break;
 			case 'V': VERBOSE=1; verbose=1;            break;
@@ -527,6 +532,7 @@ int main(int argc, char** argv)
 		
 			assemblers[i] = new Microassembler();
 
+			assemblers[i]->ACTIVE_REGION_MODULE = ACTIVE_REGIONS;
 			assemblers[i]->KMER_RECOVERY = KMER_RECOVERY;
 			assemblers[i]->verbose = verbose;
 			assemblers[i]->VERBOSE = VERBOSE;
@@ -579,16 +585,22 @@ int main(int argc, char** argv)
 			cerr << " exiting with status :" << status << endl;
 		}
 		
+		int tot_skip = 0;
 		//merge variant from all threads
 		cerr << "Merge variants" << endl;
 		VariantDB_t variantDB; // variants DB
 		for( i=0; i < NUM_THREADS; i++ ) {
+			
+			tot_skip += assemblers[i]->num_skip;
+			
 			map<string,Variant_t> db = (assemblers[i]->vDB).DB;
 			map<string,Variant_t>::iterator it;			
 			for (it=db.begin(); it!=db.end(); ++it) {
 				variantDB.addVar(it->second);
 			}
 		}
+		
+		cerr << "Total # of skipped windows: " << tot_skip << endl;
 				
 		/***** get current time and date *****/
 		time_t rawtime;

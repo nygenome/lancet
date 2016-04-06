@@ -127,22 +127,20 @@ string rc_str(const string & str)
 }
 
 // reverse
-// reverse the content of a string
+// reverse the content of a string (in place)
 //////////////////////////////////////////////////////////////
-string reverse(const string & str) 
+void reverse(string & str) 
 {
 	string retval = str;
 	
 	int i=0;
-	int j=retval.size()-1;
+	int j=str.size()-1;
 	while(i<j){
-		char tmp = retval[i];
-		retval[i] = retval[j];
-		retval[j] = tmp; 
+		char tmp = str[i];
+		str[i] = str[j];
+		str[j] = tmp; 
 		i++;j--;
-	}
-	
-	return retval;
+	}	
 }
 
 // isNseq

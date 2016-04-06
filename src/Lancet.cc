@@ -79,7 +79,7 @@ const string Graph_t::COLOR_LOW    = "grey";
 const string Graph_t::COLOR_NOVO   = "darkorange3";
 const string Graph_t::COLOR_TUMOR  = "red";
 const string Graph_t::COLOR_NORMAL = "green";
-const string Graph_t::COLOR_SHARED = "deepskyblue4";
+const string Graph_t::COLOR_SHARED = "blue"; //"deepskyblue4";
 const string Graph_t::COLOR_SOURCE = "orange\" style=\"filled";
 const string Graph_t::COLOR_SINK   = "yellow\" style=\"filled";
 const string Graph_t::COLOR_TOUCH  = "magenta";
@@ -88,11 +88,11 @@ const string Graph_t::COLOR_TOUCH  = "magenta";
 
 void printConfiguration(ostream & out, Filters & filters)
 {
-	out << "tumor BAM: "        << TUMOR << endl;
-	out << "normal BAM: "       << NORMAL << endl;
+	out << "tumor-BAM: "        << TUMOR << endl;
+	out << "normal-BAM: "       << NORMAL << endl;
 	out << "reference: "        << REFFILE << endl;
 	out << "region: "           << REGION  << endl;
-	out << "BED file: "         << BEDFILE  << endl;
+	out << "BED-file: "         << BEDFILE  << endl;
 
 	out << "min-K: "            << minK << endl;
 	out << "max-K: "            << maxK << endl;
@@ -132,11 +132,11 @@ void printConfiguration(ostream & out, Filters & filters)
 	out << "min-coverage-normal: "  << filters.minCovNormal << endl;
 	out << "max-coverage-normal: "  << filters.maxCovNormal << endl;
 	
-	out << "active regions: "   << bvalue(ACTIVE_REGIONS) << endl;
-	out << "kmer recovery: "    << bvalue(KMER_RECOVERY) << endl;
-	out << "print graphs: "     << bvalue(PRINT_ALL) << endl;
+	out << "active-regions: "   << bvalue(ACTIVE_REGIONS) << endl;
+	out << "kmer-recovery: "    << bvalue(KMER_RECOVERY) << endl;
+	out << "print-graphs: "     << bvalue(PRINT_ALL) << endl;
 	out << "verbose: "          << bvalue(verbose) << endl;
-	out << "more verbose: "     << bvalue(VERBOSE) << endl;
+	out << "more-verbose: "     << bvalue(VERBOSE) << endl;
 	
 	out << endl;
 }
@@ -304,7 +304,7 @@ int main(int argc, char** argv)
 	filters.maxVafNormal = 0;
 	filters.minAltCntTumor = 4;
 	filters.maxAltCntNormal = 0;
-	filters.minStrandBias = 2;
+	filters.minStrandBias = 1;
 	
 	stringstream helptext;
 	helptext << HEADER.str() << USAGE <<
@@ -333,7 +333,7 @@ int main(int argc, char** argv)
 		"   --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: " << MAX_MISMATCH << "]\n"
 		"   --num-threads, -X         <int>         : number of parallel threads [default: " << NUM_THREADS << "]\n"
 		"   --rg-file, -g             <string>      : read group file\n"
-		"   --ode-str-len, -L          <int>         : length of sequence to display at graph node (default: " << NODE_STRLEN << ")\n"
+		"   --node-str-len, -L        <int>         : length of sequence to display at graph node (default: " << NODE_STRLEN << ")\n"
 
 		"\nFilters\n"
 		"   --min-alt-count-tumor, -a  <int>        : minimum alternative count in the tumor [default: " << filters.minAltCntTumor << "]\n"

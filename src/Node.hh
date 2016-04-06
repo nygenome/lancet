@@ -60,7 +60,6 @@ public:
 	//////////////////////////////////////////////////////////////
 
 	Mer_t nodeid_m;
-	string qv_m;
 	
 	string str_m;
 	float cov_tmr_m_fwd; // tumor coverage forward
@@ -128,7 +127,6 @@ public:
 	void setIsTumor() { isTumor_m = true; }
 	void setIsNormal() { isNormal_m = true; }
 	void setMinQV(int q) { MIN_QUAL = q; }
-	void setQVstr(string qv) { qv_m = qv; }
 	
 	void incTmrCov(unsigned int strand) { if(strand == FWD) { cov_tmr_m_fwd++; } if(strand == REV) { cov_tmr_m_rev++; } }
 	void incNmlCov(unsigned int strand) { if(strand == FWD) { cov_nml_m_fwd++; } if(strand == REV) { cov_nml_m_rev++; } }
@@ -140,9 +138,10 @@ public:
 	float getTotNmlCov() { return cov_nml_m_fwd + cov_nml_m_rev; }
 	float getTotCov() { return cov_tmr_m_fwd + cov_tmr_m_rev + cov_nml_m_fwd + cov_nml_m_rev; }
 	void updateCovDistr(int c, unsigned int strand, char sample);
-	void updateCovDistrMinQV(unsigned int strand, char sample);
+	void updateCovDistrMinQV(const string & qv, unsigned int strand, char sample);
 	void revCovDistr();
-	int  minCov();
+	int minCov();
+	int minCovMinQV();
 	int minNon0Cov(char sample);
 	int avgCovDistr(char sample);
 	

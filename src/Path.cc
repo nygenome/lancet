@@ -340,9 +340,10 @@ float Path_t::maxcov(char sample)
 			}
 		}
 	}
-
+	
 	return maxcov;
 }
+
 
 // pathcontig
 //////////////////////////////////////////////////////////////

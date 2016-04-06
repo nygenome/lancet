@@ -78,12 +78,15 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			vc.set(seq.substr(offset+1, K));	
 			uc_qv = qv.substr(offset,   K);
 			vc_qv = qv.substr(offset+1, K);
+			if (uc.ori_m == R) { reverse(uc_qv); }
+			if (vc.ori_m == R) { reverse(vc_qv); }
 		}
 		else {
 			uc = vc; 
 			uc_qv = vc_qv; 
 			vc.set(seq.substr(offset+1, K));
 			vc_qv = qv.substr(offset+1, K);
+			if (vc.ori_m == R) { reverse(vc_qv); }
 		}
 
 		//cerr << readid << "\t" << offset << "\t" << uc << "\t" << vc << endl;
@@ -100,16 +103,12 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 		if (ui == nodes_m.end())
 		{
 			ui = nodes_m.insert(make_pair(uc.mer_m, new Node_t(uc.mer_m))).first; 
-			if (uc.ori_m == R) { ui->second->setQVstr(reverse(uc_qv)); }
-			else { ui->second->setQVstr(uc_qv); }
 			ui->second->setMinQV(MIN_QUAL_CALL);
 		}
 
 		if (vi == nodes_m.end())
 		{
 			vi = nodes_m.insert(make_pair(vc.mer_m, new Node_t(vc.mer_m))).first; 
-			if (vc.ori_m == R) { vi->second->setQVstr(reverse(vc_qv)); }
-			else { vi->second->setQVstr(vc_qv); }
 			vi->second->setMinQV(MIN_QUAL_CALL);
 		}
 
@@ -118,7 +117,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			// set node label
 			if(readid2info[readid].label_m == TMR) {
 				ui->second->setIsTumor();
-				vi->second->setIsTumor();			
+				vi->second->setIsTumor();
 			}
 			else if(readid2info[readid].label_m == NML) {
 				ui->second->setIsNormal();
@@ -136,13 +135,13 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 					ui->second->incTmrCov(strand);
 					ui->second->updateCovDistr((int)(ui->second->getTmrCov(strand)),strand,'T');
 					ref_m->updateCoverage(uc.mer_m, 'T'); // update referecne k-mer coverage for tumor
-					ui->second->updateCovDistrMinQV(strand,'T');
+					ui->second->updateCovDistrMinQV(uc_qv, strand,'T');
 				}
 				else if(readid2info[readid].label_m == NML) {
 					ui->second->incNmlCov(strand);
 					ui->second->updateCovDistr((int)(ui->second->getNmlCov(strand)),strand,'N');
 					ref_m->updateCoverage(uc.mer_m, 'N'); // update referecne k-mer coverage for normal
-					ui->second->updateCovDistrMinQV(strand,'N');
+					ui->second->updateCovDistrMinQV(uc_qv, strand,'N');
 				}
 
 				if (uc.ori_m == F)
@@ -159,13 +158,13 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 				vi->second->incTmrCov(strand);
 				vi->second->updateCovDistr((int)(vi->second->getTmrCov(strand)),strand,'T');
 				ref_m->updateCoverage(vc.mer_m, 'T'); // update reference k-mer coverage for tumor
-				vi->second->updateCovDistrMinQV(strand,'T');
+				vi->second->updateCovDistrMinQV(vc_qv, strand,'T');
 			}
 			else if(readid2info[readid].label_m == NML) {
 				vi->second->incNmlCov(strand);
 				vi->second->updateCovDistr((int)(vi->second->getNmlCov(strand)),strand,'N');
 				ref_m->updateCoverage(vc.mer_m, 'N'); // update reference k-mer coverage for normal
-				vi->second->updateCovDistrMinQV(strand,'N');
+				vi->second->updateCovDistrMinQV(vc_qv, strand,'N');
 			}
 		}
 

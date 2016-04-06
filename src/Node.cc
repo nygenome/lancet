@@ -340,7 +340,7 @@ void Node_t::updateCovDistr(int c, unsigned int strand, char sample)
 // updated the coverage distribution along the node with 
 // base-quality value greater than MIN_QUAL
 //////////////////////////////////////////////////////////////
-void Node_t::updateCovDistrMinQV(unsigned int strand, char sample) {
+void Node_t::updateCovDistrMinQV(const string & qv, unsigned int strand, char sample) {
 	
 	vector<cov_t> * cov_distr = NULL;
 	
@@ -349,7 +349,7 @@ void Node_t::updateCovDistrMinQV(unsigned int strand, char sample) {
 	else { cerr << "Error: unrecognized sample " << sample << endl; }
 
 	unsigned int i = 0;
-	for ( string::const_iterator it=qv_m.begin(); it!=qv_m.end(); ++it) {
+	for ( string::const_iterator it=qv.begin(); it!=qv.end(); ++it) {
 		if( (*it >= MIN_QUAL) && (strand == FWD)) { (((*cov_distr)[i]).minqv_fwd)++; }
 		if( (*it >= MIN_QUAL) && (strand == REV)) { (((*cov_distr)[i]).minqv_rev)++; }
 		i++;
@@ -431,16 +431,29 @@ int Node_t::minNon0Cov(char sample)
 	return min;
 }
 
+// minCov
+// return the minimum coverage along the node (exlusing lowquality bases)
+//////////////////////////////////////////////////////////////
+int Node_t::minCovMinQV() 
+{
+	int min = 10000000;
+	for (unsigned int i = 0; i < cov_distr_tmr.size(); i++)
+	{
+		int totcov = cov_distr_tmr[i].minqv_fwd + cov_distr_tmr[i].minqv_rev + cov_distr_nml[i].minqv_fwd + cov_distr_nml[i].minqv_rev;
+		if(totcov < min) { min = totcov; } 
+	}
+	return min;
+}
 
 // minCov
-// retunr the minimum coverage along the node
+// return the minimum coverage along the node
 //////////////////////////////////////////////////////////////
 int Node_t::minCov() 
 {
 	int min = 10000000;
 	for (unsigned int i = 0; i < cov_distr_tmr.size(); i++)
 	{
-		int totcov = cov_distr_tmr[i].fwd + cov_distr_tmr[i].rev + cov_distr_nml[i].fwd + cov_distr_nml[i].rev;;
+		int totcov = cov_distr_tmr[i].fwd + cov_distr_tmr[i].rev + cov_distr_nml[i].fwd + cov_distr_nml[i].rev;
 		if(totcov < min) { min = totcov; } 
 	}
 	return min;

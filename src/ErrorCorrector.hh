@@ -50,14 +50,14 @@ public:
 						
 			if(nodeA->getTotTmrCov() == 1) { // only process tumor singletons
 			
-				string qv = nodeA->qv_m;				
 				Mer_t merA = mi->first;
 				Mer_t merA_original = merA;
 				char old_bp;
 				// test changing each bp in the mer
 				for (unsigned int i=0; i<merA.size(); i++) {
 					
-					if(qv[i] < MIN_QV) { // if quality below threshold
+					int qv_cov = (nodeA->cov_distr_tmr[i]).minqv_fwd + (nodeA->cov_distr_tmr[i]).minqv_rev;
+					if(qv_cov == 0) { // if loq quality base in tumor
 					
 						// change bp to any of the 3 other possibile bp
 						old_bp = merA[i]; // save old bp

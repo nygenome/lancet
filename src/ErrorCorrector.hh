@@ -54,10 +54,14 @@ public:
 				Mer_t merA_original = merA;
 				char old_bp;
 				// test changing each bp in the mer
+				
+				int num_changes = 0; // number of succesfull bp changes for this mer
 				for (unsigned int i=0; i<merA.size(); i++) {
 					
-					int qv_cov = (nodeA->cov_distr_tmr[i]).minqv_fwd + (nodeA->cov_distr_tmr[i]).minqv_rev;
-					if(qv_cov == 0) { // if loq quality base in tumor
+					//if(num_changes > 0) { break; } // allow only one base to be changed per mer
+						
+					int qv_covA = (nodeA->cov_distr_tmr[i]).minqv_fwd + (nodeA->cov_distr_tmr[i]).minqv_rev;
+					if(qv_covA == 0) { // if low quality base in tumor
 					
 						// change bp to any of the 3 other possibile bp
 						old_bp = merA[i]; // save old bp
@@ -73,12 +77,14 @@ public:
 							if(mjF != nodes_m.end() && mjF != mi) { 
 								Mer_t merB = mjF->first;
 								Node_t * nodeB = mjF->second;
+								int qv_covB = (nodeB->cov_distr_tmr[i]).minqv_fwd + (nodeB->cov_distr_tmr[i]).minqv_rev;
 					
 								// merB has only 1 difference from merA
-								// only use mers with support >= 2
-								if(nodeB->getTotTmrCov() >= MIN_SUPPORT) {
-									//cerr << merA_original << "(" << nodeA->getTotTmrCov() << ")\t" << merB << "(" << nodeB->getTotTmrCov() << ")" << "\t" << old_bp << "->" << BP[j] << endl;
-						
+								// only use mers with support >= MIN_SUPPORT and with high quality for base of interest
+								if( (nodeB->getTotTmrCov() >= MIN_SUPPORT) && (qv_covB > 0) ) {
+									num_changes++;
+									//cerr << merA_original << "(" << nodeA->getTotTmrCov() << ")\t" << merB << "(" << nodeB->getTotTmrCov() << ")" << "\t" << old_bp << "->" << BP[j] << "\t" << num_changes << endl;
+									
 									// retrive strand info
 									unsigned int strand;
 									if(nodeA->getTmrCov(FWD)>0) { strand = FWD; }
@@ -95,12 +101,17 @@ public:
 							if(mjR != nodes_m.end() && mjR != mi) { 
 								Mer_t merB = mjR->first;
 								Node_t * nodeB = mjR->second;
+								
+								// for reverse complement need to adjust array index to find correct base position
+								int M = merB.size()-1;
+								int qv_covB = (nodeB->cov_distr_tmr[M-i]).minqv_fwd + (nodeB->cov_distr_tmr[M-i]).minqv_rev;
 					
 								// merB has only 1 difference from merA
 								// only use mers with support >= 2
-								if(nodeB->getTotTmrCov() >= MIN_SUPPORT) {
-									//cerr << merA_original << "(" << nodeA->getTotTmrCov() << ")\t" << merB << "(" << nodeB->getTotTmrCov() << ")" << "\t" << old_bp << "->" << BP[j] << endl;
-						
+								if( (nodeB->getTotTmrCov() >= MIN_SUPPORT) && (qv_covB > 0) ) {
+									num_changes++;
+									//cerr << merA_original << "(" << nodeA->getTotTmrCov() << ")\t" << merB << "(" << nodeB->getTotTmrCov() << ")" << "\t" << old_bp << "->" << BP[j] << "\t" << num_changes << endl;
+									
 									// retrive strand info
 									unsigned int strand;
 									if(nodeA->getTmrCov(FWD)>0) { strand = FWD; }

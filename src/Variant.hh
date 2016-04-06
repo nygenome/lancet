@@ -71,17 +71,6 @@ public:
 	string GT_tumor;
 	double fet_score;
 	
-	// filter thresholds
-	double minPhredFisher;
-	double maxVafNormal;
-	int minCovNormal;
-	int maxCovNormal;
-	int minCovTumor;
-	int maxCovTumor;
-	int minVafTumor;
-	int minAltCntTumor;
-	int maxAltCntNormal;
-	
 	Filters filters; // filter thresholds
 
 	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters &fs)

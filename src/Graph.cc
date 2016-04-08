@@ -2534,7 +2534,8 @@ void Graph_t::removeLowCov(bool docompression, int compid)
 			if (node->isSpecial())    { continue; }
 			//if (node->touchRef_m) { continue; }
 
-			if ( (node->minCov() <= LOW_COV_THRESHOLD) || (node->minCov() <= (MIN_COV_RATIO*avgcov)) )
+			if ( (node->minCov() <= LOW_COV_THRESHOLD) || (node->minCov() <= (MIN_COV_RATIO*avgcov)) ||
+				(node->getTotTmrCov() == 1 && node->getTotNmlCov() == 1) )
 			//if ( (node->minCovMinQV() <= LOW_COV_THRESHOLD) || (node->minCovMinQV() <= (MIN_COV_RATIO*avgcov)) )
 			{
 				lowcovnodes++;

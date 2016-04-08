@@ -138,6 +138,12 @@ public:
 	map<string, Ref_t *> * reftable; // table of references to analyze
 	VariantDB_t vDB; // variants DB
 	
+	int num_snv_only_regions;
+	int num_indel_only_regions;
+	int num_softclip_only_regions;
+	int num_indel_softclip_regions;
+	int num_snv_indel_softclip_regions;
+	
 	Microassembler() { 
 		graphCnt = 0;
 		num_skip = 0;
@@ -181,7 +187,13 @@ public:
 
 		DFS_LIMIT = 1000000;
 		MAX_INDEL_LEN = 250;
-		MAX_MISMATCH = 3;		
+		MAX_MISMATCH = 3;
+		
+		num_snv_only_regions = 0;
+		num_indel_only_regions = 0;
+		num_softclip_only_regions = 0;
+		num_indel_softclip_regions = 0;
+		num_snv_indel_softclip_regions = 0;
 	}
 		
 	~Microassembler() { }

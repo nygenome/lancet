@@ -347,13 +347,18 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 		}
 	}
 
-	// check for any locus with evidence for SNVs, indel, or soft-clipped sequences
+	// check for any locus with evidence for SNVs, indel, or soft-clipped sequences	
+	bool snv_evidence = false;
+	bool indel_evidence = false;
+	bool softclip_evidence = false;
 	
 	//cerr << "X: ";
     for (mit=mapX.begin(); mit!=mapX.end(); ++mit) {
 		if((*mit).second >= MIN_EVIDENCE) { 
 			//cerr << (*mit).first << "," << (*mit).second << "|";
-			ans = true; break; 
+			snv_evidence = true;
+			ans = true; 
+			break; 
 		}
 	}
 	//cerr << endl;
@@ -362,7 +367,9 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
     for (mit=mapI.begin(); mit!=mapI.end(); ++mit) {
 		if((*mit).second >= MIN_EVIDENCE) { 
 			//cerr << (*mit).first << "," << (*mit).second << "|";
-			ans = true; break; 
+			indel_evidence = true;
+			ans = true; 
+			break; 
 		}
 	}
 	//cerr << endl;
@@ -371,7 +378,9 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
     for (mit=mapD.begin(); mit!=mapD.end(); ++mit) {
 		if((*mit).second >= MIN_EVIDENCE) { 
 			//cerr << (*mit).first << "," << (*mit).second << "|";
-			ans = true; break;
+			indel_evidence = true;
+			ans = true; 
+			break;
 		}
 	}
 	//cerr << endl;
@@ -380,10 +389,24 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
     for (mit=mapSC.begin(); mit!=mapSC.end(); ++mit) {
 		if((*mit).second >= MIN_EVIDENCE) { 
 			//cerr << (*mit).first << "," << (*mit).second << "|";
-			ans = true; break; 
+			softclip_evidence = true;
+			ans = true; 
+			break; 
 		}
 	}
 	//cerr << endl;
+	
+	num_snv_only_regions = 0;
+	num_indel_only_regions = 0;
+	num_softclip_only_regions = 0;
+	num_indel_softclip_regions = 0;
+	num_snv_indel_softclip_regions = 0;
+	
+	if(snv_evidence && !indel_evidence && !softclip_evidence) { num_snv_only_regions++; /*ans = false;*/ }
+	if(!snv_evidence && indel_evidence && !softclip_evidence) { num_indel_only_regions++; }
+	if(!snv_evidence && !indel_evidence && softclip_evidence) { num_softclip_only_regions++; }
+	if(!snv_evidence && indel_evidence && softclip_evidence)  { num_indel_softclip_regions++; }	
+	if(snv_evidence && indel_evidence && softclip_evidence)   { num_snv_indel_softclip_regions++; }
 		
 	return ans;
 }

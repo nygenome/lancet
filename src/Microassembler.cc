@@ -247,7 +247,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion &region, int code) {
 	
 	// iterate through all alignments
-	int MIN_EVIDENCE = 3;
+	int MIN_EVIDENCE = 2;
 	BamAlignment al;
 	int totalreadbp = 0;
 	bool ans = false;
@@ -290,6 +290,10 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 				// String for mismatching positions. Regex : [0-9]+(([A-Z]|\^[A-Z]+)[0-9]+)*10
 				al.GetTag("MD", md); // get string of mismatching positions
 				parseMD(md, mapX, alstart);
+				
+				// add SNV to database
+				//Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters &fs)
+				
 				
 				// example: 31M1I17M1D37M
 				CIGAR = "";
@@ -396,18 +400,14 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 	}
 	//cerr << endl;
 	
-	num_snv_only_regions = 0;
-	num_indel_only_regions = 0;
-	num_softclip_only_regions = 0;
-	num_indel_softclip_regions = 0;
-	num_snv_indel_softclip_regions = 0;
+	if(code == TMR) {
+		if(snv_evidence && !indel_evidence && !softclip_evidence)   { num_snv_only_regions++; ans = false; }
+		if(!snv_evidence && indel_evidence && !softclip_evidence)   { num_indel_only_regions++; }
+		if(!snv_evidence && !indel_evidence && softclip_evidence)   { num_softclip_only_regions++; }
+		if(!snv_evidence && (indel_evidence || softclip_evidence))  { num_indel_or_softclip_regions++; }	
+		if(snv_evidence || indel_evidence || softclip_evidence)     { num_snv_or_indel_or_softclip_regions++; }
+	}
 	
-	if(snv_evidence && !indel_evidence && !softclip_evidence) { num_snv_only_regions++; /*ans = false;*/ }
-	if(!snv_evidence && indel_evidence && !softclip_evidence) { num_indel_only_regions++; }
-	if(!snv_evidence && !indel_evidence && softclip_evidence) { num_softclip_only_regions++; }
-	if(!snv_evidence && indel_evidence && softclip_evidence)  { num_indel_softclip_regions++; }	
-	if(snv_evidence && indel_evidence && softclip_evidence)   { num_snv_indel_softclip_regions++; }
-		
 	return ans;
 }
 

@@ -89,8 +89,17 @@ void Variant_t::printVCF() {
 		if (FILTER.compare("") == 0) { FILTER = "HighAltCntNormal"; }
 		else { FILTER += ";HighAltCntNormal"; }
 	}
-	// snp specific filters
-	if(type == 'S') { 
+	
+	// if only 2 reads supporting the variant check for strand bias
+	if(tot_alt_cov_tumor == 2) {
+		if( (alt_cov_tumor_fwd == 0) || (alt_cov_tumor_rev == 0) ) { 
+			if (FILTER.compare("") == 0) { FILTER = "StrandBias"; }
+			else { FILTER += ";StrandBias"; }
+		}
+	}
+	
+	// snv specific filters
+	if(type == 'S') { // for snv strand bias filter is applied at all coverages
 		if( (alt_cov_tumor_fwd < filters.minStrandBias) || (alt_cov_tumor_rev < filters.minStrandBias) ) { 
 			if (FILTER.compare("") == 0) { FILTER = "StrandBias"; }
 			else { FILTER += ";StrandBias"; }

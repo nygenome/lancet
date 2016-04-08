@@ -141,8 +141,8 @@ public:
 	int num_snv_only_regions;
 	int num_indel_only_regions;
 	int num_softclip_only_regions;
-	int num_indel_softclip_regions;
-	int num_snv_indel_softclip_regions;
+	int num_indel_or_softclip_regions;
+	int num_snv_or_indel_or_softclip_regions;
 	
 	Microassembler() { 
 		graphCnt = 0;
@@ -192,8 +192,8 @@ public:
 		num_snv_only_regions = 0;
 		num_indel_only_regions = 0;
 		num_softclip_only_regions = 0;
-		num_indel_softclip_regions = 0;
-		num_snv_indel_softclip_regions = 0;
+		num_indel_or_softclip_regions = 0;
+		num_snv_or_indel_or_softclip_regions = 0;
 	}
 		
 	~Microassembler() { }

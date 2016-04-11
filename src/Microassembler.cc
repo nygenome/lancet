@@ -635,10 +635,10 @@ int Microassembler::processReads() {
 			if(!skipT && !skipN) { 
 				processGraph(g, graphref, minK, maxK);
 			}
+			else { num_skip++; g.clear(true); }
 		}
 		else {
 			num_skip++;
-			g.clear(true);
 			if(verbose) { cerr << "Skip region: not enough evidence for variation." << endl; }
 		}
 	}

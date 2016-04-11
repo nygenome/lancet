@@ -247,7 +247,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion &region, int code) {
 	
 	// iterate through all alignments
-	int MIN_EVIDENCE = 2;
+	int MIN_EVIDENCE = filters.minAltCntTumor; // min evidence equal to min support for somatic variant
 	BamAlignment al;
 	int totalreadbp = 0;
 	bool ans = false;
@@ -407,6 +407,8 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 		if(!snv_evidence && (indel_evidence || softclip_evidence))  { num_indel_or_softclip_regions++; }	
 		if(snv_evidence || indel_evidence || softclip_evidence)     { num_snv_or_indel_or_softclip_regions++; }
 	}
+
+	if(snv_evidence && !indel_evidence && !softclip_evidence) { ans = false; }
 	
 	return ans;
 }

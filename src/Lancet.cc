@@ -613,9 +613,9 @@ int main(int argc, char** argv)
 		cerr << "Total # of skipped windows: " << tot_skip << endl;
 		cerr << "- # of windows with SNVs only: " << tot_svn_only << endl;
 		cerr << "- # of windows with indels only: " << tot_indel_only << endl;
-		cerr << "- # of windows with softcips only: " << tot_softclip_only << endl;
-		cerr << "- # of windows with indels and softclips: " << tot_indel_or_softclip << endl;
-		cerr << "- # of windows with SNVs, indels and softclips: " << tot_snv_or_indel_or_softclip << endl;
+		cerr << "- # of windows with softclips only: " << tot_softclip_only << endl;
+		cerr << "- # of windows with indels or softclips: " << tot_indel_or_softclip << endl;
+		cerr << "- # of windows with SNVs or indels or softclips: " << tot_snv_or_indel_or_softclip << endl;
 				
 		/***** get current time and date *****/
 		time_t rawtime;

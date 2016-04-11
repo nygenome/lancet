@@ -907,7 +907,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			int RCN = transcript[ti].getMinRefCovN(); // ref cov normal
 			int RCT = transcript[ti].getMinRefCovT(); // ref cov tumor
 			int ACNF = (transcript[ti].isSomatic) ? transcript[ti].getMinCovNfwd() : transcript[ti].getMinNon0CovNfwd(); // alt normal cov fwd
-			int ACNR = (transcript[ti].isSomatic) ? transcript[ti].getMinCovNrev() : transcript[ti].getMinNon0CovNrev(); // alt normal cov ref
+			int ACNR = (transcript[ti].isSomatic) ? transcript[ti].getMinCovNrev() : transcript[ti].getMinNon0CovNrev(); // alt normal cov rev
 			int ACTF = transcript[ti].getMinCovTfwd(); // alt tumor cov fwd
 			int ACTR = transcript[ti].getMinCovTrev(); // alt tumor cov rev
 			//int ACTF = (transcript[ti].code=='x') ? transcript[ti].getMinCovTfwd() : transcript[ti].getMedianCovTfwd(); // alt tumor cov fwd
@@ -920,10 +920,12 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 						transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt; 
 			}
 			
-			// save into variant format
-			vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, 
-				RCN, RCT, ACNF, ACNR, ACTF, ACTR,
-				transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters));
+			// save variant into DB
+			if( (ACNF > 0) || (ACNR > 0) || (ACTF > 0) || (ACTR > 0) ) {
+				vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, 
+					RCN, RCT, ACNF, ACNR, ACTF, ACTR,
+					transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters));
+				}
 		}
 		if(verbose) { cerr << endl; }
 

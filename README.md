@@ -92,17 +92,17 @@ sfdp -Tpdf file.dot -O
 
 An exemplary graph for a short region containing a somatic variant would look like this one:
 
-![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/initial.png)
+![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/initial_graph.png)
 
 where the blue nodes are k-mers shared by both tumor and normal; the white nodes are k-mer with low support (e.g., sequencing errors); the red nodes are k-mers only present in the tumor node.
 
 The same graph after low coverage nodes removal is:
 
-![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/low_cov_removal.png)
+![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/clean_bubble.png)
 
 The final graph after compression is below. Yellow and orange nodes are the source and sink respectively 
 
-<img src="https://github.com/nygenome/lancet/blob/master/doc/img/final.png" width="400">
+<img src="https://github.com/nygenome/lancet/blob/master/doc/img/final_graph.png" width="400">
 
 ### Complete command-line options
 

@@ -28,9 +28,7 @@ void VariantDB_t::addVar(Variant_t v) {
 	string key = sha256(v.getSignature());
     map<string,Variant_t>::iterator it = DB.find(key);
 	
-	if (it != DB.end()) {
-		Variant_t old_v = it->second;
-		
+	if (it != DB.end()) {		
 		// keep highest supporting coverage found
 		if (it->second.ref_cov_normal < v.ref_cov_normal) { it->second.ref_cov_normal = v.ref_cov_normal; }
 		if (it->second.ref_cov_tumor  < v.ref_cov_tumor ) { it->second.ref_cov_tumor = v.ref_cov_tumor;   }

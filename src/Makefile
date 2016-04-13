@@ -11,7 +11,7 @@ INCLUDES := -I$(ABS_BAMTOOLS_DIR)/include/ -I$(ABS_HTSLIB_DIR)/ -L$(ABS_BAMTOOLS
 
 all: Lancet
 
-Lancet: Lancet.cc align.cc util.hh util.cc sha256.hh sha256.cc FET.hh ErrorCorrector.hh Mer.hh Ref.cc Ref.hh ReadInfo.hh ReadStart.hh Transcript.hh CoverageWindow.hh Variant.hh Variant.cc VariantDB.hh VariantDB.cc Edge.cc Edge.hh ContigLink.hh Node.cc Node.hh Path.cc Path.hh ContigLink.cc Graph.cc Graph.hh Microassembler.cc Microassembler.hh
+Lancet: Lancet.cc align.cc util.hh util.cc sha256.hh sha256.cc FET.hh ErrorCorrector.hh Mer.hh Ref.cc Ref.hh ReadInfo.hh ReadStart.hh Transcript.hh Variant.hh Variant.cc VariantDB.hh VariantDB.cc Edge.cc Edge.hh ContigLink.hh Node.cc Node.hh Path.cc Path.hh ContigLink.cc Graph.cc Graph.hh Microassembler.cc Microassembler.hh
 	$(CXX) $(CXXFLAGS) $(INCLUDES) Lancet.cc Edge.cc Node.cc Graph.cc Microassembler.cc Ref.cc Path.cc ContigLink.cc align.cc util.cc sha256.cc VariantDB.cc Variant.cc -o Lancet $(ABS_HTSLIB_DIR)/libhts.a -lz -ldl -lbamtools -lpthread
 
 clean:

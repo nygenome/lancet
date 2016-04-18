@@ -90,7 +90,7 @@ These files can be rendered using the utilities available in the [Graphviz](http
 sfdp -Tpdf file.dot -O
 ```
 
-Finally we reccomand to open the pdf file using the "Preview" image viewer software available in MacOS.
+Finally we recommend opening the pdf file using the "Preview" image viewer software available in MacOS.
 
 An exemplary graph (before removal of low coverage nodes and tips) for a short region containing a somatic variant would look like this one:
 
@@ -102,7 +102,7 @@ A clean bubble whitin a graph is displayed below:
 
 ![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/clean_bubble.png)
 
-The final graph (after compression) containong one single variant is depicted below. Yellow and orange nodes are the source and sink nodes respectively 
+The final graph (after compression) containing one single variant is depicted below. Yellow and orange nodes are the source and sink nodes respectively 
 
 <img src="https://github.com/nygenome/lancet/blob/master/doc/img/final_graph.png" width="400">
 
@@ -137,6 +137,7 @@ Optional
    --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: 2]
    --num-threads, -X         <int>         : number of parallel threads [default: 1]
    --rg-file, -g             <string>      : read group file
+   --node-str-len, -L        <int>         : length of sequence to display at graph node (default: 100)
 
 Filters
    --min-alt-count-tumor, -a  <int>        : minimum alternative count in the tumor [default: 4]
@@ -148,12 +149,12 @@ Filters
    --min-coverage-normal, -z  <int>        : minimum coverage in the normal [default: 10]
    --max-coverage-normal, -j  <int>        : maximum coverage in the normal [default: 1000000]
    --min-phred-fisher, -s     <float>      : minimum fisher exact test score [default: 10]
-   --min-strand-bias, -f      <float>      : minimum strand bias threshold [default: 2]
+   --min-strand-bias, -f      <float>      : minimum strand bias threshold [default: 1]
 
 Flags
-   -R            : turn on k-mer recovery
-   -A            : print graph (in .dot format) after every stage
-   -L <len>      : length of sequence to display at graph node (default: 100)
-   -v            : be verbose
-   -V            : be more verbose
+   --active-region-off, -W    : turn off active region module
+   --kmer-recovery-on, -R     : turn on k-mer recovery
+   --print-graph, -A          : print graph (in .dot format) after every stage
+   --verbose, -v              : be verbose
+   --more-verbose, -V         : be more verbose
 ```

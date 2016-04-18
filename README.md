@@ -62,7 +62,7 @@ Below is the current list of filters:
 9. **LowFisherScore**: low Fisher's exact test score for tumor-normal allele counts
 10. **StrandBias**: rejects variants where the vast majority of alternate alleles are seen in a single direction
 
-### Visual inspection of the DeBruijn graphs
+### Visual inspection of the DeBruijn graph
 
 The DeBruijn graph representation of a genomic region can be exported to file in [DOT](http://www.graphviz.org/doc/info/lang.html) format using the -A flag. 
 
@@ -74,7 +74,7 @@ For example the following command:
 Lancet -A --tumor T.bam --normal N.bam --ref ref.fa --reg chr:start-end
 ```
 
-will export the DeBruijn graph after every stage of the assembly (low covergae removal, tips removal, compression) to the follwoing set of files:
+will export the DeBruijn graph after every stage of the assembly (low covergae removal, tips removal, compression) to the follwing set of files:
 
 1. chr:start-end.0.dot (initial graph)
 2. chr:start-end.1l.cX.dot (after first low coverage nodes removal)
@@ -90,17 +90,19 @@ These files can be rendered using the utilities available in the [Graphviz](http
 sfdp -Tpdf file.dot -O
 ```
 
-An exemplary graph for a short region containing a somatic variant would look like this one:
+Finally we reccomand to open the pdf file using the "Preview" image viewer software available in MacOS.
+
+An exemplary graph (before removal of low coverage nodes and tips) for a short region containing a somatic variant would look like this one:
 
 ![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/initial_graph.png)
 
 where the blue nodes are k-mers shared by both tumor and normal; the white nodes are k-mer with low support (e.g., sequencing errors); the red nodes are k-mers only present in the tumor node.
 
-The same graph after low coverage nodes removal is:
+A clean bubble whitin a graph is displayed below:
 
 ![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/clean_bubble.png)
 
-The final graph after compression is below. Yellow and orange nodes are the source and sink respectively 
+The final graph (after compression) containong one single variant is depicted below. Yellow and orange nodes are the source and sink nodes respectively 
 
 <img src="https://github.com/nygenome/lancet/blob/master/doc/img/final_graph.png" width="400">
 

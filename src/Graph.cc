@@ -118,10 +118,14 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			if(readid2info[readid].label_m == TMR) {
 				ui->second->setIsTumor();
 				vi->second->setIsTumor();
+				ui->second->updateCovStatus('T');
+				vi->second->updateCovStatus('T');
 			}
 			else if(readid2info[readid].label_m == NML) {
 				ui->second->setIsNormal();
-				vi->second->setIsNormal();			
+				vi->second->setIsNormal();
+				ui->second->updateCovStatus('N');
+				vi->second->updateCovStatus('N');
 			}
 		}
 		//ui->second->appendRefFlag(isRef);
@@ -140,7 +144,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 				else if(readid2info[readid].label_m == NML) {
 					ui->second->incNmlCov(strand);
 					ui->second->updateCovDistr((int)(ui->second->getNmlCov(strand)),strand,'N');
-					ref_m->updateCoverage(uc.mer_m, 'N'); // update referecne k-mer coverage for normal
+					ref_m->updateCoverage(uc.mer_m, 'N'); // update reference k-mer coverage for normal
 					ui->second->updateCovDistrMinQV(uc_qv, strand,'N');
 				}
 
@@ -736,7 +740,9 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			spanner->setRead2InfoList(&readid2info);
 			
 			bool within_tumor_node = false;
-			if (spanner->isTumor() && !spanner->isNormal()) { 
+			
+			if (spanner->isStatusCnt('T')) { 
+			//if (spanner->isTumor() && !spanner->isNormal()) { 
 				//cerr << "Within tumor only node" << endl;
 				within_tumor_node = true;
 			}			
@@ -876,7 +882,8 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					// chech if within tumor only node
 					spanner = path->pathcontig(idx1);
 					if (spanner == NULL) { cerr << "Error: path position out of range: " << idx1 << endl; break; }
-					if (spanner->isTumor() && !spanner->isNormal()) { 
+					if (spanner->isStatusCnt('T')) { 
+					//if (spanner->isTumor() && !spanner->isNormal()) { 
 						//cerr << "Within tumor only node" << endl;
 						transcript[ti].isSomatic = true;
 					}
@@ -906,8 +913,18 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			// select coverage according to mutation type and sample
 			int RCN = transcript[ti].getMinRefCovN(); // ref cov normal
 			int RCT = transcript[ti].getMinRefCovT(); // ref cov tumor
-			int ACNF = (transcript[ti].isSomatic) ? transcript[ti].getMinCovNfwd() : transcript[ti].getMinNon0CovNfwd(); // alt normal cov fwd
-			int ACNR = (transcript[ti].isSomatic) ? transcript[ti].getMinCovNrev() : transcript[ti].getMinNon0CovNrev(); // alt normal cov rev
+			int ACNF = transcript[ti].getMinNon0CovNfwd(); // alt normal cov fwd
+			int ACNR = transcript[ti].getMinNon0CovNrev(); // alt normal cov rev
+			
+			if(transcript[ti].isSomatic) {
+				RCN = transcript[ti].getAvgRefCovN(); // ref cov normal
+				RCT = transcript[ti].getAvgRefCovT(); // ref cov tumor
+				//ACNF = transcript[ti].getMinCovNfwd(); // alt normal cov fwd
+				//ACNR = transcript[ti].getMinCovNrev(); // alt normal cov rev
+				ACNF = 0; // alt normal cov fwd
+				ACNR = 0; // alt normal cov rev
+			}
+
 			int ACTF = transcript[ti].getMinCovTfwd(); // alt tumor cov fwd
 			int ACTR = transcript[ti].getMinCovTrev(); // alt tumor cov rev
 			//int ACTF = (transcript[ti].code=='x') ? transcript[ti].getMinCovTfwd() : transcript[ti].getMedianCovTfwd(); // alt tumor cov fwd
@@ -2355,6 +2372,7 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 		for (unsigned int j = (K-1); j < buddy->cov_distr_tmr.size(); j++) {
 			node->cov_distr_tmr.push_back(buddy->cov_distr_tmr[j]); // tumor
 			node->cov_distr_nml.push_back(buddy->cov_distr_nml[j]); // normal
+			node->cov_status.push_back(buddy->cov_status[j]);
 		}
 		
 		node->cov_tmr_m_fwd = ((ncov_tmr_fwd * amerlen) + (ccov_tmr_fwd * bmerlen)) / (amerlen + bmerlen);

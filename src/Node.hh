@@ -78,6 +78,7 @@ public:
 	int color;
 	int MIN_QUAL;
 
+	vector<char> cov_status; // T=tumot,N=normal,B=both,E=empty
 	vector<cov_t> cov_distr_tmr;
 	vector<cov_t> cov_distr_nml;
 	
@@ -107,6 +108,7 @@ public:
 		color(0),
 		MIN_QUAL(0)
 		{ 	
+			cov_status.resize(str_m.size(),'E'); 
 			cov_distr_tmr.resize(str_m.size()); 
 			cov_distr_nml.resize(str_m.size()); 
 		}
@@ -137,8 +139,10 @@ public:
 	float getTotTmrCov() { return cov_tmr_m_fwd + cov_tmr_m_rev; }
 	float getTotNmlCov() { return cov_nml_m_fwd + cov_nml_m_rev; }
 	float getTotCov() { return cov_tmr_m_fwd + cov_tmr_m_rev + cov_nml_m_fwd + cov_nml_m_rev; }
+	bool isStatusCnt(char c);
 	void updateCovDistr(int c, unsigned int strand, char sample);
 	void updateCovDistrMinQV(const string & qv, unsigned int strand, char sample);
+	void updateCovStatus(char c);
 	void revCovDistr();
 	int minCov();
 	int minCovMinQV();

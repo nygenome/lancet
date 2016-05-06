@@ -319,7 +319,40 @@ int Node_t::cntReadCode(char code)
 	return retval;
 }
 
-// updateCovDistrTmr
+// isstatusCnt
+// return true if mor than 90% of the postion in the nodes are 
+// of type c (T or N)
+//////////////////////////////////////////////////////////////
+bool Node_t::isStatusCnt(char c) {
+	
+	bool ans = false;
+	int cnt = 0;
+	unsigned int N = cov_status.size();
+	
+	for (unsigned int i = 0; i < N; i++) {
+		if(cov_status[i] == c) { cnt++; }
+	}
+	
+	double prcnt = (double(cnt)/double(N));
+	if ( prcnt > 0.9) { ans = true; }
+	//cerr << "Percent tumor: " << prcnt << " " << cnt << "/" << N << endl;
+	
+	return ans;
+}
+
+// updateCovStatus
+// updated the coverage status along the node string
+//////////////////////////////////////////////////////////////
+void Node_t::updateCovStatus(char c) 
+{
+	for (unsigned int i = 0; i < cov_status.size(); i++) {
+		if(cov_status[i] == 'E') { cov_status[i] = c; }
+		else if(cov_status[i] != c) { cov_status[i] = 'B'; }
+		else { cov_status[i] = c; }
+	}
+}
+
+// updateCovDistr
 // updated the coverage distribution along the node string
 //////////////////////////////////////////////////////////////
 void Node_t::updateCovDistr(int c, unsigned int strand, char sample) 

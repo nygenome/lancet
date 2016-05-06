@@ -32,6 +32,7 @@ void Variant_t::printVCF() {
 	char flag = bestState(ref_cov_normal,(alt_cov_normal_fwd+alt_cov_normal_rev),ref_cov_tumor,(alt_cov_tumor_fwd+alt_cov_tumor_rev));
 	if(flag == 'T') { status = "SOMATIC"; }
 	else if(flag == 'S') { status = "SHARED"; }
+	else if(flag == 'L') { status = "LOH"; }
 	else if(flag == 'N') { status = "NORMAL"; }
 	else if(flag == 'E') { status = "NONE"; return; } // do not print varaints without support
 	
@@ -153,14 +154,16 @@ void Variant_t::update() {
 char Variant_t::bestState(int Rn, int An, int Rt, int At) {
 	
 	char ans = '?';
-	if ( (An>0) && (At>0) ) { // shred
+	if ( (An>0) && (At>0) ) { // shred (support in both samples)
 		ans = 'S';
+		//if( (Rn>0) && (Rt==0) ) { ans = 'L'; } // loss of heterozygosity (LOH) [het in normal but hom in tumor]
 	}
-	else if ( (An==0) && (At>0) ) { // somatic
+	else if ( (An==0) && (At>0) ) { // somatic (alternative support only in tumor)
 		ans = 'T';
 	}
-	else if ( (An>0) && (At==0) ) { // somatic
+	else if ( (An>0) && (At==0) ) { // normal (alternative support only in normal)
 		ans = 'N';
+		//if( (Rn>0) && (Rt>0) ) { ans = 'L'; } // loss of heterozygosity (LOH) [het in normal but lost in tumor]
 	}
 	else if ( (An==0) && (At==0) ) { // no support
 		ans = 'E';

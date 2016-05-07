@@ -327,9 +327,11 @@ bool Node_t::isStatusCnt(char c) {
 	
 	bool ans = false;
 	int cnt = 0;
-	unsigned int N = cov_status.size();
+	unsigned int N = 0;
 	
-	for (unsigned int i = 0; i < N; i++) {
+	for (unsigned int i = (K-1); i < cov_status.size(); i++) {
+		//cerr << cov_status[i] << " ";
+		N++;
 		if(cov_status[i] == c) { cnt++; }
 	}
 	

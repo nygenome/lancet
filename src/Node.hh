@@ -61,6 +61,7 @@ public:
 
 	Mer_t nodeid_m;
 	
+	int K; // k-mer size
 	string str_m;
 	float cov_tmr_m_fwd; // tumor coverage forward
 	float cov_tmr_m_rev; // tumor coverage reverse
@@ -129,6 +130,7 @@ public:
 	void setIsTumor() { isTumor_m = true; }
 	void setIsNormal() { isNormal_m = true; }
 	void setMinQV(int q) { MIN_QUAL = q; }
+	void setK(int k) { K = k; }
 	
 	void incTmrCov(unsigned int strand) { if(strand == FWD) { cov_tmr_m_fwd++; } if(strand == REV) { cov_tmr_m_rev++; } }
 	void incNmlCov(unsigned int strand) { if(strand == FWD) { cov_nml_m_fwd++; } if(strand == REV) { cov_nml_m_rev++; } }

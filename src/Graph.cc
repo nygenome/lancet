@@ -104,12 +104,14 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 		{
 			ui = nodes_m.insert(make_pair(uc.mer_m, new Node_t(uc.mer_m))).first; 
 			ui->second->setMinQV(MIN_QUAL_CALL);
+			ui->second->setK(K);
 		}
 
 		if (vi == nodes_m.end())
 		{
 			vi = nodes_m.insert(make_pair(vc.mer_m, new Node_t(vc.mer_m))).first; 
 			vi->second->setMinQV(MIN_QUAL_CALL);
+			vi->second->setK(K);
 		}
 
 		if( (seqAboveQual(uc_qv,MIN_QUAL_CALL) && seqAboveQual(vc_qv,MIN_QUAL_CALL)) ) {

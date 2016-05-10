@@ -275,9 +275,17 @@ static void* execute(void* ptr) {
 // main
 //////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
-{	
+{			
+	stringstream LOGO1;
+	LOGO1 <<
+		"\n"
+		"  |                           |  \n"
+		"  |      _` | __ \\   __|  _ \\ __|\n"
+		"  |     (   | |   | (     __/ |  \n"
+		" _____|\\__,_|_|  _|\\___|\\___|\\__|\n";
+	
 	stringstream HEADER;
-	HEADER << 
+	HEADER << LOGO1.str() <<
 		"\nProgram: Lancet (micro-assembly somatic variant caller)\n"
 		"Version: "<< VERSION << "\n"
 		"Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>\n";

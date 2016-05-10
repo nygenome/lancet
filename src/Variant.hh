@@ -52,6 +52,7 @@ class Variant_t
 {
 public:
 
+	int kmer;
 	string chr;
 	int pos;
 	char type;
@@ -73,10 +74,10 @@ public:
 	
 	Filters filters; // filter thresholds
 
-	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters &fs)
+	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters &fs, int k)
 	{ 	
+		kmer = k;
 		filters = fs;
-		
 		chr = chr_;
 		pos = pos_;
 		if(ref_.at(0) == '-') { type = 'I'; ref_ = ""; len = alt_.length(); }  // deletion

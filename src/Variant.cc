@@ -41,6 +41,8 @@ void Variant_t::printVCF() {
 	if(type=='D') { INFO += ";TYPE=del"; }
 	if(type=='S') { INFO += ";TYPE=snv"; }
 	
+	INFO += ";KMERSIZE=" + itos(kmer);
+	
 	double QUAL = fet_score;
 	string FORMAT = "GT:AD:SC:DP";
 	

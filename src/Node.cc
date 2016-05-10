@@ -336,7 +336,7 @@ bool Node_t::isStatusCnt(char c) {
 	}
 	
 	double prcnt = (double(cnt)/double(N));
-	if ( prcnt > 0.9) { ans = true; }
+	if ( prcnt > 0.8) { ans = true; }
 	//cerr << "Percent tumor: " << prcnt << " " << cnt << "/" << N << endl;
 	
 	return ans;

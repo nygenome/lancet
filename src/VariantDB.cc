@@ -56,6 +56,7 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##INFO=<ID=SHARED,Number=0,Type=Flag,Description=\"Shared mutation betweem tumor and normal\">\n"
 			"##INFO=<ID=NORMAL,Number=0,Type=Flag,Description=\"Mutation present only in the normal\">\n"
 			"##INFO=<ID=NONE,Number=0,Type=Flag,Description=\"Mutation not supported by data\">\n"
+			"##INFO=<ID=KMERSIZE,Number=1,Type=Integer,Description=\"K-mer size used to assemble the locus\">\n"
 			//"##FILTER=<ID=MS,Description=\"Microsatellite mutation (format: #LEN#MOTIF)\">\n"
 			"##FILTER=<ID=LowCovNormal,Description=\"low coverage in the normal (<" << fs.minCovNormal << ")\">\n"
 			"##FILTER=<ID=HighCovNormal,Description=\"high coverage in the normal (>" << fs.maxCovNormal << ")\">\n"

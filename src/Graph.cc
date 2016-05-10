@@ -931,8 +931,8 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				//ACNR = transcript[ti].getMinCovNrev(); // alt normal cov rev
 				ACNF = 0; // alt normal cov fwd
 				ACNR = 0; // alt normal cov rev
-				//ACTF = transcript[ti].getAvgCovTfwd(); // alt tumor cov fwd
-				//ACTR = transcript[ti].getAvgCovTrev(); // alt tumor cov rev
+				ACTF = transcript[ti].getMedianCovTfwd(); // alt tumor cov fwd
+				ACTR = transcript[ti].getMedianCovTrev(); // alt tumor cov rev
 			}
 			
 			//int ACTF = (transcript[ti].code=='x') ? transcript[ti].getMinCovTfwd() : transcript[ti].getMedianCovTfwd(); // alt tumor cov fwd

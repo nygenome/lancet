@@ -34,6 +34,7 @@ public:
 
 	unsigned int pos;
 	unsigned int ref_pos;
+	unsigned int start_pos;
 	char code;
 	unsigned int end_pos;
 	unsigned int ref_end_pos;
@@ -87,8 +88,8 @@ public:
 	char prev_bp_ref; // base-pair preceding the mutation in reference
 	char prev_bp_alt; // base-pair preceding the mutation in alternative
 
-	Transcript_t(int pos_, int ref_pos_, char code_, char ref_, char qry_, int covN_fwd_, int covN_rev_, int covT_fwd_, int covT_rev_, int ref_covN_, int ref_covT_, char prev_bp_ref_, char prev_bp_alt_, int end_pos_, int ref_end_pos_, bool flag)
-		: pos(pos_), ref_pos(ref_pos_), code(code_), end_pos(end_pos_), ref_end_pos(ref_end_pos_)
+	Transcript_t(int pos_, int ref_pos_, int start_pos_, char code_, char ref_, char qry_, int covN_fwd_, int covN_rev_, int covT_fwd_, int covT_rev_, int ref_covN_, int ref_covT_, char prev_bp_ref_, char prev_bp_alt_, int end_pos_, int ref_end_pos_, bool flag)
+		: pos(pos_), ref_pos(ref_pos_), start_pos(start_pos_), code(code_), end_pos(end_pos_), ref_end_pos(ref_end_pos_)
 	{ 	
 		isSomatic = flag;
 		ref = ref_;

@@ -636,14 +636,14 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	assert(coverageN.size() == coverageT.size());
 	
 	string pathseq = path->str();
-	
+		
 	// perform SW alignment only if the two strings are different
 	if(refseq == pathseq) {
 		ref_aln = refseq;
 		path_aln = pathseq;
 	}
 	else {
-		global_align_aff(refseq, path->str(), ref_aln, path_aln, 0, 0);
+		global_align_aff(refseq, pathseq, ref_aln, path_aln, 0, 0);
 	}
 	/*
 	global_cov_align_aff(refseq, path->str(), coverageT_fwd, ref_aln, path_aln, cov_path_aln, 0, 0);
@@ -846,7 +846,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				{
 					// create new transcript for mutation
 					if(code == 'x') { // snv						
-						transcript.push_back(Transcript_t(rrpos, pos_in_ref+ref->trim5, code, 
+						transcript.push_back(Transcript_t(rrpos, pos_in_ref+ref->trim5, P+1, code, 
 							ref_aln[i], path_aln[i], 
 							cov_at_pos_N_minqv_fwd, cov_at_pos_N_minqv_rev,
 							cov_at_pos_T_minqv_fwd, cov_at_pos_T_minqv_rev,
@@ -855,7 +855,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 							P, pos_in_ref+ref->trim5, within_tumor_node));
 					}
 					else { // indel
-						transcript.push_back(Transcript_t(rrpos, pos_in_ref+ref->trim5, code, 
+						transcript.push_back(Transcript_t(rrpos, pos_in_ref+ref->trim5, P+1, code, 
 							ref_aln[i], path_aln[i], 
 							cov_at_pos_N_fwd, cov_at_pos_N_rev, 
 							cov_at_pos_T_fwd, cov_at_pos_T_rev, 
@@ -931,8 +931,8 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				//ACNR = transcript[ti].getMinCovNrev(); // alt normal cov rev
 				ACNF = 0; // alt normal cov fwd
 				ACNR = 0; // alt normal cov rev
-				ACTF = transcript[ti].getMedianCovTfwd(); // alt tumor cov fwd
-				ACTR = transcript[ti].getMedianCovTrev(); // alt tumor cov rev
+				//ACTF = transcript[ti].getMedianCovTfwd(); // alt tumor cov fwd
+				//ACTR = transcript[ti].getMedianCovTrev(); // alt tumor cov rev
 			}
 			
 			//int ACTF = (transcript[ti].code=='x') ? transcript[ti].getMinCovTfwd() : transcript[ti].getMedianCovTfwd(); // alt tumor cov fwd
@@ -947,9 +947,20 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			
 			// save variant into DB
 			if( (ACNF > 0) || (ACNR > 0) || (ACTF > 0) || (ACTR > 0) ) {
+				
+				// annotate if in STR
+				int LEN;
+				string MOTIF = "";
+				stringstream STR;
+				bool ans = findTandems(pathseq, "test", transcript[ti].start_pos, LEN, MOTIF);
+				if(ans) { 
+					STR << LEN << MOTIF;
+					//cerr << "STR = " << STR.str() << endl; 					
+				}
+				
 				vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, 
 					RCN, RCT, ACNF, ACNR, ACTF, ACTR,
-					transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters, K));
+					transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters, K, STR.str()));
 				}
 		}
 		if(verbose) { cerr << endl; }

@@ -108,6 +108,11 @@ void Variant_t::printVCF() {
 			else { FILTER += ";StrandBias"; }
 		}
 	}
+	
+	if(!str.empty()) { 
+		if (FILTER.compare("") == 0) { FILTER = "MS="; FILTER += str; }
+		else { FILTER += ";MS="; FILTER += str; }
+	}
 		
 	if(FILTER.compare("") == 0) { FILTER = "PASS"; }
 	

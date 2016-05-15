@@ -336,19 +336,20 @@ void parseMD(string & md, map<int,int> & M, int start) {
 // 2 24 23 A 22+1 cAAAAAAAAAAAAAAAAAAAAAAAt 0
 // finished in 8.9e-05s
 //////////////////////////////////////////////////////////////////////////
-/*
-void findTandems(const string & seq, const string & tag)
+
+bool findTandems(const string & seq, const string & tag, int pos, int & len, std::string & motif)
 {
-	
+	bool ans = false;
+	//FILE * MUTATE_fp = NULL;
 	const int OFFSET_TABLE_SIZE = 100;
 
-	int MIN_REPORT_LEN = 8;
-	int MIN_REPORT_UNITS = 3;
-	int MIN_UNIT_LEN = 1;
-	int MAX_UNIT_LEN = 4;
-	int FLANK = 10;
+	unsigned int MIN_REPORT_LEN = 7;
+	unsigned int MIN_REPORT_UNITS = 3;
+	//unsigned int MIN_UNIT_LEN = 1;
+	unsigned int MAX_UNIT_LEN = 4;
+	unsigned int FLANK = 10;
 	
-	cout << ">" << tag << " len=" << seq.length() << endl;
+	//cerr << ">" << tag << " len=" << seq.length() << endl;
 
 	//if (MUTATE_fp != NULL)
 	//{
@@ -356,31 +357,31 @@ void findTandems(const string & seq, const string & tag)
 	//	tag.c_str(), MUTATE_PROB, MUTATE_MAX_LEN, MUTATE_PROB_EXTEND, MUTATE_SEED);
 	//}
 	
-	int lastprinted = 0;
+	//int lastprinted = 0;
 
 	int offsets[OFFSET_TABLE_SIZE][OFFSET_TABLE_SIZE];
 
 	// initialize the offsets
-	for (int merlen = 1; merlen <= MAX_UNIT_LEN; merlen++)
+	for (unsigned int merlen = 1; merlen <= MAX_UNIT_LEN; merlen++)
 	{
-		for (int phase = 0; phase < merlen; phase++)
+		for (unsigned int phase = 0; phase < merlen; phase++)
 		{
 			offsets[merlen][phase] = phase;
 		}
 	}
 
 	// now scan the sequence, considering mers starting at position i
-	for (int i = 0; i < seq.length(); i++)
+	for (unsigned int i = 0; i < seq.length(); i++)
 	{
     
 		// consider all possible merlens from 1 to max
-		for (int merlen = 1; merlen <= MAX_UNIT_LEN; merlen++)
+		for (unsigned int merlen = 1; merlen <= MAX_UNIT_LEN; merlen++)
 		{
 			int phase = i % merlen;
 			int offset = offsets[merlen][phase];
 
 			// compare [i..i+merlen) to [offset..offset+merlen)
-			int j = 0;
+			unsigned int j = 0;
 			while ((j < merlen) && 
 				(i+j < seq.length()) && 
 					(seq[i+j] == seq[offset+j])) 
@@ -388,25 +389,28 @@ void findTandems(const string & seq, const string & tag)
 
 			// is the end of the tandem?
 			if (j != merlen || (i+j+1 == seq.length()))
-			{
+			{	
+				assert(offset-1 < (int)seq.length());
+				assert(offset+merlen-1 < seq.length());
+											
 				// am i the leftmost version of this tandem?
 				if (seq[offset-1] != seq[offset+merlen-1])
-				{
+				{					
 					// is it long enough to report?
 					if (((i-offset)/merlen >= MIN_REPORT_UNITS) && (i - offset >= MIN_REPORT_LEN))
 					{
 						// is it primitive?
-						int ml = 1;
+						unsigned int ml = 1;
 
 						while (ml < merlen)
 						{
-							int units = (i-offset+j) / ml;
+							unsigned int units = (i-offset+j) / ml;
 
 							int allmatch = 1;
-							for (int index = 1; allmatch && (index < units); index++)
+							for (unsigned int index = 1; allmatch && (index < units); index++)
 							{
 								// compare the bases of the current unit to those of unit0
-								for (int m = 0; m < ml; m++)
+								for (unsigned int m = 0; m < ml; m++)
 								{
 									if (seq[offset+m] != seq[offset+index*ml+m])
 									{
@@ -425,22 +429,36 @@ void findTandems(const string & seq, const string & tag)
 						if (ml == merlen)
 						{
 							// start end length
-							cout << offset+1 << "\t" << i+j << "\t" << i+j-offset << "\t";
+							//cerr << offset+1 << "\t" << i+j << "\t" << i+j-offset << "\t";
+							
+							int start = offset+1;
+							int end = i+j;
+							int L = i+j-offset;
+							if ( (pos >= start) && (pos <=end) ) { 
+								ans = true; 
+								len = L; 
+								for (unsigned int z = 0; z < merlen; z++) { 
+									motif += seq[offset+z];
+								}
+							}
 
 							// tandem seq
-							for (int z = 0; z < merlen; z++) { cout << seq[offset+z]; }
-
+							/*
+							for (unsigned int z = 0; z < merlen; z++) { 
+								cerr << seq[offset+z];
+							}
+							*/
 							// complete units + remainder
-							cout << "\t" << (i - offset) / merlen << "+" << j << "\t";
+							//cerr << "\t" << (i - offset) / merlen << "+" << j << "\t";
 
 							// left flank - tandem - right flank
-							for (int z = offset-FLANK; z < offset;    z++) { if (z >= 0) { cout << (char) tolower(seq[z]); } }
-							for (int z = offset;       z < i+j;       z++) { cout << seq[z]; }
-							for (int z = i+j;          z < i+j+FLANK; z++) { if (z < seq.length()) { cout << (char) tolower(seq[z]); } }
+							for (unsigned int z = offset-FLANK; z < (unsigned int)offset;    z++) { if (z >= 0) { /*cerr << (char) tolower(seq[z]);*/ } }
+							for (unsigned int z = offset;       z < i+j;       z++) { /*cerr << seq[z];*/ }
+							for (unsigned int z = i+j;          z < i+j+FLANK; z++) { if (z < seq.length()) { /*cerr << (char) tolower(seq[z]);*/ } }
 
-							cout << "\t" << phase;
+							//cerr << "\t" << phase;
 
-
+							/*
 							if (MUTATE_fp != NULL)
 							{
 								float r = ((float) rand()) / ((float) RAND_MAX);
@@ -452,45 +470,45 @@ void findTandems(const string & seq, const string & tag)
 									char mutate = '-';
 									if (extend <= MUTATE_PROB_EXTEND) { mutate = '+'; }
 
-									cout << "\t||\t" << mutate << "\t" << mutate_len << "\t";
+									cerr << "\t||\t" << mutate << "\t" << mutate_len << "\t";
 
 									// left flank
-									for (int z = offset-FLANK; z < offset;  z++) { if (z >= 0) { cout << (char) tolower(seq[z]); } }
+									for (int z = offset-FLANK; z < offset;  z++) { if (z >= 0) { cerr << (char) tolower(seq[z]); } }
 
 									// mutated ms
 									if (mutate == '-')
 									{
-										for (int z = offset; z < i+j-mutate_len; z++) { cout << seq[z]; }
+										for (unsigned int z = offset; z < i+j-mutate_len; z++) { cerr << seq[z]; }
 									}
 									else
 									{
-										for (int z = offset; z < i+j; z++) { cout << seq[z]; }
-										for (int xxx = 0; xxx < mutate_len; xxx++) { cout << seq[offset + ((j+xxx)%merlen)]; }
+										for (unsigned int z = offset; z < i+j; z++) { cerr << seq[z]; }
+										for (unsigned int xxx = 0; xxx < mutate_len; xxx++) { cerr << seq[offset + ((j+xxx)%merlen)]; }
 									}
 
 									// right flank
-									for (int z = i+j; z < i+j+FLANK; z++) { if (z < seq.length()) { cout << (char) tolower(seq[z]); } }
+									for (unsigned int z = i+j; z < i+j+FLANK; z++) { if (z < seq.length()) { cerr << (char) tolower(seq[z]); } }
 
 
 									// genome sequence up to ms
-									for (int ppp = lastprinted; ppp < offset; ppp++) { fprintf(MUTATE_fp, "%c", seq[ppp]); }
+									for (unsigned int ppp = lastprinted; ppp < offset; ppp++) { fprintf(MUTATE_fp, "%c", seq[ppp]); }
 
 									// mutated ms
 									if (mutate == '-')
 									{
-										for (int z = offset; z < i+j-mutate_len; z++) { fprintf(MUTATE_fp, "%c", seq[z]); }
+										for (unsigned int z = offset; z < i+j-mutate_len; z++) { fprintf(MUTATE_fp, "%c", seq[z]); }
 									}
 									else
 									{
-										for (int z = offset; z < i+j; z++) { fprintf(MUTATE_fp, "%c",  seq[z]); }
-										for (int xxx = 0; xxx < mutate_len; xxx++) { fprintf(MUTATE_fp, "%c", seq[offset + ((j+xxx)%merlen)]); }
+										for (unsigned int z = offset; z < i+j; z++) { fprintf(MUTATE_fp, "%c",  seq[z]); }
+										for (unsigned int xxx = 0; xxx < mutate_len; xxx++) { fprintf(MUTATE_fp, "%c", seq[offset + ((j+xxx)%merlen)]); }
 									}
 
 									lastprinted = i+j;
 								}
 							}
-
-							cout << endl;
+							*/
+							//cerr << endl;
 						}
 					}
 				}
@@ -499,5 +517,5 @@ void findTandems(const string & seq, const string & tag)
 			}
 		}
 	}
+	return ans;
 }
-*/

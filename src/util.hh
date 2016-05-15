@@ -26,6 +26,7 @@
 #include <string>
 #include <set>
 #include <sstream>
+#include <assert.h>
 #include <map>
 
 //-- Include hash_map
@@ -68,6 +69,6 @@ bool isAlmostRepeat(const std::string & seq, int K, int max);
 bool kMismatch(size_t s, size_t e, const std::string & t, size_t start, int max);
 bool seqAboveQual(std::string qv, int Q);
 void parseMD(std::string & md, std::map<int,int> & map, int start);
-//void findTandems(const std::string & seq, const string & tag);
+bool findTandems(const std::string & seq, const std::string & tag, int pos, int & len, std::string & motif);
 
 #endif

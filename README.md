@@ -61,6 +61,7 @@ Below is the current list of filters:
 8. **HighAltCntNormal**: high alternative allele count in the normal
 9. **LowFisherScore**: low Fisher's exact test score for tumor-normal allele counts
 10. **StrandBias**: rejects variants where the vast majority of alternate alleles are seen in a single direction
+11. **MS**: microsatellite mutation (format: #LEN#MOTIF)
 
 ### Visual inspection of the DeBruijn graph
 
@@ -150,6 +151,12 @@ Filters
    --max-coverage-normal, -j  <int>        : maximum coverage in the normal [default: 1000000]
    --min-phred-fisher, -s     <float>      : minimum fisher exact test score [default: 10]
    --min-strand-bias, -f      <float>      : minimum strand bias threshold [default: 1]
+
+Short Tandem Repeat parameters
+   --max-unit-length, -U      <int>        : maximum unit length of the motif [default: 4]
+   --min-report-unit, -N      <int>        : minimum number of units to report [default: 3]
+   --min-report-len, -Y       <int>        : minimum length of tandem in base pairs [default: 7]
+   --dist-from-str, -D        <int>        : distance (in bp) of variant from STR locus [default: 1]
 
 Flags
    --active-region-off, -W    : turn off active region module

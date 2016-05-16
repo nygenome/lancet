@@ -567,6 +567,12 @@ int Microassembler::processReads() {
 	g.setInsertStdev(INSERT_STDEV);
 	g.setMaxMismatch(MAX_MISMATCH);
 	g.setFilters(filters);
+	
+	// set STR params
+	g.setMaxUnitLen(MAX_UNIT_LEN);
+	g.setMinReportUnits(MIN_REPORT_UNITS);
+	g.setMinReportLen(MIN_REPORT_LEN);
+	g.setDistFromStr(DIST_FROM_STR);
 
 	string graphref = "";
 

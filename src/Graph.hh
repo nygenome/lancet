@@ -103,6 +103,12 @@ public:
 	int  INSERT_STDEV;
 	int  MAX_MISMATCH;
 	
+	//STR parameters
+	int MAX_UNIT_LEN;
+	int MIN_REPORT_UNITS;
+	int MIN_REPORT_LEN;
+	int DIST_FROM_STR;
+	
 	unsigned int NUM_EXTRA_BP; // number of extra bp aftre variant to examine for coverage
 
 	MerTable_t nodes_m;
@@ -146,6 +152,12 @@ public:
 	void setInsertStdev(int is) { INSERT_STDEV = is; }
 	void setMaxMismatch(int mm) { MAX_MISMATCH = mm; }
 	void setFilters(Filters &fs) { filters = fs; }
+	
+	//set STR params
+	void setMaxUnitLen(int l) { MAX_UNIT_LEN = l; }
+	void setMinReportUnits(int l) { MIN_REPORT_UNITS = l; }
+	void setMinReportLen(int l) { MIN_REPORT_LEN = l; }
+	void setDistFromStr(int l) { DIST_FROM_STR = l; }
 	
 	bool hasRepeatsInGraphPaths(Ref_t * ref) { return findRepeatsInGraphPaths(source_m, sink_m, F, ref); }
 

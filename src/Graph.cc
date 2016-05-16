@@ -952,7 +952,8 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				int LEN;
 				string MOTIF = "";
 				stringstream STR;
-				bool ans = findTandems(pathseq, "test", transcript[ti].start_pos, LEN, MOTIF);
+					
+				bool ans = findTandems(pathseq, "test", MAX_UNIT_LEN, MIN_REPORT_UNITS, MIN_REPORT_LEN, DIST_FROM_STR, transcript[ti].start_pos, LEN, MOTIF);
 				if(ans) { 
 					STR << LEN << MOTIF;
 					//cerr << "STR = " << STR.str() << endl; 					

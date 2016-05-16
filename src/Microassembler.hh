@@ -107,6 +107,12 @@ public:
 	double MIN_COV_RATIO;
 	int LOW_COV_THRESHOLD;
 	int MAX_AVG_COV;
+	
+	//STR parameters
+	int MAX_UNIT_LEN;
+	int MIN_REPORT_UNITS;
+	int MIN_REPORT_LEN;
+	int DIST_FROM_STR;
 
 	bool ACTIVE_REGION_MODULE;
 	bool SCAFFOLD_CONTIGS;

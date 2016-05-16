@@ -336,18 +336,18 @@ void parseMD(string & md, map<int,int> & M, int start) {
 // 2 24 23 A 22+1 cAAAAAAAAAAAAAAAAAAAAAAAt 0
 // finished in 8.9e-05s
 //////////////////////////////////////////////////////////////////////////
-
-bool findTandems(const string & seq, const string & tag, int pos, int & len, std::string & motif)
+bool findTandems(const string & seq, const string & tag, int max_unit_len, int min_report_units, int min_report_len, int dist_from_str, int pos, int & len, std::string & motif)
 {
 	bool ans = false;
 	//FILE * MUTATE_fp = NULL;
 	const int OFFSET_TABLE_SIZE = 100;
 
-	unsigned int MIN_REPORT_LEN = 7;
-	unsigned int MIN_REPORT_UNITS = 3;
+	unsigned int MIN_REPORT_LEN = min_report_len;
+	unsigned int MIN_REPORT_UNITS = min_report_units;
 	//unsigned int MIN_UNIT_LEN = 1;
-	unsigned int MAX_UNIT_LEN = 4;
+	unsigned int MAX_UNIT_LEN = max_unit_len;
 	unsigned int FLANK = 10;
+	int delta = dist_from_str;
 	
 	//cerr << ">" << tag << " len=" << seq.length() << endl;
 
@@ -434,7 +434,7 @@ bool findTandems(const string & seq, const string & tag, int pos, int & len, std
 							int start = offset+1;
 							int end = i+j;
 							int L = i+j-offset;
-							if ( (pos >= start) && (pos <=end) ) { 
+							if ( (pos >= (start-delta)) && (pos <= (end+delta)) ) { 
 								ans = true; 
 								len = L; 
 								for (unsigned int z = 0; z < merlen; z++) { 

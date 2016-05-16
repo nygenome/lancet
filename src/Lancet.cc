@@ -61,6 +61,12 @@ int NODE_STRLEN = 100;
 int DFS_LIMIT = 1000000;
 int MAX_INDEL_LEN = 500;
 int MAX_MISMATCH = 2;
+	
+//STR parameters
+int MAX_UNIT_LEN = 4;
+int MIN_REPORT_UNITS = 3;
+int MIN_REPORT_LEN = 7;
+int DIST_FROM_STR = 1;
 
 bool SCAFFOLD_CONTIGS = 0;
 int INSERT_SIZE = 150;
@@ -354,6 +360,12 @@ int main(int argc, char** argv)
 		"   --max-coverage-normal, -j  <int>        : maximum coverage in the normal [default: " << filters.maxCovNormal << "]\n"
 		"   --min-phred-fisher, -s     <float>      : minimum fisher exact test score [default: " << filters.minPhredFisher << "]\n"
 		"   --min-strand-bias, -f      <float>      : minimum strand bias threshold [default: " << filters.minStrandBias << "]\n"
+			
+		"\nShort Tandem Repeat parameters\n"
+		"   --max-unit-length, -U      <int>        : maximum unit length of the motif [default: " << MAX_UNIT_LEN << "]\n"
+		"   --min-report-unit, -N      <int>        : minimum number of units to report [default: " << MIN_REPORT_UNITS << "]\n"
+		"   --min-report-len, -Y       <int>        : minimum length of tandem in base pairs [default: " << MIN_REPORT_LEN << "]\n"
+		"   --dist-from-str, -D        <int>        : distance (in bp) of variant from STR locus [default: " << DIST_FROM_STR << "]\n"
 		
 		"\nFlags\n"
 		"   --active-region-off, -W    : turn off active region module\n"		
@@ -398,6 +410,12 @@ int main(int argc, char** argv)
 		{"num-threads",  required_argument, 0, 'X'},
 		{"max-indel-len",  required_argument, 0, 'T'},
 		{"max-mismatch",  required_argument, 0, 'M'},
+
+		// STR params
+		{"max-unit-length",  required_argument, 0, 'U'},
+		{"min-report-unit",  required_argument, 0, 'N'},
+		{"min-report-len",  required_argument, 0, 'Y'},
+		{"dist-from-str",  required_argument, 0, 'D'},
 		
 		//filters
 		{"min-phred-fisher",  required_argument, 0, 's'},
@@ -424,7 +442,7 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSWL:T:M:vVF:q:b:B:Q:p:s:a:m:e:i:o:y:z:w:j:X:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSWL:T:M:vVF:q:b:B:Q:p:s:a:m:e:i:o:y:z:w:j:X:U:N:Y:D:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -567,7 +585,11 @@ int main(int argc, char** argv)
 			assemblers[i]->NODE_STRLEN = NODE_STRLEN;
 			assemblers[i]->DFS_LIMIT = DFS_LIMIT;
 			assemblers[i]->MAX_INDEL_LEN = MAX_INDEL_LEN;
-			assemblers[i]->MAX_MISMATCH = MAX_MISMATCH;	
+			assemblers[i]->MAX_MISMATCH = MAX_MISMATCH;		
+			assemblers[i]->MAX_UNIT_LEN = MAX_UNIT_LEN;
+			assemblers[i]->MIN_REPORT_UNITS = MIN_REPORT_UNITS;
+			assemblers[i]->MIN_REPORT_LEN = MIN_REPORT_LEN;
+			assemblers[i]->DIST_FROM_STR = DIST_FROM_STR;	
 			
 			assemblers[i]->reftable = &reftables[i];
 			assemblers[i]->setFilters(filters);

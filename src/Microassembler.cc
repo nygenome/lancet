@@ -232,8 +232,8 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 		
 		if(verbose) {
 			if(rptInRef) { cerr << " Found repeat in reference" << endl; }
-			if(rptInQry) { cerr << " Found repeat in assembly" << endl; }	
-			if(cycleInGraph) { cerr << " Found cycle in assembly" << endl; }	
+			if(rptInQry) { cerr << " Found repeat in assembly" << endl; }
+			if(cycleInGraph) { cerr << " Found cycle in assembly" << endl; }
 		}
 		
 		if(verbose) { cerr << "FINISHED" << endl; }

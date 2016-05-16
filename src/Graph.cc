@@ -27,7 +27,9 @@
 void Graph_t::clear(bool flag)
 {
 	if(flag) {
-		readid2info.clear();
+		//readid2info.clear();
+		vector<ReadInfo_t>().swap(readid2info); 
+		is_ref_added = false; // reference reads was in readid2info and removed
 	}
 	totalreadbp_m = 0;
 
@@ -37,7 +39,8 @@ void Graph_t::clear(bool flag)
 		delete mi->second;
 	}
 	
-	nodes_m.clear();
+	//nodes_m.clear();
+	unordered_map<Mer_t, Node_t *>().swap(nodes_m);	
 
 	source_m = NULL;
 	sink_m = NULL;
@@ -46,7 +49,7 @@ void Graph_t::clear(bool flag)
 	{
 		delete ref_m;
 		ref_m = NULL;
-	}
+	}	
 }
 
 // loadSequence

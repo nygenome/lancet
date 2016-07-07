@@ -199,8 +199,8 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 				// Thread reads
 				// BUG: threding is off because creates problems if the the bubble is not covered (end-to-end) 
 				// by the reads. This is particularly problematic for detecting denovo events
-				//g.threadReads();
-				//if (PRINT_ALL) { g.printDot(out_prefix + ".4thread.dot"); }
+				//g.threadReads(c);
+				//if (PRINT_ALL) { g.printDot(out_prefix + ".4thread.c" + comp + ".dot",c); }
 		
 				// scaffold contigs
 				if (SCAFFOLD_CONTIGS)
@@ -421,7 +421,12 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	//int num_PCR_duplicates = 0;
 	BamAlignment al;
 	string rg = "";
+	string xt = "";	
+	string xa = "";	
 	int num_unmapped = 0;
+	int num_XT_R_read = 0;
+	int num_XT_M_read = 0;
+	
 	int totalreadbp = 0;
 	double avgcov = 0.0;
 	int MQ = MIN_MAP_QUAL;
@@ -456,11 +461,39 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			if(al.IsReverseStrand()) { strand = REV; }
 			
 			/*
+			// get original base quality scores
 			string oq;
-			al.GetTag("OQ", oq); // get original base quality scores
+			al.GetTag("OQ", oq); 
 			cerr << oq << endl;
 			*/
 			
+			// XT type: Unique/Repeat/N/Mate-sw
+			//
+			// XT:A:M (one-mate recovered) means that one of the pairs is uniquely mapped and the other isn't
+			//
+			// Heng Li: If the read itself is a repeat and can be mapped without relying on its mate, you see "XT:Z:R". 
+			// Nonetheless, the mapping quality is not necessarily zero. When its mate can be mapped unambiguously, 
+			// the read can still be mapped confidently and thus assigned a high mapQ.
+			// MapQ is computed for the read pair. XT is determined from a single read.
+			xt = "";
+			al.GetTag("XT", xt); // get the XT tag for the read
+			if(xt.empty()) { xt = "null"; }
+			if(xt == "R") { num_XT_R_read++; continue; } // skip alignments which are marked XT:R
+			if(xt == "M") { num_XT_M_read++; continue; } // skip alignments which are marked XT:M
+			
+			/*
+			// XA  Alternative hits; format: (chr,pos,CIGAR,NM;)
+			xa = "";
+			al.GetTag("XA", xa); // get the XA for the read
+			if(xa.empty()) { xa = "null"; }
+			if(xa != "null") {  // skip alignments which are marked as repeats
+				//cerr << al.Name << "\t" << xa << endl;
+				num_repeat_read++; 
+				continue; 
+			}
+			*/
+			
+			rg = "";
 			al.GetTag("RG", rg); // get the read group information for the read
 			if(rg.empty()) { rg = "null"; }
 			
@@ -495,6 +528,11 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			}
 		}
 		//else{ num_PCR_duplicates++; }
+	}
+	
+	if(verbose) {
+		cerr << "Num reads marked as XT:A:R tag " << num_XT_R_read << endl;
+		cerr << "Num reads marked as XT:A:M tag " << num_XT_M_read << endl;
 	}
 	
 	return skip;

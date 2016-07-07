@@ -90,13 +90,15 @@ void Ref_t::computeCoverage() {
 				normal_coverage.at(i+K-1) = n_cov;
 				tumor_coverage.at(i+K-1) = t_cov;
 				
-				for (int l = 0; l < K-1; l++) {
+				
+				//for (int l = 0; l < K-1; l++) {
 					//if(normal_coverage.at(i+l) < n_cov) { normal_coverage.at(i+l) = n_cov; }
 					//if(tumor_coverage.at(i+l) < t_cov) { tumor_coverage.at(i+l) = t_cov; }
-					normal_coverage.at(i+l) = n_cov;
-					tumor_coverage.at(i+l) = t_cov;
-				}	
+					//normal_coverage.at(i+l) = n_cov;
+					//tumor_coverage.at(i+l) = t_cov;
+				//}
 			}
+			
 		}
 		else {
 			normal_coverage.at(i) = 0;

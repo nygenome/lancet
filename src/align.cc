@@ -24,13 +24,25 @@
 
 using namespace std;
 
+//Original:
 int MATCH = 2;
 int MISMATCH = -4;
+int GAP_OPEN = -8;
+int GAP_EXTEND = -1;
 
 int INDEL = -2;
 
-int GAP_OPEN = -8;
-int GAP_EXTEND = -1;
+//blastn scoring:
+//int MATCH = 1;
+//int MISMATCH = -2;
+//int GAP_OPEN = 5;
+//int GAP_EXTEND = 2;
+
+// BWA-MEM scoring:
+//int MATCH = 1;
+//int MISMATCH = 4;
+//int GAP_OPEN = 6;
+//int GAP_EXTEND = 1;
 
 
 int cmp(char s, char t)

@@ -52,7 +52,7 @@ string REGION;
 int minK = 11;
 int maxK = 100;
 int MAX_TIP_LEN = minK;
-unsigned int MIN_THREAD_READS = 3;
+unsigned int MIN_THREAD_READS = 1;
 int COV_THRESHOLD = 5;
 double MIN_COV_RATIO = 0.01;
 int LOW_COV_THRESHOLD = 1;
@@ -640,13 +640,15 @@ int main(int argc, char** argv)
 			}
 		}
 		
-		cerr << "Total # of skipped windows: " << tot_skip << endl;
-		cerr << "- # of windows with SNVs only: " << tot_svn_only << endl;
-		cerr << "- # of windows with indels only: " << tot_indel_only << endl;
-		cerr << "- # of windows with softclips only: " << tot_softclip_only << endl;
-		cerr << "- # of windows with indels or softclips: " << tot_indel_or_softclip << endl;
-		cerr << "- # of windows with SNVs or indels or softclips: " << tot_snv_or_indel_or_softclip << endl;
-				
+		if(verbose) {
+			cerr << "Total # of skipped windows: " << tot_skip << endl;
+			cerr << "- # of windows with SNVs only: " << tot_svn_only << endl;
+			cerr << "- # of windows with indels only: " << tot_indel_only << endl;
+			cerr << "- # of windows with softclips only: " << tot_softclip_only << endl;
+			cerr << "- # of windows with indels or softclips: " << tot_indel_or_softclip << endl;
+			cerr << "- # of windows with SNVs or indels or softclips: " << tot_snv_or_indel_or_softclip << endl;
+		}
+		
 		/***** get current time and date *****/
 		time_t rawtime;
 		time (&rawtime);

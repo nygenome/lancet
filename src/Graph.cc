@@ -750,6 +750,12 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			//if (spanner->isTumor() && !spanner->isNormal()) { 
 				//cerr << "Within tumor only node" << endl;
 				within_tumor_node = true;
+				
+				// print read ids
+				//unordered_set<ReadId_t>::const_iterator it;
+				//for (auto it = spanner->reads_m.begin(); it != spanner->reads_m.end(); it++) {
+				//	cerr << readid2info[*it].readname_m.c_str() << endl;
+				//}
 			}			
 
 			assert(pathpos <= coverageN.size());
@@ -894,6 +900,12 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					//if (spanner->isTumor() && !spanner->isNormal()) { 
 						//cerr << "Within tumor only node" << endl;
 						transcript[ti].isSomatic = true;
+						
+						// print read ids
+						//unordered_set<ReadId_t>::const_iterator it;
+						//for (auto it = spanner->reads_m.begin(); it != spanner->reads_m.end(); it++) {
+						//	cerr << readid2info[*it].readname_m.c_str() << endl;
+						//}
 					}
 				
 					if(transcript[ti].code == 'x') { // snv
@@ -2759,7 +2771,7 @@ void Graph_t::greedyTrim()
 **
 */
 
-void Graph_t::threadReads()
+void Graph_t::threadReads(int compid)
 {
     if (MIN_THREAD_READS == -1)
     {
@@ -2797,148 +2809,52 @@ void Graph_t::threadReads()
 
 		for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
 		{
-			Node_t * cur = mi->second;
+			
+			if(mi->second->component_m == compid) { //only process the selected connected component 
+			
+				Node_t * cur = mi->second;
 
-			//if (cur->isRef()) { continue; }
-			if (cur->isSpecial()) { continue; }
+				//if (cur->isRef()) { continue; }
+				if (cur->isSpecial()) { continue; }
 
-			//if ((cur->degree(F) > 1) || (cur->degree(R) > 1))
-			if ((cur->degree(F) > 1) && (cur->degree(R) > 1))
-			{
-				unsigned int numedges = cur->edges_m.size();
-
-				vector<unsigned int> threaded;
-				threaded.resize(numedges);
-
-				for (unsigned int ti = 0; ti < numedges; ti++)
+				//if ((cur->degree(F) > 1) || (cur->degree(R) > 1))
+				if ((cur->degree(F) > 1) && (cur->degree(R) > 1))
 				{
-					threaded[ti] = 0;
-				}
+					unsigned int numedges = cur->edges_m.size();
 
-				if (VERBOSE)
-				{
-					cerr << endl;
-					cerr << "=Checking: " << cur->nodeid_m << " " << cur->strlen() << "bp" << endl;
-					cerr << "================================================================" << endl;
+					vector<unsigned int> threaded;
+					threaded.resize(numedges);
 
-					for (unsigned int i = 0; i < numedges; i++)
+					for (unsigned int ti = 0; ti < numedges; ti++)
 					{
-						cerr << "  " << i << ": " << cur->nodeid_m << ":" << cur->edges_m[i] << endl;
-					}
-				}
-
-				if (cur->isTandem()) 
-				{ 
-					if (VERBOSE) { cerr << " tandem, skipping" << endl << endl; }
-
-					continue; 
-				}
-
-				// Find reads that span across the node
-
-				for (unsigned int e1i = 0; e1i < numedges; e1i++)
-				{
-					Edge_t & e1 = cur->edges_m[e1i];
-					Node_t * n1 = getNode(e1);
-
-					if (e1.startdir() != F) { continue; }
-
-					set<ReadId_t> e1reads;
-					for (unsigned int j = 0; j < e1.readids_m.size(); j++)
-					{
-						e1reads.insert(e1.readids_m[j]);
+						threaded[ti] = 0;
 					}
 
-					for (unsigned int e2i = 0; e2i < numedges; e2i++)
+					if (VERBOSE)
 					{
-						Edge_t & e2 = cur->edges_m[e2i];
-						Node_t * n2 = getNode(e2);
-						
+						cerr << endl;
+						cerr << "=Checking: " << cur->nodeid_m << " " << cur->strlen() << "bp" << endl;
+						cerr << "================================================================" << endl;
 
-						if (e2.startdir() != R) { continue; }
-
-						// check if any reads span edges from e1 to e2
-						//////////////////////////////////////////////
-
-						set<ReadId_t> overlap;
-
-						if (VERBOSE) cerr << e1i << ":" << e1.label() << " == " << e2i << ":" << e2.label() << " :";
-
-						for (unsigned int j = 0; j < e2.readids_m.size(); j++)
+						for (unsigned int i = 0; i < numedges; i++)
 						{
-							int jj = e2.readids_m[j];
-
-							if (e1reads.find(jj) != e1reads.end())
-							{
-								if (VERBOSE) cerr << " " << jj;
-								overlap.insert(jj);
-							}
-						}
-
-						if (VERBOSE) cerr << endl;
-
-
-						// check if any mates of n1 span to n2
-						//////////////////////////////////////
-
-						if (VERBOSE) cerr << "mates: " << endl;
-
-						set<ReadId_t> mateoverlap;
-						unordered_set<ReadId_t>::const_iterator s1, s2;
-
-						for (s1 =  n1->reads_m.begin();
-						s1 != n1->reads_m.end();
-						s1++)
-						{
-							s2 = n2->reads_m.find(readid2info[*s1].mateid_m);
-
-							if (s2 != n2->reads_m.end())
-							{
-								// mates are in n1 and n2
-								// TODO: check orientation and spacing
-								if (VERBOSE) cerr << " " << *s1 << " " << *s2 << endl;
-							}
-						}
-
-						// overlap has reads that span from e1 (in F dir) to e2 (in R dir)
-
-						if ( (int)overlap.size() >= MIN_THREAD_READS)
-						{
-							threaded[e1i]++;
-							threaded[e2i]++;
+							cerr << "  " << i << ": " << cur->nodeid_m << ":" << cur->edges_m[i] << endl;
 						}
 					}
-				}
 
-				// see what fraction of nodes were completely threaded
+					if (cur->isTandem()) 
+					{ 
+						if (VERBOSE) { cerr << " tandem, skipping" << endl << endl; }
 
-				unsigned int threadcnt = 0;
-				for (unsigned int ti = 0; ti < numedges; ti++)
-				{
-					if (threaded[ti] > 0)
-					{
-						threadcnt++;
+						continue; 
 					}
-				}
-				
 
-				if (VERBOSE)
-				{ 
-					cerr << "threads through " << threadcnt << " of " << numedges << endl;
-				}
-
-				// if the node was completely resolved, go ahead and resolve it
-
-				if (threadcnt == numedges)
-				{
-					if (VERBOSE) { cerr << endl << "All edges threaded, applying..." << endl; }
-
-					int copy = 0;
-					vector<Node_t*> newnodes;
+					// Find reads that span across the node
 
 					for (unsigned int e1i = 0; e1i < numedges; e1i++)
 					{
 						Edge_t & e1 = cur->edges_m[e1i];
+						Node_t * n1 = getNode(e1);
 
 						if (e1.startdir() != F) { continue; }
 
@@ -2951,10 +2867,17 @@ void Graph_t::threadReads()
 						for (unsigned int e2i = 0; e2i < numedges; e2i++)
 						{
 							Edge_t & e2 = cur->edges_m[e2i];
+							Node_t * n2 = getNode(e2);
+						
 
 							if (e2.startdir() != R) { continue; }
 
+							// check if any reads span edges from e1 to e2
+							//////////////////////////////////////////////
+
 							set<ReadId_t> overlap;
+
+							if (VERBOSE) cerr << e1i << ":" << e1.label() << " == " << e2i << ":" << e2.label() << " :";
 
 							for (unsigned int j = 0; j < e2.readids_m.size(); j++)
 							{
@@ -2962,114 +2885,224 @@ void Graph_t::threadReads()
 
 								if (e1reads.find(jj) != e1reads.end())
 								{
+									if (VERBOSE) cerr << " " << jj;
 									overlap.insert(jj);
+								}
+							}
+
+							if (VERBOSE) cerr << endl;
+
+
+							// check if any mates of n1 span to n2
+							//////////////////////////////////////
+
+							if (VERBOSE) cerr << "mates: " << endl;
+
+							set<ReadId_t> mateoverlap;
+							unordered_set<ReadId_t>::const_iterator s1, s2;
+
+							for (s1 =  n1->reads_m.begin();
+							s1 != n1->reads_m.end();
+							s1++)
+							{
+								s2 = n2->reads_m.find(readid2info[*s1].mateid_m);
+
+								if (s2 != n2->reads_m.end())
+								{
+									// mates are in n1 and n2
+									// TODO: check orientation and spacing
+									if (VERBOSE) cerr << " " << *s1 << " " << *s2 << endl;
 								}
 							}
 
 							// overlap has reads that span from e1 (in F dir) to e2 (in R dir)
 
-							if ((int)overlap.size() >= MIN_THREAD_READS)
+							if ( (int)overlap.size() >= MIN_THREAD_READS)
 							{
-								copy++;
-
-								char buffer [1024];
-								sprintf(buffer, "%s_%d", cur->nodeid_m.c_str(), copy);
-
-								if (VERBOSE)
-								{
-									cerr << "thread " << cur->nodeid_m << " " << cur->strlen() << "bp" << endl;
-									cerr << "  1: " << e1 << endl
-										<< "  2: " << e2 << endl
-										<< "  r[" << overlap.size() << "]:";
-
-									set<ReadId_t>::iterator si;
-									for (si = overlap.begin(); si != overlap.end(); si++) { cerr << " " << *si; }
-									cerr << endl;
-
-									cerr << "  making " << buffer << endl << endl;
-								}
-
-								Node_t * copy = new Node_t(cur->nodeid_m);
-
-								copy->nodeid_m = buffer;      // nodeid
-								copy->str_m = cur->str_m;     // sequence
-								//copy->cov_m = overlap.size(); // coverage
-								//copy->cov_distr.resize(copy->str_m.size());
-								//copy->updateCovDistr(overlap.size()); // coverage distribution
-
-								// reads and edges
-								set<ReadId_t>::iterator si;
-								for (si = overlap.begin(); si != overlap.end(); si++)
-								{
-									copy->addEdge(e1.nodeid_m, e1.dir_m, *si);
-									copy->addEdge(e2.nodeid_m, e2.dir_m, *si);
-								}
-
-								// TODO: update read starts?
-
-								copy->touchRef_m = cur->touchRef_m;
-
-								newnodes.push_back(copy);
+								threaded[e1i]++;
+								threaded[e2i]++;
 							}
 						}
 					}
 
-					if (!newnodes.empty())
+					// see what fraction of nodes were completely threaded
+
+					unsigned int threadcnt = 0;
+					for (unsigned int ti = 0; ti < numedges; ti++)
 					{
-						if (VERBOSE) 
-						{ 
-							cerr << "cleaning up: " << cur->nodeid_m << endl; 
-
-							for (unsigned int e1i = 0; e1i < cur->edges_m.size(); e1i++)
-							{
-								Edge_t & e1 = cur->edges_m[e1i];
-								cerr << "   " << e1 << endl;
-							} 
-						} 
-
-						removeNode(cur);
-
-						thread++;
-
-						for (unsigned int j = 0; j < newnodes.size(); j++)
+						if (threaded[ti] > 0)
 						{
-							Node_t * nn = newnodes[j];
-							nodes_m.insert(make_pair(nn->nodeid_m, nn));
+							threadcnt++;
+						}
+					}
+				
 
-							if (VERBOSE) { cerr << "  swapping in: " << nn->nodeid_m << endl; }
+					if (VERBOSE)
+					{ 
+						cerr << "threads through " << threadcnt << " of " << numedges << endl;
+					}
 
-							for (unsigned int k = 0; k < nn->edges_m.size(); k++)
+					// if the node was completely resolved, go ahead and resolve it
+
+					if (threadcnt == numedges)
+					{
+						if (VERBOSE) { cerr << endl << "All edges threaded, applying..." << endl; }
+
+						int copy = 0;
+						vector<Node_t*> newnodes;
+
+						for (unsigned int e1i = 0; e1i < numedges; e1i++)
+						{
+							Edge_t & e1 = cur->edges_m[e1i];
+
+							if (e1.startdir() != F) { continue; }
+
+							set<ReadId_t> e1reads;
+							for (unsigned int j = 0; j < e1.readids_m.size(); j++)
 							{
-								Edge_t & e = nn->edges_m[k];
-								Node_t * other = getNode(e.nodeid_m);
+								e1reads.insert(e1.readids_m[j]);
+							}
 
-								if (VERBOSE) { cerr << "    edge: " << e << endl; }
+							for (unsigned int e2i = 0; e2i < numedges; e2i++)
+							{
+								Edge_t & e2 = cur->edges_m[e2i];
 
-								for (unsigned int r = 0; r < e.readids_m.size(); r++)
+								if (e2.startdir() != R) { continue; }
+
+								set<ReadId_t> overlap;
+
+								for (unsigned int j = 0; j < e2.readids_m.size(); j++)
 								{
-									other->addEdge(nn->nodeid_m, Edge_t::fliplink(e.dir_m), e.readids_m[r]);
+									int jj = e2.readids_m[j];
+
+									if (e1reads.find(jj) != e1reads.end())
+									{
+										overlap.insert(jj);
+									}
 								}
 
-								if (VERBOSE) { cerr << "      " << other << endl; }
+								// overlap has reads that span from e1 (in F dir) to e2 (in R dir)
+
+								if ((int)overlap.size() >= MIN_THREAD_READS)
+								{
+									copy++;
+
+									char buffer [1024];
+									sprintf(buffer, "%s_%d", cur->nodeid_m.c_str(), copy);
+
+									if (VERBOSE)
+									{
+										cerr << "thread " << cur->nodeid_m << " " << cur->strlen() << "bp" << endl;
+										cerr << "  1: " << e1 << endl
+											<< "  2: " << e2 << endl
+											<< "  r[" << overlap.size() << "]:";
+
+										set<ReadId_t>::iterator si;
+										for (si = overlap.begin(); si != overlap.end(); si++) { cerr << " " << *si; }
+										cerr << endl;
+
+										cerr << "  making " << buffer << endl << endl;
+									}
+
+									// create new node and updated data structures accordingly 
+									Node_t * copy = new Node_t(cur->nodeid_m);
+
+									copy->nodeid_m = buffer;      // nodeid
+									copy->setMinQV(MIN_QUAL_CALL);
+									copy->setK(K);
+									copy->str_m = cur->str_m;     // sequence
+									copy->component_m = cur->component_m;
+								
+									copy->cov_tmr_m_fwd = overlap.size(); // tumor coverage forward
+									copy->cov_tmr_m_rev = overlap.size(); // tumor coverage reverse
+									copy->cov_nml_m_fwd = overlap.size(); // normal coverage forward
+									copy->cov_nml_m_rev = overlap.size(); // normal coverage reverse
+								
+									copy->cov_distr_tmr.resize(copy->str_m.size());
+									copy->cov_distr_nml.resize(copy->str_m.size());
+									copy->cov_status = cur->cov_status; // T=tumot,N=normal,B=both,E=empty
+									copy->cov_distr_tmr = cur->cov_distr_tmr;
+									copy->cov_distr_nml = cur->cov_distr_nml;;
+									//copy->updateCovDistr(overlap.size()); // coverage distribution
+
+									if(cur->isRef()) { copy->setIsRef(); }
+									if(cur->isNormal()) { copy->setIsNormal(); }
+									if(cur->isTumor()) { copy->setIsTumor(); }
+								
+									// reads and edges
+									set<ReadId_t>::iterator si;
+									for (si = overlap.begin(); si != overlap.end(); si++)
+									{
+										copy->addEdge(e1.nodeid_m, e1.dir_m, *si);
+										copy->addEdge(e2.nodeid_m, e2.dir_m, *si);
+									}
+
+									// TODO: update read starts?
+
+									copy->touchRef_m = cur->touchRef_m;
+
+									newnodes.push_back(copy);
+								}
 							}
 						}
 
-						if (VERBOSE) { cerr << endl << endl; }
+						if (!newnodes.empty())
+						{
+							if (VERBOSE) 
+							{ 
+								cerr << "cleaning up: " << cur->nodeid_m << endl; 
+
+								for (unsigned int e1i = 0; e1i < cur->edges_m.size(); e1i++)
+								{
+									Edge_t & e1 = cur->edges_m[e1i];
+									cerr << "   " << e1 << endl;
+								} 
+							} 
+
+							removeNode(cur);
+
+							thread++;
+
+							for (unsigned int j = 0; j < newnodes.size(); j++)
+							{
+								Node_t * nn = newnodes[j];
+								nodes_m.insert(make_pair(nn->nodeid_m, nn));
+
+								if (VERBOSE) { cerr << "  swapping in: " << nn->nodeid_m << endl; }
+
+								for (unsigned int k = 0; k < nn->edges_m.size(); k++)
+								{
+									Edge_t & e = nn->edges_m[k];
+									Node_t * other = getNode(e.nodeid_m);
+
+									if (VERBOSE) { cerr << "    edge: " << e << endl; }
+
+									for (unsigned int r = 0; r < e.readids_m.size(); r++)
+									{
+										other->addEdge(nn->nodeid_m, Edge_t::fliplink(e.dir_m), e.readids_m[r]);
+									}
+
+									if (VERBOSE) { cerr << "      " << other << endl; }
+								}
+							}
+
+							if (VERBOSE) { cerr << endl << endl; }
+						}
 					}
-				}
-				else
-				{
-					if (VERBOSE) { cerr << "Not all edges threaded, skipping" << endl << endl; }
+					else
+					{
+						if (VERBOSE) { cerr << "Not all edges threaded, skipping" << endl << endl; }
+					}
 				}
 			}
 		}
-
+		
 		cerr << "  round: " << threadround << " threaded: " << thread << endl;
 
 		if (thread > 0)
 		{
 			cleanDead();
-			compress(0);
+			compress(compid);
 		}
 	}
 

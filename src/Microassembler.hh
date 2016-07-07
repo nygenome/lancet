@@ -192,8 +192,8 @@ public:
 		RG_FILE = "";
 
 		DFS_LIMIT = 1000000;
-		MAX_INDEL_LEN = 250;
-		MAX_MISMATCH = 3;
+		MAX_INDEL_LEN = 500;
+		MAX_MISMATCH = 2;
 		
 		num_snv_only_regions = 0;
 		num_indel_only_regions = 0;

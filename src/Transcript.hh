@@ -151,6 +151,7 @@ public:
 		float sum_non0 = 0;
 
 		/*
+		cerr << endl << "Transcript coverage: ";		
 		for (unsigned int i = 0; i < n; i++) {
 			cerr << cov_distr[i] << " ";
 		}

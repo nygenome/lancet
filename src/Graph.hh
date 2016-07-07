@@ -229,7 +229,7 @@ public:
 	void removeLowCov(bool docompression, int compid);
 	void removeTips(int compid);
     void greedyTrim();
-	void threadReads();
+	void threadReads(int compid);
 	void checkReadStarts(int compid);
 	void updateContigReadStarts();
 	void bundleMates();

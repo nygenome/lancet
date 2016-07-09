@@ -68,7 +68,7 @@ bool isRepeat(const std::string & seq, int K);
 bool isAlmostRepeat(const std::string & seq, int K, int max);
 bool kMismatch(size_t s, size_t e, const std::string & t, size_t start, int max);
 bool seqAboveQual(std::string qv, int Q);
-void parseMD(std::string & md, std::map<int,int> & map, int start);
+void parseMD(std::string & md, std::map<int,int> & map, int start, std::string & qual, int min_qv);
 bool findTandems(const std::string & seq, const std::string & tag, int max_unit_len, int min_report_units, int min_report_len, int dist_from_str, int pos, int & len, std::string & motif);
 
 #endif

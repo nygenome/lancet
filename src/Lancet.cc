@@ -620,6 +620,8 @@ int main(int argc, char** argv)
 		int tot_indel_only = 0;
 		int tot_softclip_only = 0;
 		int tot_indel_or_softclip = 0;
+		int tot_snv_or_indel = 0;
+		int tot_snv_or_softclip = 0;
 		int tot_snv_or_indel_or_softclip = 0;
 		//merge variant from all threads
 		cerr << "Merge variants" << endl;
@@ -631,6 +633,8 @@ int main(int argc, char** argv)
 			tot_indel_only += assemblers[i]->num_indel_only_regions;
 			tot_softclip_only += assemblers[i]->num_softclip_only_regions;
 			tot_indel_or_softclip += assemblers[i]->num_indel_or_softclip_regions;			
+			tot_snv_or_indel += assemblers[i]->num_snv_or_indel_regions;			
+			tot_snv_or_softclip += assemblers[i]->num_snv_or_softclip_regions;
 			tot_snv_or_indel_or_softclip += assemblers[i]->num_snv_or_indel_or_softclip_regions;
 						
 			map<string,Variant_t> db = (assemblers[i]->vDB).DB;
@@ -640,14 +644,16 @@ int main(int argc, char** argv)
 			}
 		}
 		
-		if(verbose) {
+		//if(verbose) {
 			cerr << "Total # of skipped windows: " << tot_skip << endl;
 			cerr << "- # of windows with SNVs only: " << tot_svn_only << endl;
 			cerr << "- # of windows with indels only: " << tot_indel_only << endl;
 			cerr << "- # of windows with softclips only: " << tot_softclip_only << endl;
 			cerr << "- # of windows with indels or softclips: " << tot_indel_or_softclip << endl;
+			cerr << "- # of windows with SNVs or indels: " << tot_snv_or_indel << endl;
+			cerr << "- # of windows with SNVs or softclips: " << tot_snv_or_softclip << endl;
 			cerr << "- # of windows with SNVs or indels or softclips: " << tot_snv_or_indel_or_softclip << endl;
-		}
+		//}
 		
 		/***** get current time and date *****/
 		time_t rawtime;

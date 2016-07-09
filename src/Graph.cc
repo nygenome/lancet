@@ -117,6 +117,15 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			vi->second->setK(K);
 		}
 
+		// always set node label for normal reads 
+		// even if kmer has low quality bases 
+		if(readid2info[readid].label_m == NML) {
+			ui->second->setIsNormal();
+			vi->second->setIsNormal();
+			ui->second->updateCovStatus('N');
+			vi->second->updateCovStatus('N');
+		}
+		
 		if( (seqAboveQual(uc_qv,MIN_QUAL_CALL) && seqAboveQual(vc_qv,MIN_QUAL_CALL)) ) {
 			
 			// set node label
@@ -126,12 +135,14 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 				ui->second->updateCovStatus('T');
 				vi->second->updateCovStatus('T');
 			}
+			/*
 			else if(readid2info[readid].label_m == NML) {
 				ui->second->setIsNormal();
 				vi->second->setIsNormal();
 				ui->second->updateCovStatus('N');
 				vi->second->updateCovStatus('N');
 			}
+			*/
 		}
 		//ui->second->appendRefFlag(isRef);
 		//vi->second->appendRefFlag(isRef);
@@ -752,10 +763,12 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				within_tumor_node = true;
 				
 				// print read ids
-				//unordered_set<ReadId_t>::const_iterator it;
-				//for (auto it = spanner->reads_m.begin(); it != spanner->reads_m.end(); it++) {
-				//	cerr << readid2info[*it].readname_m.c_str() << endl;
-				//}
+				/*
+				unordered_set<ReadId_t>::const_iterator it;
+				for (auto it = spanner->reads_m.begin(); it != spanner->reads_m.end(); it++) {
+					cerr << readid2info[*it].readname_m.c_str() << endl;
+				}
+				*/
 			}			
 
 			assert(pathpos <= coverageN.size());
@@ -902,10 +915,12 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 						transcript[ti].isSomatic = true;
 						
 						// print read ids
-						//unordered_set<ReadId_t>::const_iterator it;
-						//for (auto it = spanner->reads_m.begin(); it != spanner->reads_m.end(); it++) {
-						//	cerr << readid2info[*it].readname_m.c_str() << endl;
-						//}
+						/*
+						unordered_set<ReadId_t>::const_iterator it;
+						for (auto it = spanner->reads_m.begin(); it != spanner->reads_m.end(); it++) {
+							cerr << readid2info[*it].readname_m.c_str() << endl;
+						}
+						*/
 					}
 				
 					if(transcript[ti].code == 'x') { // snv

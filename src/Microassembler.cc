@@ -289,7 +289,7 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 				// parse MD string
 				// String for mismatching positions. Regex : [0-9]+(([A-Z]|\^[A-Z]+)[0-9]+)*10
 				al.GetTag("MD", md); // get string of mismatching positions
-				parseMD(md, mapX, alstart);
+				parseMD(md, mapX, alstart, al.Qualities, MIN_QUAL_CALL);
 				
 				// add SNV to database
 				//Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters &fs)
@@ -401,14 +401,16 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 	//cerr << endl;
 	
 	if(code == TMR) {
-		if(snv_evidence && !indel_evidence && !softclip_evidence)   { num_snv_only_regions++; ans = false; }
+		if(snv_evidence && !indel_evidence && !softclip_evidence)   { num_snv_only_regions++; /*ans = false*/; }
 		if(!snv_evidence && indel_evidence && !softclip_evidence)   { num_indel_only_regions++; }
 		if(!snv_evidence && !indel_evidence && softclip_evidence)   { num_softclip_only_regions++; }
 		if(!snv_evidence && (indel_evidence || softclip_evidence))  { num_indel_or_softclip_regions++; }	
+		if((snv_evidence || indel_evidence) && !softclip_evidence)  { num_snv_or_indel_regions++; }	
+		if((snv_evidence || softclip_evidence) && !indel_evidence)  { num_snv_or_softclip_regions++; }	
 		if(snv_evidence || indel_evidence || softclip_evidence)     { num_snv_or_indel_or_softclip_regions++; }
 	}
 
-	if(snv_evidence && !indel_evidence && !softclip_evidence) { ans = false; }
+	if(!snv_evidence && !indel_evidence && !softclip_evidence) { ans = false; }
 	
 	return ans;
 }
@@ -417,20 +419,39 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 // return false if the region could not be analyzed (e.g., too much coverage)
 bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo, BamRegion &region, int &readcnt, int code) {
 	
+	if(verbose) { 
+		if(code == TMR) { cerr << "Extract reads from tumor" << endl; }
+		if(code == NML) { cerr << "Extract reads from normal" << endl; }
+	}
+	
+	double CLIP_PRC = 0.5;
+	int MIN_XM = 5;
+	
 	// iterate through all alignments
 	//int num_PCR_duplicates = 0;
 	BamAlignment al;
 	string rg = "";
 	string xt = "";	
 	string xa = "";	
+	int nm = 0;
+	
 	int num_unmapped = 0;
+	int num_XA_read = 0;
 	int num_XT_R_read = 0;
 	int num_XT_M_read = 0;
+	int num_high_softclip_read = 0;
+	int num_high_XM_read = 0;
+	//int counter = 0;
 	
 	int totalreadbp = 0;
 	double avgcov = 0.0;
 	int MQ = MIN_MAP_QUAL;
 	bool skip = false;
+	
+	// softclipping variables
+	std::vector< int > clipSizes;
+	std::vector< int > readPositions; 
+	std::vector< int > genomePositions;
 	
 	// more sensitive in normal (extract all reads)
 	if (code == NML) { MQ = 0; }
@@ -467,6 +488,12 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			cerr << oq << endl;
 			*/
 			
+			// XM	Number of mismatches in the alignment
+			nm = 0;
+			al.GetTag("XM", nm); // get the XT tag for the read
+			if(xt.empty()) { nm = 0; }
+			if(nm >= MIN_XM) { num_high_XM_read++; /*continue;*/ } // skip alignments with too many mis-matches
+			
 			// XT type: Unique/Repeat/N/Mate-sw
 			//
 			// XT:A:M (one-mate recovered) means that one of the pairs is uniquely mapped and the other isn't
@@ -479,20 +506,30 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			al.GetTag("XT", xt); // get the XT tag for the read
 			if(xt.empty()) { xt = "null"; }
 			if(xt == "R") { num_XT_R_read++; continue; } // skip alignments which are marked XT:R
-			if(xt == "M") { num_XT_M_read++; continue; } // skip alignments which are marked XT:M
+			if(xt == "M") { num_XT_M_read++; /*continue;*/ } // skip alignments which are marked XT:M
 			
-			/*
+			
 			// XA  Alternative hits; format: (chr,pos,CIGAR,NM;)
 			xa = "";
 			al.GetTag("XA", xa); // get the XA for the read
 			if(xa.empty()) { xa = "null"; }
-			if(xa != "null") {  // skip alignments which are marked as repeats
+			if(xa != "null") {  
 				//cerr << al.Name << "\t" << xa << endl;
-				num_repeat_read++; 
-				continue; 
+				num_XA_read++; 
+				continue; // skip alignments with alternative hits
 			}
-			*/
 			
+			// reads wiht high soft-clipping
+			if(al.GetSoftClips(clipSizes, readPositions, genomePositions)) {		
+				for (vector<int>::iterator it = clipSizes.begin() ; it != clipSizes.end(); ++it) {
+					double prc_sc = (double)(*it)/(double)al.Length;
+					//cerr << (*it) << " " << al.Length << " " << prc_sc << endl;
+					if(prc_sc >= CLIP_PRC) { num_high_softclip_read++; break; }
+				}
+			}
+			
+			//if( (nm >= MIN_XM) && (xt == "M") ) { counter++; continue; }
+									
 			rg = "";
 			al.GetTag("RG", rg); // get the read group information for the read
 			if(rg.empty()) { rg = "null"; }
@@ -531,8 +568,12 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	}
 	
 	if(verbose) {
-		cerr << "Num reads marked as XT:A:R tag " << num_XT_R_read << endl;
-		cerr << "Num reads marked as XT:A:M tag " << num_XT_M_read << endl;
+		cerr << "Num reads marked as repeat (XT:A:R tag): " << num_XT_R_read << endl;
+		cerr << "Num reads marked as Mate-sw (XT:A:M tag): " << num_XT_M_read << endl;
+		cerr << "Num reads with alternative hits (XA tag): " << num_XA_read << endl;
+		cerr << "Num reads with >=" << CLIP_PRC << "\% soft-clipping: " << num_high_softclip_read << endl;
+		cerr << "Num reads with >=" << MIN_XM << " mis-matches: " << num_high_XM_read << endl;
+		//cerr << "Num reads with >=" << MIN_XM << " mis-matches and Mate-sw (XT:A:M tag): " << counter << endl;
 	}
 	
 	return skip;

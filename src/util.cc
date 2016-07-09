@@ -288,7 +288,7 @@ bool seqAboveQual(string qv, int Q)
 // parse MD string 
 // extract SNVs locations and add them to map M
 //////////////////////////////////////////////////////////////////////////
-void parseMD(string & md, map<int,int> & M, int start) {
+void parseMD(string & md, map<int,int> & M, int start, string & qual, int min_qv) {
 	// String for mismatching positions. Regex : [0-9]+(([A-Z]|\^[A-Z]+)[0-9]+)*10
 	// example: 6G4C20G1A5C5A1^C3A15G1G15
     map<int,int>::iterator mit;
@@ -312,10 +312,13 @@ void parseMD(string & md, map<int,int> & M, int start) {
 		}
 		else {
 			pos++;
-			mit = M.find(pos);
-			if (mit != M.end()) { ((*mit).second)++; }
-			else { M.insert(std::pair<int,int>(pos,1)); }
-			
+			assert( (pos-start) >= 0 );
+			if(qual[pos-start] >= min_qv) {
+				//cerr << qual[pos-start] << ">=?" << min_qv << endl;
+				mit = M.find(pos);
+				if (mit != M.end()) { ((*mit).second)++; }
+				else { M.insert(std::pair<int,int>(pos,1)); }
+			}
 			//cerr << md[p] << "|";
 			p_old = p;
 			p = md.find_first_of("ACGT^",p_old+1);

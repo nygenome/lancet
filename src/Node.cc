@@ -513,6 +513,31 @@ int Node_t::readOverlaps(const Node_t & other)
 	return retval;
 }
 
+// hasOverlappingMate
+// return true if k-mer come from the same fragment (overlapping mates)
+//////////////////////////////////////////////////////////////
+bool Node_t::hasOverlappingMate(ReadId_t rid)
+{
+	bool ans = false;
+		
+	string rdname1 = readid2info->at(rid).readname_m;
+	rdname1.pop_back(); rdname1.pop_back(); // remove last two characters (e.g. _1)
+	
+	for (auto it = reads_m.begin(); it != reads_m.end(); it++) {
+		
+		string rdname2 = readid2info->at(*it).readname_m;
+		rdname2.pop_back(); rdname2.pop_back(); // remove last two characters (e.g. _1)
+		
+		if (rdname1.compare(rdname2) == 0) { 
+			//cerr << rdname1 << "\t" << rdname2 << endl;
+			ans = true; 
+		}
+	}
+
+	return ans;
+}
+
+
 // return tumor coverage on the input strand
 //////////////////////////////////////////////////////////////
 float Node_t::getTmrCov(unsigned int strand) { 

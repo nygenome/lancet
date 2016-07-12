@@ -434,6 +434,8 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	string xt = "";	
 	string xa = "";	
 	int nm = 0;
+	int as = -1;
+	int xs = -1;
 	
 	int num_unmapped = 0;
 	int num_XA_read = 0;
@@ -441,7 +443,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	int num_XT_M_read = 0;
 	int num_high_softclip_read = 0;
 	int num_high_XM_read = 0;
-	//int counter = 0;
+	int num_equal_AS_XS_read = 0;
 	
 	int totalreadbp = 0;
 	double avgcov = 0.0;
@@ -488,10 +490,17 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			cerr << oq << endl;
 			*/
 			
+			as = -1;
+			xs = -1;
+			al.GetTag("AS", as); // get the AS tag for the read
+			al.GetTag("XS", xs); // get the AS tag for the read
+			//if(as.empty()) { as = -1; }
+			//if(xs.empty()) { xs = -1; }
+			if( as==xs && as!=-1 && xs!=-1 ) { num_equal_AS_XS_read++; continue; } // skip alignments equal alignment score for AS and XS
+			
 			// XM	Number of mismatches in the alignment
 			nm = 0;
 			al.GetTag("XM", nm); // get the XT tag for the read
-			if(xt.empty()) { nm = 0; }
 			if(nm >= MIN_XM) { num_high_XM_read++; /*continue;*/ } // skip alignments with too many mis-matches
 			
 			// XT type: Unique/Repeat/N/Mate-sw
@@ -526,9 +535,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 					//cerr << (*it) << " " << al.Length << " " << prc_sc << endl;
 					if(prc_sc >= CLIP_PRC) { num_high_softclip_read++; break; }
 				}
-			}
-			
-			//if( (nm >= MIN_XM) && (xt == "M") ) { counter++; continue; }
+			}			
 									
 			rg = "";
 			al.GetTag("RG", rg); // get the read group information for the read
@@ -536,7 +543,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			
 			if ( (readgroups.find("null") != readgroups.end())  || (readgroups.find(rg) != readgroups.end()) ) { // select reads in the read group RG
 												
-				if (mate>1) { // mated pair
+				if (mate>0) { // mated pair
 					//cerr << "PAIRED!!" << endl;
 					if( !(al.IsMapped()) ) { // unmapped read
 						g.addpaired("tumor", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, code, strand);
@@ -573,7 +580,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 		cerr << "Num reads with alternative hits (XA tag): " << num_XA_read << endl;
 		cerr << "Num reads with >=" << CLIP_PRC << "\% soft-clipping: " << num_high_softclip_read << endl;
 		cerr << "Num reads with >=" << MIN_XM << " mis-matches: " << num_high_XM_read << endl;
-		//cerr << "Num reads with >=" << MIN_XM << " mis-matches and Mate-sw (XT:A:M tag): " << counter << endl;
+		cerr << "Num reads with equal alignment score (AS==XS): " << num_equal_AS_XS_read << endl;
 	}
 	
 	return skip;

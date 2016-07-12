@@ -170,6 +170,7 @@ public:
 	void sortReadStarts();
 	void addContigLink(Mer_t contigid, ReadId_t rid);
 	int cntReadCode(char code);
+	bool hasOverlappingMate(ReadId_t rid);
 
 	int readOverlaps(const Node_t & other);
 	

@@ -108,6 +108,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			ui = nodes_m.insert(make_pair(uc.mer_m, new Node_t(uc.mer_m))).first; 
 			ui->second->setMinQV(MIN_QUAL_CALL);
 			ui->second->setK(K);
+			ui->second->setRead2InfoList(&readid2info);
 		}
 
 		if (vi == nodes_m.end())
@@ -115,6 +116,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			vi = nodes_m.insert(make_pair(vc.mer_m, new Node_t(vc.mer_m))).first; 
 			vi->second->setMinQV(MIN_QUAL_CALL);
 			vi->second->setK(K);
+			vi->second->setRead2InfoList(&readid2info);
 		}
 
 		// always set node label for normal reads 
@@ -148,43 +150,49 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 		//vi->second->appendRefFlag(isRef);
 
 		if (!isRef)
-		{
+		{		
 			if (offset == 0) 
 			{ 
-				if(readid2info[readid].label_m == TMR) {	
-					ui->second->incTmrCov(strand);
-					ui->second->updateCovDistr((int)(ui->second->getTmrCov(strand)),strand,'T');
-					ref_m->updateCoverage(uc.mer_m, 'T'); // update referecne k-mer coverage for tumor
-					ui->second->updateCovDistrMinQV(uc_qv, strand,'T');
+				if( !(ui->second->hasOverlappingMate(readid)) ) { // do not update coverage for overlapping mates
+					
+					if(readid2info[readid].label_m == TMR) {	
+						ui->second->incTmrCov(strand);
+						ui->second->updateCovDistr((int)(ui->second->getTmrCov(strand)),strand,'T');
+						ref_m->updateCoverage(uc.mer_m, 'T'); // update referecne k-mer coverage for tumor
+						ui->second->updateCovDistrMinQV(uc_qv, strand,'T');
+					}
+					else if(readid2info[readid].label_m == NML) {
+						ui->second->incNmlCov(strand);
+						ui->second->updateCovDistr((int)(ui->second->getNmlCov(strand)),strand,'N');
+						ref_m->updateCoverage(uc.mer_m, 'N'); // update reference k-mer coverage for normal
+						ui->second->updateCovDistrMinQV(uc_qv, strand,'N');
+					}
+
+					if (uc.ori_m == F)
+					{
+						ui->second->addReadStart(readid, 0, trim5, uc.ori_m);
+					}
+					else
+					{
+						ui->second->addReadStart(readid, K-1, trim5, uc.ori_m);
+					}
+				}
+			}
+
+			if( !(vi->second->hasOverlappingMate(readid)) ) { // do not update coverage for overlapping mates
+
+				if(readid2info[readid].label_m == TMR) {
+					vi->second->incTmrCov(strand);
+					vi->second->updateCovDistr((int)(vi->second->getTmrCov(strand)),strand,'T');
+					ref_m->updateCoverage(vc.mer_m, 'T'); // update reference k-mer coverage for tumor
+					vi->second->updateCovDistrMinQV(vc_qv, strand,'T');
 				}
 				else if(readid2info[readid].label_m == NML) {
-					ui->second->incNmlCov(strand);
-					ui->second->updateCovDistr((int)(ui->second->getNmlCov(strand)),strand,'N');
-					ref_m->updateCoverage(uc.mer_m, 'N'); // update reference k-mer coverage for normal
-					ui->second->updateCovDistrMinQV(uc_qv, strand,'N');
+					vi->second->incNmlCov(strand);
+					vi->second->updateCovDistr((int)(vi->second->getNmlCov(strand)),strand,'N');
+					ref_m->updateCoverage(vc.mer_m, 'N'); // update reference k-mer coverage for normal
+					vi->second->updateCovDistrMinQV(vc_qv, strand,'N');
 				}
-
-				if (uc.ori_m == F)
-				{
-					ui->second->addReadStart(readid, 0, trim5, uc.ori_m);
-				}
-				else
-				{
-					ui->second->addReadStart(readid, K-1, trim5, uc.ori_m);
-				}
-			}
-
-			if(readid2info[readid].label_m == TMR) {
-				vi->second->incTmrCov(strand);
-				vi->second->updateCovDistr((int)(vi->second->getTmrCov(strand)),strand,'T');
-				ref_m->updateCoverage(vc.mer_m, 'T'); // update reference k-mer coverage for tumor
-				vi->second->updateCovDistrMinQV(vc_qv, strand,'T');
-			}
-			else if(readid2info[readid].label_m == NML) {
-				vi->second->incNmlCov(strand);
-				vi->second->updateCovDistr((int)(vi->second->getNmlCov(strand)),strand,'N');
-				ref_m->updateCoverage(vc.mer_m, 'N'); // update reference k-mer coverage for normal
-				vi->second->updateCovDistrMinQV(vc_qv, strand,'N');
 			}
 		}
 

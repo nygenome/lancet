@@ -514,29 +514,51 @@ int Node_t::readOverlaps(const Node_t & other)
 }
 
 // hasOverlappingMate
-// return true if k-mer come from the same fragment (overlapping mates)
+// return true if the k-mer comes from the same fragment (overlapping mates)
 //////////////////////////////////////////////////////////////
-bool Node_t::hasOverlappingMate(ReadId_t rid)
+bool Node_t::hasOverlappingMate(string & read_name)
 {
 	bool ans = false;
-		
-	string rdname1 = readid2info->at(rid).readname_m;
-	rdname1.pop_back(); rdname1.pop_back(); // remove last two characters (e.g. _1)
+	string name = read_name;
 	
+	char id = name.back();
+	name.pop_back(); name.pop_back(); // remove last two characters (e.g. _1)
+	
+	if(id == '1') {
+		if (mate2_name.find(name) != mate2_name.end()) { ans = true; }
+	}
+	
+	if(id == '2') {
+		if (mate1_name.find(name) != mate1_name.end()) { ans = true; }
+	}
+	
+	/*
 	for (auto it = reads_m.begin(); it != reads_m.end(); it++) {
 		
 		string rdname2 = readid2info->at(*it).readname_m;
+		char mate_num2 = rdname2.back();
 		rdname2.pop_back(); rdname2.pop_back(); // remove last two characters (e.g. _1)
 		
-		if (rdname1.compare(rdname2) == 0) { 
+		if ( rdname1.compare(rdname2) == 0 && (mate_num1 != mate_num2) ) { 
 			//cerr << rdname1 << "\t" << rdname2 << endl;
 			ans = true; 
 		}
 	}
-
+	*/
 	return ans;
 }
 
+// add mate name to the set of mates containing this kmer
+void Node_t::addMateName(string & read_name) 
+{
+	string name = read_name;
+	
+	char id = name.back();
+	name.pop_back(); name.pop_back(); // remove last two characters (e.g. _1)
+	
+	if(id == '1') { mate1_name.insert(name); }
+	if(id == '2') { mate2_name.insert(name); }
+}
 
 // return tumor coverage on the input strand
 //////////////////////////////////////////////////////////////

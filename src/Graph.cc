@@ -108,7 +108,8 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			ui = nodes_m.insert(make_pair(uc.mer_m, new Node_t(uc.mer_m))).first; 
 			ui->second->setMinQV(MIN_QUAL_CALL);
 			ui->second->setK(K);
-			ui->second->setRead2InfoList(&readid2info);
+			//ui->second->setRead2InfoList(&readid2info);
+			ui->second->addMateName(readid2info[readid].readname_m);
 		}
 
 		if (vi == nodes_m.end())
@@ -116,7 +117,8 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			vi = nodes_m.insert(make_pair(vc.mer_m, new Node_t(vc.mer_m))).first; 
 			vi->second->setMinQV(MIN_QUAL_CALL);
 			vi->second->setK(K);
-			vi->second->setRead2InfoList(&readid2info);
+			//vi->second->setRead2InfoList(&readid2info);
+			vi->second->addMateName(readid2info[readid].readname_m);
 		}
 
 		// always set node label for normal reads 
@@ -153,7 +155,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 		{		
 			if (offset == 0) 
 			{ 
-				if( !(ui->second->hasOverlappingMate(readid)) ) { // do not update coverage for overlapping mates
+				if( !(ui->second->hasOverlappingMate(readid2info[readid].readname_m)) ) { // do not update coverage for overlapping mates
 					
 					if(readid2info[readid].label_m == TMR) {	
 						ui->second->incTmrCov(strand);
@@ -179,7 +181,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 				}
 			}
 
-			if( !(vi->second->hasOverlappingMate(readid)) ) { // do not update coverage for overlapping mates
+			if( !(vi->second->hasOverlappingMate(readid2info[readid].readname_m)) ) { // do not update coverage for overlapping mates
 
 				if(readid2info[readid].label_m == TMR) {
 					vi->second->incTmrCov(strand);

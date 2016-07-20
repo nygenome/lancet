@@ -85,6 +85,10 @@ public:
 	
 	vector<Edge_t> edges_m;
 	unordered_set<ReadId_t> reads_m;
+	
+	unordered_set<string> mate1_name;
+	unordered_set<string> mate2_name;
+	
 	vector<ReadStart_t> readstarts_m;
 	ContigLinkMap_t contiglinks_m;
 	ReadInfoList_t * readid2info;
@@ -170,7 +174,8 @@ public:
 	void sortReadStarts();
 	void addContigLink(Mer_t contigid, ReadId_t rid);
 	int cntReadCode(char code);
-	bool hasOverlappingMate(ReadId_t rid);
+	bool hasOverlappingMate(std::string & read_name);
+	void addMateName(std::string & read_name);
 
 	int readOverlaps(const Node_t & other);
 	

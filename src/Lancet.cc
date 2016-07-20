@@ -547,7 +547,7 @@ int main(int argc, char** argv)
 			loadRefs(REFFILE,REGION,reftables,NUM_THREADS, 0);
 		}
 		
-		cerr << num_windows << " windows to process" << endl << endl;
+		cerr << num_windows << " total windows to process" << endl << endl;
 		
 		// Initialize and set thread joinable
 		pthread_attr_init(&attr);
@@ -645,7 +645,7 @@ int main(int argc, char** argv)
 		}
 		
 		//if(verbose) {
-			cerr << "Total # of skipped windows: " << tot_skip << endl;
+			cerr << "Total # of skipped windows: " << tot_skip << " (" << (100*(double)tot_skip/double(num_windows)) << "\%)" << endl;
 			cerr << "- # of windows with SNVs only: " << tot_svn_only << endl;
 			cerr << "- # of windows with indels only: " << tot_indel_only << endl;
 			cerr << "- # of windows with softclips only: " << tot_softclip_only << endl;

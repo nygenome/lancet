@@ -517,7 +517,7 @@ int Node_t::readOverlaps(const Node_t & other)
 // return true if the k-mer comes from the same fragment (overlapping mates)
 //////////////////////////////////////////////////////////////
 bool Node_t::hasOverlappingMate(string & read_name)
-{
+{	
 	bool ans = false;
 	string name = read_name;
 	
@@ -545,6 +545,7 @@ bool Node_t::hasOverlappingMate(string & read_name)
 		}
 	}
 	*/
+	
 	return ans;
 }
 
@@ -552,7 +553,7 @@ bool Node_t::hasOverlappingMate(string & read_name)
 void Node_t::addMateName(string & read_name) 
 {
 	string name = read_name;
-	
+		
 	char id = name.back();
 	name.pop_back(); name.pop_back(); // remove last two characters (e.g. _1)
 	

@@ -109,7 +109,6 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			ui->second->setMinQV(MIN_QUAL_CALL);
 			ui->second->setK(K);
 			//ui->second->setRead2InfoList(&readid2info);
-			ui->second->addMateName(readid2info[readid].readname_m);
 		}
 
 		if (vi == nodes_m.end())
@@ -118,7 +117,6 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			vi->second->setMinQV(MIN_QUAL_CALL);
 			vi->second->setK(K);
 			//vi->second->setRead2InfoList(&readid2info);
-			vi->second->addMateName(readid2info[readid].readname_m);
 		}
 
 		// always set node label for normal reads 
@@ -150,6 +148,12 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 		}
 		//ui->second->appendRefFlag(isRef);
 		//vi->second->appendRefFlag(isRef);
+
+		// add mate name info to the nodes
+		// (used to check for overlapping mates)
+		ui->second->addMateName(readid2info[readid].readname_m);
+		vi->second->addMateName(readid2info[readid].readname_m);
+
 
 		if (!isRef)
 		{		
@@ -395,7 +399,7 @@ void Graph_t::addUnpaired(const string & set,
 	int label,
 	unsigned int strand)
 {
-	int rd = addRead(set, readname, seq, qv, code, label, strand);
+	int rd = addRead(set, readname+"_0", seq, qv, code, label, strand);
 	//trimAndLoad(rd, seq, qv, false);
 	trim(rd, seq, qv, false);
 	

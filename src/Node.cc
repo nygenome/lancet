@@ -532,20 +532,6 @@ bool Node_t::hasOverlappingMate(string & read_name)
 		if (mate1_name.find(name) != mate1_name.end()) { ans = true; }
 	}
 	
-	/*
-	for (auto it = reads_m.begin(); it != reads_m.end(); it++) {
-		
-		string rdname2 = readid2info->at(*it).readname_m;
-		char mate_num2 = rdname2.back();
-		rdname2.pop_back(); rdname2.pop_back(); // remove last two characters (e.g. _1)
-		
-		if ( rdname1.compare(rdname2) == 0 && (mate_num1 != mate_num2) ) { 
-			//cerr << rdname1 << "\t" << rdname2 << endl;
-			ans = true; 
-		}
-	}
-	*/
-	
 	return ans;
 }
 

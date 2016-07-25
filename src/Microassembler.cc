@@ -490,10 +490,11 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			cerr << oq << endl;
 			*/
 			
+			// extract AS and XS tags (available in bwa-mem , not in bwa-aln)
 			as = -1;
 			xs = -1;
 			al.GetTag("AS", as); // get the AS tag for the read
-			al.GetTag("XS", xs); // get the AS tag for the read
+			al.GetTag("XS", xs); // get the XS tag for the read
 			//if(as.empty()) { as = -1; }
 			//if(xs.empty()) { xs = -1; }
 			if( as==xs && as!=-1 && xs!=-1 ) { num_equal_AS_XS_read++; continue; } // skip alignments equal alignment score for AS and XS

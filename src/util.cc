@@ -60,7 +60,7 @@ string itos(int i) // convert int to string
 
 // double to string conversion
 //////////////////////////////////////////////////////////////////////////
-string dtos(double d) // convert int to string
+string dtos(double d) // convert double to string
 {
     stringstream s;
     s << d;

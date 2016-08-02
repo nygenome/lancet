@@ -4,7 +4,7 @@
 /****************************************************************************
 ** FET.hh
 **
-** Implementation of the Fisher Exact Test calss based on the implementation  
+** Implementation of the Fisher Exact Test class based on the implementation  
 ** in the samtools fet.c code at:
 ** https://github.com/lh3/samtools/blob/master/bcftools/fet.c
 

@@ -27,9 +27,15 @@ void Variant_t::printVCF() {
 	//CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  Pat4-FF-Normal-DNA      Pat4-FF-Tumor-DNA
 	string ID = ".";
 	string FILTER = "";
+	
+	int tot_ref_cov_tumor = ref_cov_tumor_fwd + ref_cov_tumor_rev;	
+	int tot_alt_cov_tumor = alt_cov_tumor_fwd + alt_cov_tumor_rev;
 
+	int tot_ref_cov_normal = ref_cov_normal_fwd + ref_cov_normal_rev;	
+	int tot_alt_cov_normal = alt_cov_normal_fwd + alt_cov_normal_rev;
+	
 	string status = "?";
-	char flag = bestState(ref_cov_normal,(alt_cov_normal_fwd+alt_cov_normal_rev),ref_cov_tumor,(alt_cov_tumor_fwd+alt_cov_tumor_rev));
+	char flag = bestState(tot_ref_cov_normal,tot_alt_cov_normal,tot_ref_cov_tumor,tot_alt_cov_tumor);
 	if(flag == 'T') { status = "SOMATIC"; }
 	else if(flag == 'S') { status = "SHARED"; }
 	else if(flag == 'L') { status = "LOH"; }
@@ -41,19 +47,17 @@ void Variant_t::printVCF() {
 	if(type=='D') { INFO += ";TYPE=del"; }
 	if(type=='S') { INFO += ";TYPE=snv"; }
 	
-	INFO += ";LEN=" + itos(len) + ";KMERSIZE=" + itos(kmer);
+	INFO += ";LEN=" + itos(len) + ";KMERSIZE=" + itos(kmer) + ";SB=" + dtos(fet_score_strand_bias);
 	
 	double QUAL = fet_score;
-	string FORMAT = "GT:AD:SC:DP";
+	string FORMAT = "GT:AD:SR:SA:DP";
 	
 	// apply filters
-	
-	int tot_alt_cov_tumor = alt_cov_tumor_fwd + alt_cov_tumor_rev;
-	int tumor_cov = ref_cov_tumor + tot_alt_cov_tumor;
+
+	int tumor_cov = tot_ref_cov_tumor + tot_alt_cov_tumor;
 	double tumor_vaf = (tumor_cov == 0) ? 0 : ((double)tot_alt_cov_tumor/(double)tumor_cov);
 	
-	int tot_alt_cov_normal = alt_cov_normal_fwd + alt_cov_normal_rev;
-	int normal_cov = ref_cov_normal + tot_alt_cov_normal;
+	int normal_cov = tot_ref_cov_normal + tot_alt_cov_normal;
 	double normal_vaf = (normal_cov == 0) ? 0 : ((double)tot_alt_cov_normal/(double)normal_cov);
 	
 	if(fet_score < filters.minPhredFisher) { 
@@ -94,20 +98,22 @@ void Variant_t::printVCF() {
 	}
 	
 	// if only 2 reads supporting the variant check for strand bias
+	/*
 	if(tot_alt_cov_tumor == 2) {
 		if( (alt_cov_tumor_fwd == 0) || (alt_cov_tumor_rev == 0) ) { 
 			if (FILTER.compare("") == 0) { FILTER = "StrandBias"; }
 			else { FILTER += ";StrandBias"; }
 		}
 	}
+	*/
 	
 	// snv specific filters
-	if( (type == 'S') && (tot_alt_cov_tumor > 2) ) { // for snv strand bias filter is applied at all coverages
+	//if( (type == 'S') && (tot_alt_cov_tumor > 2) ) { // for snv strand bias filter is applied at all coverages
 		if( (alt_cov_tumor_fwd < filters.minStrandBias) || (alt_cov_tumor_rev < filters.minStrandBias) ) { 
 			if (FILTER.compare("") == 0) { FILTER = "StrandBias"; }
 			else { FILTER += ";StrandBias"; }
 		}
-	}
+	//}
 	
 	if(!str.empty()) { 
 		if (FILTER.compare("") == 0) { FILTER = "MS="; FILTER += str; }
@@ -116,8 +122,8 @@ void Variant_t::printVCF() {
 		
 	if(FILTER.compare("") == 0) { FILTER = "PASS"; }
 	
-	string NORMAL = GT_normal + ":" + itos(ref_cov_normal) + "," + itos(tot_alt_cov_normal) + ":" + itos(alt_cov_normal_fwd) + "," + itos(alt_cov_normal_rev) + ":" + itos(ref_cov_normal+tot_alt_cov_normal);
-	string TUMOR = GT_tumor + ":" + itos(ref_cov_tumor) + "," + itos(tot_alt_cov_tumor) + ":" + itos(alt_cov_tumor_fwd) + "," + itos(alt_cov_tumor_rev) + ":" + itos(ref_cov_tumor+tot_alt_cov_tumor);
+	string NORMAL = GT_normal + ":" + itos(tot_ref_cov_normal) + "," + itos(tot_alt_cov_normal) + ":" + itos(ref_cov_normal_fwd) + "," + itos(ref_cov_normal_rev) +":" + itos(alt_cov_normal_fwd) + "," + itos(alt_cov_normal_rev) + ":" + itos(tot_ref_cov_normal+tot_alt_cov_normal);
+	string TUMOR = GT_tumor + ":" + itos(tot_ref_cov_tumor) + "," + itos(tot_alt_cov_tumor) + ":" + itos(ref_cov_tumor_fwd) + "," + itos(ref_cov_tumor_rev) + ":" + itos(alt_cov_tumor_fwd) + "," + itos(alt_cov_tumor_rev) + ":" + itos(tot_ref_cov_tumor+tot_alt_cov_tumor);
 	
 	cout << chr << "\t" << pos << "\t" << ID << "\t" << ref << "\t" << alt << "\t" << QUAL << "\t" << FILTER << "\t" << INFO << "\t" << FORMAT << "\t" << NORMAL << "\t" << TUMOR << endl;
 }
@@ -143,17 +149,46 @@ string Variant_t::genotype(int R, int A) {
 
 void Variant_t::update() {
 	
-	double left = 0;
-	double right = 0;
-	double twotail = 0;
+	double prob = 0.0;
+	double left = 0.0;
+	double right = 0.0;
+	double twotail = 0.0;
+	
+	//double fet_score_prob;
+	//double fet_score_left;
+	double fet_score_right = 0.0;
+	double fet_score_twotail = 0.0;
+	
 	FET_t fet;
-	double prob = fet.kt_fisher_exact(ref_cov_normal, ref_cov_tumor, (alt_cov_normal_fwd+alt_cov_normal_rev), (alt_cov_tumor_fwd+alt_cov_tumor_rev), &left, &right, &twotail);
-	if(prob == 1) { fet_score = 0; }
-	else { fet_score = -10*log10(prob); }
+	
+	// fisher exaxt test score for tumor/normal coverages
+	prob = fet.kt_fisher_exact((ref_cov_normal_fwd+ref_cov_normal_rev), (ref_cov_tumor_fwd+ref_cov_tumor_rev), (alt_cov_normal_fwd+alt_cov_normal_rev), (alt_cov_tumor_fwd+alt_cov_tumor_rev), &left, &right, &twotail);
+	if(right == 1) { fet_score_right = 0.0; }
+	else { 
+		//fet_score_prob = -10*log10(prob);
+		//fet_score_left = -10*log10(left);
+		fet_score_right = -10*log10(right);
+		//fet_score_twotail = -10*log10(twotail);
+	}
+	fet_score = fet_score_right;
+	
+	// fisher exaxt test score for strand bias in tumor
+	prob = fet.kt_fisher_exact(ref_cov_tumor_fwd, ref_cov_tumor_rev, alt_cov_tumor_fwd, alt_cov_tumor_rev, &left, &right, &twotail);
+	if(twotail == 1) { fet_score_twotail = 0.0; }
+	else { fet_score_twotail = -10*log10(twotail); }
+	fet_score_strand_bias = fet_score_twotail;
+
+	/*
+	cerr << endl;
+	cerr << "FET score: " << fet_score << " (p = " << prob << ")" << endl;
+	cerr << "FET score left: " << fet_score_left << " (p = " << left << ")" << endl; 
+	cerr << "FET score right: " << fet_score_right << " (p = " << right << ")" << endl; 
+	cerr << "FET score twotail: " << fet_score_twotail << " (p = " << twotail << ")" << endl; 
+	*/
 	
 	//compute genotype
-	GT_normal = genotype(ref_cov_normal,(alt_cov_normal_fwd+alt_cov_normal_rev));
-	GT_tumor = genotype(ref_cov_tumor,(alt_cov_tumor_fwd+alt_cov_tumor_rev));
+	GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
+	GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
 }
 
 // compute best state for the variant

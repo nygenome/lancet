@@ -41,7 +41,7 @@ using namespace std;
 // Node_t
 //////////////////////////////////////////////////////////////////////////
 
-
+/*
 typedef struct cov_t
 {
   int fwd; // total fwd coverage
@@ -51,6 +51,7 @@ typedef struct cov_t
   //int minmq_fwd; // min mapping quality fwd coverage
   //int minmq_rev; // min mapping quality rev coverage
 } cov_t;
+*/
 
 class Node_t
 {

@@ -61,8 +61,10 @@ public:
 	string alt;
 	string str;
 	char status; // T=somatic, S=shared
-	int ref_cov_normal;
-	int ref_cov_tumor;
+	int ref_cov_normal_fwd;
+	int ref_cov_normal_rev;
+	int ref_cov_tumor_fwd;
+	int ref_cov_tumor_rev;
 	int alt_cov_normal_fwd;
 	int alt_cov_normal_rev;
 	int alt_cov_tumor_fwd;
@@ -72,10 +74,11 @@ public:
 	string GT_normal;
 	string GT_tumor;
 	double fet_score;
+	double fet_score_strand_bias;
 	
 	Filters filters; // filter thresholds
 
-	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters &fs, int k, string str_)
+	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_fwd_, int ref_cov_normal_rev_, int ref_cov_tumor_fwd_, int ref_cov_tumor_rev_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters &fs, int k, string str_)
 	{ 	
 		kmer = k;
 		str = str_;
@@ -91,8 +94,11 @@ public:
 		}
 		else { alt = alt_; ref = ref_; len = 1; }
 		
-		ref_cov_normal = ref_cov_normal_;
-		ref_cov_tumor = ref_cov_tumor_;
+		ref_cov_normal_fwd = ref_cov_normal_fwd_;
+		ref_cov_normal_rev = ref_cov_normal_rev_;
+		ref_cov_tumor_fwd = ref_cov_tumor_fwd_;
+		ref_cov_tumor_rev = ref_cov_tumor_rev_;
+		
 		alt_cov_normal_fwd = alt_cov_normal_fwd_;
 		alt_cov_normal_rev = alt_cov_normal_rev_;
 		alt_cov_tumor_fwd = alt_cov_tumor_fwd_;

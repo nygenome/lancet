@@ -29,9 +29,20 @@
 #include <set>
 #include <vector>
 #include "Mer.hh"
+#include "ReadInfo.hh"
 
 
 using namespace std;
+
+typedef struct cov_t
+{
+  int fwd; // total fwd coverage
+  int rev; // total rev coverage 
+  int minqv_fwd; // min base quality fwd coverage
+  int minqv_rev; // min base quality rev coverage
+  //int minmq_fwd; // min mapping quality fwd coverage
+  //int minmq_rev; // min mapping quality rev coverage
+} cov_t;
 
 class Ref_t
 {
@@ -50,8 +61,9 @@ public:
 	int trim5;
 	int trim3;
 
-	// mapping of mers to normal/tumor counts (mer,(n_cnt,t_cnt))  
-	map<string,std::pair<int,int>> mertable;
+	// mapping of mers to fwd/rev counts (mer,cov_t)  
+	map<string,cov_t> mertable_nml;
+	map<string,cov_t> mertable_tmr;
 	set<int> refcompids;
 
 	int refnodes;
@@ -60,24 +72,27 @@ public:
 
 	bool indexed_m;
 	
-	vector<int> normal_coverage; // normal k-mer coverage across the reference
-	vector<int> tumor_coverage; // tumor k-mer coverage across the reference
+	//vector<int> normal_coverage; // normal k-mer coverage across the reference
+	//vector<int> tumor_coverage; // tumor k-mer coverage across the reference
+
+	vector<cov_t> normal_coverage; // normal k-mer coverage across the reference
+	vector<cov_t> tumor_coverage; // tumor k-mer coverage across the reference
 
 	Ref_t(int k) : indexed_m(0) 
 		{ K = k; }
 	
 	void setHdr(string hdr_) { hdr = hdr_; }
 	void setRawSeq(string rawseq_) { rawseq = rawseq_; }
-	void setK(int k) { K = k; indexed_m = 0; mertable.clear(); resetCoverage(); }
+	void setK(int k) { K = k; indexed_m = 0; mertable_nml.clear(); mertable_tmr.clear(); resetCoverage(); }
 	void setSeq(string seq_) { seq = seq_; normal_coverage.resize(seq.size()); tumor_coverage.resize(seq.size()); resetCoverage(); }
 
 	void indexMers();
 	bool hasMer(const string & cmer);
 	bool isRefComp(int comp) { return refcompids.find(comp) != refcompids.end(); }
 	
-	void updateCoverage(const string & cmer, char sample);
-	void computeCoverage();
-	int getCovAt(unsigned pos, char sample);
+	void updateCoverage(const string & cmer, unsigned int strand, char sample);
+	void computeCoverage(char sample);
+	int getCovAt(unsigned pos, unsigned int strand, char sample);
 	int getMinCovInKbp(unsigned pos, int K, char sample);
 	void printKmerCoverage(char sample);
 	void resetCoverage();

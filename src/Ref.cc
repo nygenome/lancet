@@ -31,7 +31,12 @@ void Ref_t::indexMers()
 		{
 			cmer.set(seq.substr(i, K));
 		    //mertable.insert(std::pair<string,int>(cmer.mer_m,0));
-		    mertable.insert(std::pair<string,std::pair<int,int>>(cmer.mer_m,std::make_pair(0,0)));
+		    //mertable.insert(std::pair<string,std::pair<int,int>>(cmer.mer_m,std::make_pair(0,0)));
+			
+			cov_t c;
+		    mertable_nml.insert(std::pair<string,cov_t>(cmer.mer_m,c));
+		    mertable_tmr.insert(std::pair<string,cov_t>(cmer.mer_m,c));
+			
 		}
 		indexed_m = true;
 	}
@@ -41,32 +46,49 @@ void Ref_t::indexMers()
 bool Ref_t::hasMer(const string & cmer)
 {
 	indexMers();
-	return mertable.count(cmer);
+	return mertable_nml.count(cmer);
 }
 
 // updated coverage for input mer
-void Ref_t::updateCoverage(const string & cmer, char sample) {
+void Ref_t::updateCoverage(const string & cmer, unsigned int strand, char sample) {
 	indexMers();
-	std::map<string,std::pair<int,int>>::iterator it = mertable.find(cmer);
-	if (it != mertable.end()) {
-		if(sample == 'N') { ((*it).second).first += 1; }
-		else if(sample == 'T') { ((*it).second).second += 1; }
-		else { cerr << "Error: unknown sample " << sample << endl; return; }
+	
+	map<string,cov_t> * mertable = NULL;
+		
+	if(sample == 'T')      { mertable = &mertable_tmr; }
+	else if(sample == 'N') { mertable = &mertable_nml; }
+	else { cerr << "Error: unrecognized sample " << sample << endl; }
+	
+	std::map<string,cov_t>::iterator it = mertable->find(cmer);
+	if (it != mertable->end()) {
+		if(strand == FWD) { ((*it).second).fwd += 1; }
+		if(strand == REV) { ((*it).second).rev += 1; }
+		
+		//if(sample == 'N') { ((*it).second).first += 1; }
+		//else if(sample == 'T') { ((*it).second).second += 1; }
+		//else { cerr << "Error: unknown sample " << sample << endl; return; }
 	}
 }
 
 // compute kmer coverage over the reference sequence 
-void Ref_t::computeCoverage() {
+void Ref_t::computeCoverage(char sample) {
 	CanonicalMer_t cmer;
+	
+	map<string,cov_t> * mertable = NULL;
+	vector<cov_t> * coverage = NULL;
+	
+	if(sample == 'T')      { mertable = &mertable_tmr; coverage = &tumor_coverage; }
+	else if(sample == 'N') { mertable = &mertable_nml; coverage = &normal_coverage; }
+	else { cerr << "Error: unrecognized sample " << sample << endl; }
 
 	unsigned int end = seq.length() - K + 1;
 	for (unsigned i = 0; i < end; i++) 
 	{	
 		cmer.set(seq.substr(i, K));			
-		std::map<string,std::pair<int,int>>::iterator it = mertable.find(cmer.mer_m);
-		if (it != mertable.end()) {
-			int n_cov = ((*it).second).first;
-			int t_cov = ((*it).second).second;
+		std::map<string,cov_t>::iterator it = mertable->find(cmer.mer_m);
+		if (it != mertable->end()) {
+			int cov_fwd = ((*it).second).fwd;
+			int cov_rev = ((*it).second).rev;
 			
 			/*
 			normal_coverage.at(i) = n_cov;			
@@ -82,13 +104,13 @@ void Ref_t::computeCoverage() {
 			
 			if(i==0) {
 				for (int j=i; j<K; j++) { 
-					normal_coverage.at(j) = n_cov; 				
-					tumor_coverage.at(j) = t_cov; 
+					coverage->at(j).fwd = cov_fwd; 				
+					coverage->at(j).fwd = cov_rev; 
 				}
 			}
 			else {
-				normal_coverage.at(i+K-1) = n_cov;
-				tumor_coverage.at(i+K-1) = t_cov;
+				coverage->at(i+K-1).fwd = cov_fwd;
+				coverage->at(i+K-1).rev = cov_rev;
 				
 				
 				//for (int l = 0; l < K-1; l++) {
@@ -101,37 +123,43 @@ void Ref_t::computeCoverage() {
 			
 		}
 		else {
-			normal_coverage.at(i) = 0;
-			tumor_coverage.at(i) = 0;
+			coverage->at(i).fwd = 0;
+			coverage->at(i).rev = 0;
 		}
 	}
 }
 
 // return k-mer coverage at position 
-int Ref_t::getCovAt(unsigned pos, char sample) {
-	 
+int Ref_t::getCovAt(unsigned pos, unsigned int strand, char sample) {
+	
+	vector<cov_t> * coverage = NULL;
+	if(sample == 'N') { coverage = &normal_coverage; }
+	else if(sample == 'T') { coverage = &tumor_coverage; }
+	else { cerr << "Error: unknown sample " << sample << endl; }
+	
 	int c = 0;
-	if(normal_coverage.size()>=pos) {	
-		if (sample == 'T') { c = tumor_coverage.at(pos); }
-		else if (sample == 'N') { c = normal_coverage.at(pos); }
-		else { cerr << "Error: unknown sample " << sample << endl; }
+	if(coverage->size()>=pos) {	
+		if(strand == FWD) { c = coverage->at(pos).fwd; }
+		if(strand == REV) { c = coverage->at(pos).rev; }
 	}
 	else { c = -1; }
+	
 	return c;
 }
 
 // return min k-mer coverage in radius of size K bp
 int Ref_t::getMinCovInKbp(unsigned pos, int K, char sample) {
 		
-	vector<int> cov;
-	if (sample == 'T') { cov = tumor_coverage; }
-	else if (sample == 'N') { cov = normal_coverage; }
+	vector<cov_t> * cov = NULL;
+	if (sample == 'T') { cov = &tumor_coverage; }
+	else if (sample == 'N') { cov = &normal_coverage; }
 	else { cerr << "Error: unknown sample " << sample << endl; }	
 	
 	int min = 1000000000;
-	if(cov.size()>=pos) {	
+	if(cov->size()>=pos) {	
 		for(int i=0; i<K; i++) {
-			if(cov[pos+i]<min) { min = cov[pos+i]; } 
+			int C = cov->at(pos+i).fwd + cov->at(pos+i).rev;
+			if(C<min) { min = C; } 
 		}
 	}
 	return min;
@@ -139,23 +167,29 @@ int Ref_t::getMinCovInKbp(unsigned pos, int K, char sample) {
 
 // print k-mer coverage along the reference
 void Ref_t::printKmerCoverage(char sample) {
-	
-	vector<int> coverage;
-	if(sample == 'N') { coverage = normal_coverage; }
-	else if(sample == 'T') { coverage = tumor_coverage; }
+
+	vector<cov_t> * coverage = NULL;
+	if(sample == 'N') { coverage = &normal_coverage; }
+	else if(sample == 'T') { coverage = &tumor_coverage; }
 	else { cerr << "Error: unknown sample " << sample << endl; return; }
 	
-    cerr << "cov " << sample << ": ";
-	for (unsigned i=0; i<coverage.size(); i++) {
-	    cerr << " " << coverage.at(i);
+    cerr << "cov " << sample << "+: ";
+	for (unsigned i=0; i<coverage->size(); i++) {
+	    cerr << " " << coverage->at(i).fwd;
 	}
-	cerr << " len: " << coverage.size() << endl;
+    cerr << "cov " << sample << "-: ";
+	for (unsigned i=0; i<coverage->size(); i++) {
+	    cerr << " " << coverage->at(i).rev;
+	}
+	cerr << " len: " << coverage->size() << endl;
 }
 
 // reset coverage to 0
 void Ref_t::resetCoverage() {
 	for (unsigned i=0; i<normal_coverage.size(); i++) { 
-		normal_coverage.at(i) = 0;
-		tumor_coverage.at(i) = 0;
+		normal_coverage.at(i).fwd = 0;
+		normal_coverage.at(i).rev = 0;
+		tumor_coverage.at(i).fwd = 0;
+		tumor_coverage.at(i).rev = 0;
 	}
 }

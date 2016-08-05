@@ -34,6 +34,9 @@ void Variant_t::printVCF() {
 	int tot_ref_cov_normal = ref_cov_normal_fwd + ref_cov_normal_rev;	
 	int tot_alt_cov_normal = alt_cov_normal_fwd + alt_cov_normal_rev;
 	
+	double fet_score = compute_FET_score(); // compute FET score
+	double fet_score_strand_bias = compute_SB_score(); // compute strand bias score
+	
 	string status = "?";
 	char flag = bestState(tot_ref_cov_normal,tot_alt_cov_normal,tot_ref_cov_tumor,tot_alt_cov_tumor);
 	if(flag == 'T') { status = "SOMATIC"; }
@@ -122,6 +125,11 @@ void Variant_t::printVCF() {
 		
 	if(FILTER.compare("") == 0) { FILTER = "PASS"; }
 	
+	
+	//compute genotype
+	string GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
+	string GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
+	
 	string NORMAL = GT_normal + ":" + itos(tot_ref_cov_normal) + "," + itos(tot_alt_cov_normal) + ":" + itos(ref_cov_normal_fwd) + "," + itos(ref_cov_normal_rev) +":" + itos(alt_cov_normal_fwd) + "," + itos(alt_cov_normal_rev) + ":" + itos(tot_ref_cov_normal+tot_alt_cov_normal);
 	string TUMOR = GT_tumor + ":" + itos(tot_ref_cov_tumor) + "," + itos(tot_alt_cov_tumor) + ":" + itos(ref_cov_tumor_fwd) + "," + itos(ref_cov_tumor_rev) + ":" + itos(alt_cov_tumor_fwd) + "," + itos(alt_cov_tumor_rev) + ":" + itos(tot_ref_cov_tumor+tot_alt_cov_tumor);
 	
@@ -147,36 +155,23 @@ string Variant_t::genotype(int R, int A) {
 	return GT;
 }
 
-void Variant_t::update() {
+// 	compute fisher exaxt test score for tumor/normal coverages
+//////////////////////////////////////////////////////////////
+double Variant_t::compute_FET_score() {
 	
 	double prob = 0.0;
 	double left = 0.0;
 	double right = 0.0;
 	double twotail = 0.0;
 	
-	//double fet_score_prob;
-	//double fet_score_left;
 	double fet_score_right = 0.0;
-	double fet_score_twotail = 0.0;
 	
 	FET_t fet;
 	
-	// fisher exaxt test score for tumor/normal coverages
+	// fisher exaxt test (FET) score for tumor/normal coverages
 	prob = fet.kt_fisher_exact((ref_cov_normal_fwd+ref_cov_normal_rev), (ref_cov_tumor_fwd+ref_cov_tumor_rev), (alt_cov_normal_fwd+alt_cov_normal_rev), (alt_cov_tumor_fwd+alt_cov_tumor_rev), &left, &right, &twotail);
 	if(right == 1) { fet_score_right = 0.0; }
-	else { 
-		//fet_score_prob = -10*log10(prob);
-		//fet_score_left = -10*log10(left);
-		fet_score_right = -10*log10(right);
-		//fet_score_twotail = -10*log10(twotail);
-	}
-	fet_score = fet_score_right;
-	
-	// fisher exaxt test score for strand bias in tumor
-	prob = fet.kt_fisher_exact(ref_cov_tumor_fwd, ref_cov_tumor_rev, alt_cov_tumor_fwd, alt_cov_tumor_rev, &left, &right, &twotail);
-	if(twotail == 1) { fet_score_twotail = 0.0; }
-	else { fet_score_twotail = -10*log10(twotail); }
-	fet_score_strand_bias = fet_score_twotail;
+	else { fet_score_right = -10*log10(right); }
 
 	/*
 	cerr << endl;
@@ -186,9 +181,27 @@ void Variant_t::update() {
 	cerr << "FET score twotail: " << fet_score_twotail << " (p = " << twotail << ")" << endl; 
 	*/
 	
-	//compute genotype
-	GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
-	GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
+	return fet_score_right;
+}
+
+// compute fisher exaxt test score for strand bias (SB) in tumor
+double Variant_t::compute_SB_score() {
+	
+	double prob = 0.0;
+	double left = 0.0;
+	double right = 0.0;
+	double twotail = 0.0;
+	
+	double fet_score_twotail = 0.0;
+	
+	FET_t fet;
+	
+	// fisher exaxt test score for strand bias in tumor
+	prob = fet.kt_fisher_exact(ref_cov_tumor_fwd, ref_cov_tumor_rev, alt_cov_tumor_fwd, alt_cov_tumor_rev, &left, &right, &twotail);
+	if(twotail == 1) { fet_score_twotail = 0.0; }
+	else { fet_score_twotail = -10*log10(twotail); }
+	
+	return fet_score_twotail;
 }
 
 // compute best state for the variant

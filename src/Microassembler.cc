@@ -424,7 +424,8 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 		if(code == NML) { cerr << "Extract reads from normal" << endl; }
 	}
 	
-	double CLIP_PRC = 0.5;
+	double CLIP_PRC = 0.5; // percent of soft-clipped bases in alignment
+	double MAX_PRC_HIGH_CLIP_READS = 30; // max percent of reads with high soft-clipping rate (>CLIP_PRC)
 	int MIN_XM = 5;
 	
 	// iterate through all alignments
@@ -445,6 +446,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	int num_high_XM_read = 0;
 	int num_equal_AS_XS_read = 0;
 	
+	int tot_reads_window = 0;
 	int totalreadbp = 0;
 	double avgcov = 0.0;
 	int MQ = MIN_MAP_QUAL;
@@ -501,7 +503,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			
 			// XM	Number of mismatches in the alignment
 			nm = 0;
-			al.GetTag("XM", nm); // get the XT tag for the read
+			al.GetTag("XM", nm); // get the XM tag for the read
 			if(nm >= MIN_XM) { num_high_XM_read++; /*continue;*/ } // skip alignments with too many mis-matches
 			
 			// XT type: Unique/Repeat/N/Mate-sw
@@ -535,8 +537,8 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 					double prc_sc = (double)(*it)/(double)al.Length;
 					//cerr << (*it) << " " << al.Length << " " << prc_sc << endl;
 					if(prc_sc >= CLIP_PRC) { num_high_softclip_read++; break; }
-				}
-			}			
+				}				
+			}
 									
 			rg = "";
 			al.GetTag("RG", rg); // get the read group information for the read
@@ -562,7 +564,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 					//g.addUnpaired("tumor", al.Name, al.QueryBases, oq, Graph_t::CODE_MAPPED, code, strand);	
 				}
 				//cout << al.Name << endl;
-				readcnt++;
+				readcnt++; tot_reads_window++;
 				totalreadbp += (al.QueryBases).length();
 				
 				//void addMates(ReadId_t r1, ReadId_t r2)
@@ -575,11 +577,15 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 		//else{ num_PCR_duplicates++; }
 	}
 	
+	// compute percentage of reads having high sofclipping rate (>CLIP_PRC)
+	double prc_high_clippied_reads = 100*((double)num_high_softclip_read/(double)tot_reads_window);
+	if(prc_high_clippied_reads > MAX_PRC_HIGH_CLIP_READS) { skip = true; }
+	
 	if(verbose) {
 		cerr << "Num reads marked as repeat (XT:A:R tag): " << num_XT_R_read << endl;
 		cerr << "Num reads marked as Mate-sw (XT:A:M tag): " << num_XT_M_read << endl;
 		cerr << "Num reads with alternative hits (XA tag): " << num_XA_read << endl;
-		cerr << "Num reads with >=" << CLIP_PRC << "\% soft-clipping: " << num_high_softclip_read << endl;
+		cerr << "Num reads with >=" << (100*CLIP_PRC) << "\% soft-clipping: " << num_high_softclip_read << "(" << prc_high_clippied_reads << "%)" << endl;
 		cerr << "Num reads with >=" << MIN_XM << " mis-matches: " << num_high_XM_read << endl;
 		cerr << "Num reads with equal alignment score (AS==XS): " << num_equal_AS_XS_read << endl;
 	}

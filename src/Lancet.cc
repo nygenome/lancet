@@ -346,7 +346,7 @@ int main(int argc, char** argv)
 		"   --max-indel-len, -T       <int>         : limit on size of detectable indel [default: " << MAX_INDEL_LEN << "]\n"
 		"   --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: " << MAX_MISMATCH << "]\n"
 		"   --num-threads, -X         <int>         : number of parallel threads [default: " << NUM_THREADS << "]\n"
-		"   --rg-file, -g             <string>      : read group file\n"
+//		"   --rg-file, -g             <string>      : read group file\n"
 		"   --node-str-len, -L        <int>         : length of sequence to display at graph node (default: " << NODE_STRLEN << ")\n"
 
 		"\nFilters\n"
@@ -369,7 +369,7 @@ int main(int argc, char** argv)
 		
 		"\nFlags\n"
 		"   --active-region-off, -W    : turn off active region module\n"		
-		"   --kmer-recovery-on, -R     : turn on k-mer recovery\n"
+		"   --kmer-recovery-on, -R     : turn on k-mer recovery (experimental)\n"
 		"   --print-graph, -A          : print graph (in .dot format) after every stage\n"
 		"   --verbose, -v              : be verbose\n"
 		"   --more-verbose, -V         : be more verbose\n"

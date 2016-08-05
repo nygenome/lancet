@@ -38,9 +38,6 @@ void VariantDB_t::addVar(Variant_t v) {
 		if (it->second.alt_cov_normal_rev < v.alt_cov_normal_rev) { it->second.alt_cov_normal_rev = v.alt_cov_normal_rev; }		
 		if (it->second.alt_cov_tumor_fwd  < v.alt_cov_tumor_fwd ) { it->second.alt_cov_tumor_fwd  = v.alt_cov_tumor_fwd;   }
 		if (it->second.alt_cov_tumor_rev  < v.alt_cov_tumor_rev ) { it->second.alt_cov_tumor_rev  = v.alt_cov_tumor_rev;   }
-
-		// re-gentype and score
-		it->second.update();
 	}
 	else { 
 		DB.insert(pair<string,Variant_t>(key,v));

@@ -71,10 +71,6 @@ public:
 	int alt_cov_tumor_rev;
 	char prev_bp_ref; // base-pair preceding the mutation in reference
 	char prev_bp_alt; // base-pair preceding the mutation in alternative
-	string GT_normal;
-	string GT_tumor;
-	double fet_score;
-	double fet_score_strand_bias;
 	
 	Filters filters; // filter thresholds
 
@@ -105,16 +101,14 @@ public:
 		alt_cov_tumor_rev = alt_cov_tumor_rev_;
 		prev_bp_ref = prev_bp_ref_;
 		prev_bp_alt = prev_bp_alt_;
-		
-		// update score and genotypes
-		update();
 	}
 	
 	void printVCF();
 	string genotype(int R, int A);
 	char bestState(int Rn, int An, int Rt, int At);
 	string getSignature();
-	void update();
+	double compute_FET_score();
+	double compute_SB_score();
 };
 
 #endif

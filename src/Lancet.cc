@@ -309,7 +309,7 @@ int main(int argc, char** argv)
 	
 	// initilize filter thresholds
 	Filters filters;
-	filters.minPhredFisher = 10;
+	filters.minPhredFisher = 7;
 	filters.minCovNormal = 10;
 	filters.maxCovNormal = 1000000;
 	filters.minCovTumor = 4;
@@ -592,7 +592,7 @@ int main(int argc, char** argv)
 			assemblers[i]->DIST_FROM_STR = DIST_FROM_STR;	
 			
 			assemblers[i]->reftable = &reftables[i];
-			assemblers[i]->setFilters(filters);
+			assemblers[i]->setFilters(&filters);
 			assemblers[i]->setID(i+1);
 	
 			rc = pthread_create(&threads[i], NULL, execute, (void * )assemblers[i]);

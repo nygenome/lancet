@@ -48,7 +48,7 @@ class Ref_t
 {
 public:
 
-	int K;
+	unsigned short K;
 	string hdr;
 	string seq;
 
@@ -58,12 +58,15 @@ public:
 	int refstart;
 	int refend;
 
-	int trim5;
-	int trim3;
+	unsigned short trim5;
+	unsigned short trim3;
 
 	// mapping of mers to fwd/rev counts (mer,cov_t)  
-	map<string,cov_t> mertable_nml;
-	map<string,cov_t> mertable_tmr;
+	//map<string,cov_t> mertable_nml;
+	//map<string,cov_t> mertable_tmr;
+	map<string,cov_t> * mertable_nml = NULL;
+	map<string,cov_t> * mertable_tmr = NULL;
+	
 	set<int> refcompids;
 
 	int refnodes;
@@ -71,20 +74,20 @@ public:
 	int allcomp;
 
 	bool indexed_m;
+
+	//vector<cov_t> normal_coverage; // normal k-mer coverage across the reference
+	//vector<cov_t> tumor_coverage; // tumor k-mer coverage across the reference
+	vector<cov_t> * normal_coverage = NULL; // normal k-mer coverage across the reference
+	vector<cov_t> * tumor_coverage = NULL; // tumor k-mer coverage across the reference
 	
-	//vector<int> normal_coverage; // normal k-mer coverage across the reference
-	//vector<int> tumor_coverage; // tumor k-mer coverage across the reference
-
-	vector<cov_t> normal_coverage; // normal k-mer coverage across the reference
-	vector<cov_t> tumor_coverage; // tumor k-mer coverage across the reference
-
 	Ref_t(int k) : indexed_m(0) 
 		{ K = k; }
 	
 	void setHdr(string hdr_) { hdr = hdr_; }
 	void setRawSeq(string rawseq_) { rawseq = rawseq_; }
-	void setK(int k) { K = k; indexed_m = 0; mertable_nml.clear(); mertable_tmr.clear(); resetCoverage(); }
-	void setSeq(string seq_) { seq = seq_; normal_coverage.resize(seq.size()); tumor_coverage.resize(seq.size()); resetCoverage(); }
+	void setK(int k) { K = k; indexed_m = 0; clear(); /*resetCoverage();*/ }
+	void setSeq(string seq_) { seq = seq_; }
+	//void setSeq(string seq_) { seq = seq_; normal_coverage.resize(seq.size()); tumor_coverage.resize(seq.size()); resetCoverage(); }
 
 	void indexMers();
 	bool hasMer(const string & cmer);
@@ -96,6 +99,7 @@ public:
 	int getMinCovInKbp(unsigned pos, int K, char sample);
 	void printKmerCoverage(char sample);
 	void resetCoverage();
+	void clear();
 };
 
 #endif

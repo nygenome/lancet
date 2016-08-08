@@ -47,6 +47,7 @@ void Graph_t::clear(bool flag)
 
 	if (ref_m && flag == true)
 	{
+		ref_m->clear();
 		delete ref_m;
 		ref_m = NULL;
 	}	

@@ -33,10 +33,10 @@ void Variant_t::printVCF() {
 
 	int tot_ref_cov_normal = ref_cov_normal_fwd + ref_cov_normal_rev;	
 	int tot_alt_cov_normal = alt_cov_normal_fwd + alt_cov_normal_rev;
-	
+		
 	double fet_score = compute_FET_score(); // compute FET score
 	double fet_score_strand_bias = compute_SB_score(); // compute strand bias score
-	
+		
 	string status = "?";
 	char flag = bestState(tot_ref_cov_normal,tot_alt_cov_normal,tot_ref_cov_tumor,tot_alt_cov_tumor);
 	if(flag == 'T') { status = "SOMATIC"; }
@@ -44,58 +44,60 @@ void Variant_t::printVCF() {
 	else if(flag == 'L') { status = "LOH"; }
 	else if(flag == 'N') { status = "NORMAL"; }
 	else if(flag == 'E') { status = "NONE"; return; } // do not print varaints without support
-	
+		
 	string INFO = status + ";FETS=" + dtos(fet_score);
 	if(type=='I') { INFO += ";TYPE=ins"; }
 	if(type=='D') { INFO += ";TYPE=del"; }
 	if(type=='S') { INFO += ";TYPE=snv"; }
-	
+		
 	INFO += ";LEN=" + itos(len) + ";KMERSIZE=" + itos(kmer) + ";SB=" + dtos(fet_score_strand_bias);
 	
 	double QUAL = fet_score;
 	string FORMAT = "GT:AD:SR:SA:DP";
 	
 	// apply filters
-
+	
 	int tumor_cov = tot_ref_cov_tumor + tot_alt_cov_tumor;
 	double tumor_vaf = (tumor_cov == 0) ? 0 : ((double)tot_alt_cov_tumor/(double)tumor_cov);
-	
+		
 	int normal_cov = tot_ref_cov_normal + tot_alt_cov_normal;
 	double normal_vaf = (normal_cov == 0) ? 0 : ((double)tot_alt_cov_normal/(double)normal_cov);
 	
-	if(fet_score < filters.minPhredFisher) { 
+	if (filters == NULL) { cerr << "Error: filters not assigned" << endl; }
+	
+	if(fet_score < filters->minPhredFisher) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowFisherScore"; }
 		else { FILTER += ";LowFisherScore"; }
 	}
-	if(normal_cov < filters.minCovNormal) { 
+	if(normal_cov < filters->minCovNormal) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowCovNormal"; }
 		else { FILTER += ";LowCovNormal"; }	
 	}
-	if(normal_cov > filters.maxCovNormal) { 
+	if(normal_cov > filters->maxCovNormal) { 
 		if (FILTER.compare("") == 0) { FILTER = "HighCovNormal"; }
 		else { FILTER += ";HighCovNormal"; }	
 	}
-	if(tumor_cov < filters.minCovTumor) { 
+	if(tumor_cov < filters->minCovTumor) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowCovTumor"; }
 		else { FILTER += ";LowCovTumor"; }	
 	}
-	if(tumor_cov > filters.maxCovTumor) { 
+	if(tumor_cov > filters->maxCovTumor) { 
 		if (FILTER.compare("") == 0) { FILTER = "HighCovTumor"; }
 		else { FILTER += ";HighCovTumor"; }	
 	}
-	if(tumor_vaf < filters.minVafTumor) { 
+	if(tumor_vaf < filters->minVafTumor) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowVafTumor"; }
 		else { FILTER += ";LowVafTumor"; }	
 	}
-	if(normal_vaf > filters.maxVafNormal) { 
+	if(normal_vaf > filters->maxVafNormal) { 
 		if (FILTER.compare("") == 0) { FILTER = "HighVafNormal"; }
 		else { FILTER += ";HighVafNormal"; }	
 	}
-	if(tot_alt_cov_tumor < filters.minAltCntTumor) { 
+	if(tot_alt_cov_tumor < filters->minAltCntTumor) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowAltCntTumor"; }
 		else { FILTER += ";LowAltCntTumor"; }	
 	}
-	if(tot_alt_cov_normal > filters.maxAltCntNormal) { 
+	if(tot_alt_cov_normal > filters->maxAltCntNormal) { 
 		if (FILTER.compare("") == 0) { FILTER = "HighAltCntNormal"; }
 		else { FILTER += ";HighAltCntNormal"; }
 	}
@@ -112,7 +114,7 @@ void Variant_t::printVCF() {
 	
 	// snv specific filters
 	//if( (type == 'S') && (tot_alt_cov_tumor > 2) ) { // for snv strand bias filter is applied at all coverages
-		if( (alt_cov_tumor_fwd < filters.minStrandBias) || (alt_cov_tumor_rev < filters.minStrandBias) ) { 
+		if( (alt_cov_tumor_fwd < filters->minStrandBias) || (alt_cov_tumor_rev < filters->minStrandBias) ) { 
 			if (FILTER.compare("") == 0) { FILTER = "StrandBias"; }
 			else { FILTER += ";StrandBias"; }
 		}
@@ -124,8 +126,7 @@ void Variant_t::printVCF() {
 	}
 		
 	if(FILTER.compare("") == 0) { FILTER = "PASS"; }
-	
-	
+		
 	//compute genotype
 	string GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
 	string GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
@@ -163,16 +164,17 @@ double Variant_t::compute_FET_score() {
 	double left = 0.0;
 	double right = 0.0;
 	double twotail = 0.0;
-	
-	double fet_score_right = 0.0;
+
+	double fet_score = 0.0;	
+	//double fet_score_right = 0.0;
 	
 	FET_t fet;
 	
 	// fisher exaxt test (FET) score for tumor/normal coverages
 	prob = fet.kt_fisher_exact((ref_cov_normal_fwd+ref_cov_normal_rev), (ref_cov_tumor_fwd+ref_cov_tumor_rev), (alt_cov_normal_fwd+alt_cov_normal_rev), (alt_cov_tumor_fwd+alt_cov_tumor_rev), &left, &right, &twotail);
-	if(right == 1) { fet_score_right = 0.0; }
-	else { fet_score_right = -10*log10(right); }
-
+	if(prob == 1) { fet_score = 0.0; }
+	else { fet_score = -10.0*log10(prob); }
+	
 	/*
 	cerr << endl;
 	cerr << "FET score: " << fet_score << " (p = " << prob << ")" << endl;
@@ -181,7 +183,7 @@ double Variant_t::compute_FET_score() {
 	cerr << "FET score twotail: " << fet_score_twotail << " (p = " << twotail << ")" << endl; 
 	*/
 	
-	return fet_score_right;
+	return fet_score;
 }
 
 // compute fisher exaxt test score for strand bias (SB) in tumor
@@ -192,16 +194,16 @@ double Variant_t::compute_SB_score() {
 	double right = 0.0;
 	double twotail = 0.0;
 	
-	double fet_score_twotail = 0.0;
+	double sb_score = 0.0;
 	
 	FET_t fet;
 	
 	// fisher exaxt test score for strand bias in tumor
 	prob = fet.kt_fisher_exact(ref_cov_tumor_fwd, ref_cov_tumor_rev, alt_cov_tumor_fwd, alt_cov_tumor_rev, &left, &right, &twotail);
-	if(twotail == 1) { fet_score_twotail = 0.0; }
-	else { fet_score_twotail = -10*log10(twotail); }
+	if(prob == 1) { sb_score = 0.0; }
+	else { sb_score = -10.0*log10(prob); }
 	
-	return fet_score_twotail;
+	return sb_score;
 }
 
 // compute best state for the variant

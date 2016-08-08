@@ -32,12 +32,12 @@ void VariantDB_t::addVar(Variant_t v) {
 		// keep highest supporting coverage found
 		if (it->second.ref_cov_normal_fwd < v.ref_cov_normal_fwd) { it->second.ref_cov_normal_fwd = v.ref_cov_normal_fwd; }
 		if (it->second.ref_cov_normal_rev < v.ref_cov_normal_rev) { it->second.ref_cov_normal_rev = v.ref_cov_normal_rev; }
-		if (it->second.ref_cov_tumor_fwd  < v.ref_cov_tumor_fwd ) { it->second.ref_cov_tumor_fwd  = v.ref_cov_tumor_fwd; }
-		if (it->second.ref_cov_tumor_rev  < v.ref_cov_tumor_rev ) { it->second.ref_cov_tumor_rev  = v.ref_cov_tumor_rev; }
+		if (it->second.ref_cov_tumor_fwd  < v.ref_cov_tumor_fwd ) { it->second.ref_cov_tumor_fwd  = v.ref_cov_tumor_fwd;  }
+		if (it->second.ref_cov_tumor_rev  < v.ref_cov_tumor_rev ) { it->second.ref_cov_tumor_rev  = v.ref_cov_tumor_rev;  }
 		if (it->second.alt_cov_normal_fwd < v.alt_cov_normal_fwd) { it->second.alt_cov_normal_fwd = v.alt_cov_normal_fwd; }
 		if (it->second.alt_cov_normal_rev < v.alt_cov_normal_rev) { it->second.alt_cov_normal_rev = v.alt_cov_normal_rev; }		
-		if (it->second.alt_cov_tumor_fwd  < v.alt_cov_tumor_fwd ) { it->second.alt_cov_tumor_fwd  = v.alt_cov_tumor_fwd;   }
-		if (it->second.alt_cov_tumor_rev  < v.alt_cov_tumor_rev ) { it->second.alt_cov_tumor_rev  = v.alt_cov_tumor_rev;   }
+		if (it->second.alt_cov_tumor_fwd  < v.alt_cov_tumor_fwd ) { it->second.alt_cov_tumor_fwd  = v.alt_cov_tumor_fwd;  }
+		if (it->second.alt_cov_tumor_rev  < v.alt_cov_tumor_rev ) { it->second.alt_cov_tumor_rev  = v.alt_cov_tumor_rev;  }
 	}
 	else { 
 		DB.insert(pair<string,Variant_t>(key,v));
@@ -78,7 +78,9 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 
 // print variant in VCF format
 void VariantDB_t::printToVCF(const string version, const string reference, char * date, Filters &fs, string &sample_name_N, string &sample_name_T) {
-		
+	
+	cerr << "Export variants to VCF file" << endl;
+	
 	printHeader(version,reference,date,fs,sample_name_N,sample_name_T);
 	
 	// dump map content to vector for custom sorting

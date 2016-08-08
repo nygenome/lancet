@@ -122,7 +122,7 @@ public:
 	int readCycles;
 	
 	VariantDB_t *vDB; // DB of variants
-	Filters filters; // filter thresholds
+	Filters * filters; // filter thresholds
 
 	Graph_t() : ref_m(NULL), is_ref_added(0), readCycles(0) {
 		clear(true); 
@@ -148,7 +148,7 @@ public:
 	void setInsertSize(int is) { INSERT_SIZE = is; }
 	void setInsertStdev(int is) { INSERT_STDEV = is; }
 	void setMaxMismatch(int mm) { MAX_MISMATCH = mm; }
-	void setFilters(Filters &fs) { filters = fs; }
+	void setFilters(Filters * fs) { filters = fs; }
 	
 	//set STR params
 	void setMaxUnitLen(int l) { MAX_UNIT_LEN = l; }

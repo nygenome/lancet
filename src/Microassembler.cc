@@ -247,7 +247,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion &region, int code) {
 	
 	// iterate through all alignments
-	int MIN_EVIDENCE = filters.minAltCntTumor; // min evidence equal to min support for somatic variant
+	int MIN_EVIDENCE = filters->minAltCntTumor; // min evidence equal to min support for somatic variant
 	BamAlignment al;
 	int totalreadbp = 0;
 	bool ans = false;
@@ -579,7 +579,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	
 	// compute percentage of reads having high sofclipping rate (>CLIP_PRC)
 	double prc_high_clippied_reads = 100*((double)num_high_softclip_read/(double)tot_reads_window);
-	if(prc_high_clippied_reads > MAX_PRC_HIGH_CLIP_READS) { skip = true; }
+	//if(prc_high_clippied_reads > MAX_PRC_HIGH_CLIP_READS) { skip = true; }
 	
 	if(verbose) {
 		cerr << "Num reads marked as repeat (XT:A:R tag): " << num_XT_R_read << endl;

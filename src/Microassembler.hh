@@ -125,7 +125,7 @@ public:
 	int MAX_INDEL_LEN;
 	int MAX_MISMATCH;
 		
-	Filters filters; // filter thresholds
+	Filters * filters; // filter thresholds
 	
 	string sample_name_normal;
 	string sample_name_tumor;
@@ -215,7 +215,7 @@ public:
 	bool extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo, BamRegion &region, int &readcnt, int code);
 	bool isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion &region, int code);
 	int processReads();
-	void setFilters(Filters &fs) { filters = fs; }
+	void setFilters(Filters * fs) { filters = fs; }
 	void setID(int i) { ID = i; }
 	string retriveSampleName(SamHeader &header);
 };

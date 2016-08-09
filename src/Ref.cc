@@ -197,10 +197,10 @@ void Ref_t::printKmerCoverage(char sample) {
 // clear DT and free memory
 void Ref_t::clear() {
 	
-	if(mertable_nml != NULL)    { mertable_nml->clear();    mertable_nml = NULL;    }
-	if(mertable_tmr != NULL)    { mertable_tmr->clear();    mertable_tmr = NULL;    }
-	if(normal_coverage != NULL) { normal_coverage->clear(); normal_coverage = NULL; }
-	if(tumor_coverage != NULL)  { tumor_coverage->clear();  tumor_coverage = NULL;  }
+	if(mertable_nml != NULL)    { mertable_nml->clear();    delete mertable_nml;    mertable_nml = NULL;    }
+	if(mertable_tmr != NULL)    { mertable_tmr->clear();    delete mertable_tmr;    mertable_tmr = NULL;    }
+	if(normal_coverage != NULL) { normal_coverage->clear(); delete normal_coverage; normal_coverage = NULL; }
+	if(tumor_coverage != NULL)  { tumor_coverage->clear();  delete tumor_coverage;  tumor_coverage = NULL;  }
 }
 
 // reset coverage to 0

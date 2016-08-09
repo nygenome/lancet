@@ -425,7 +425,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	}
 	
 	double CLIP_PRC = 0.5; // percent of soft-clipped bases in alignment
-	double MAX_PRC_HIGH_CLIP_READS = 30; // max percent of reads with high soft-clipping rate (>CLIP_PRC)
+	//double MAX_PRC_HIGH_CLIP_READS = 30; // max percent of reads with high soft-clipping rate (>CLIP_PRC)
 	int MIN_XM = 5;
 	
 	// iterate through all alignments

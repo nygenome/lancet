@@ -52,11 +52,11 @@ class Variant_t
 {
 public:
 
-	int kmer;
+	unsigned short kmer;
 	string chr;
 	int pos;
 	char type;
-	int len;
+	unsigned short len;
 	string ref;
 	string alt;
 	string str;

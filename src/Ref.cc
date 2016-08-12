@@ -22,21 +22,33 @@
 **
 *************************** /COPYRIGHT **************************************/
 
+
+// allocate mmeory for data structures
+void Ref_t::init() {
+	
+	// allocate memory for mertables
+	mertable_nml = new 	unordered_map<string,cov_t>();
+	mertable_tmr = new 	unordered_map<string,cov_t>();
+	
+	// allocate memory for coverage info
+	normal_coverage = new vector<cov_t>(); // normal k-mer coverage across the reference
+	tumor_coverage  = new vector<cov_t>(); // tumor k-mer coverage across the reference
+	resetCoverage();
+}
+
+// index mers
 void Ref_t::indexMers()
 {
 	if (!indexed_m)
 	{
+		
+		assert(mertable_nml != NULL);
+		assert(mertable_tmr != NULL);
+		//if (mertable_nml == NULL) { cerr << "Error: null pointer to mer-table for normal!" << endl; } 
+		//if (mertable_tmr == NULL) { cerr << "Error: null pointer to mer-table for tumor!" << endl; } 
+		
 		CanonicalMer_t cmer;
-		
-		// allocate memory for mertables
-		mertable_nml = new 	map<string,cov_t>();
-		mertable_tmr = new 	map<string,cov_t>();
-		
-		// allocate memory for coverage info
-		normal_coverage = new vector<cov_t>(); // normal k-mer coverage across the reference
-		tumor_coverage  = new vector<cov_t>(); // tumor k-mer coverage across the reference
-		resetCoverage();
-		
+
 		for (unsigned int i = 0; i < seq.length() - K + 1; i++)
 		{
 			cmer.set(seq.substr(i, K));
@@ -63,13 +75,16 @@ bool Ref_t::hasMer(const string & cmer)
 void Ref_t::updateCoverage(const string & cmer, unsigned int strand, char sample) {
 	indexMers();
 	
-	map<string,cov_t> * mertable = NULL;
+	unordered_map<string,cov_t> * mertable = NULL;
 		
 	if(sample == 'T')      { mertable = mertable_tmr; }
 	else if(sample == 'N') { mertable = mertable_nml; }
 	else { cerr << "Error: unrecognized sample " << sample << endl; }
 	
-	std::map<string,cov_t>::iterator it = mertable->find(cmer);
+	assert(mertable != NULL);
+	//if (mertable == NULL) { cerr << "Error: null pointer to mer-table!" << endl; } 
+	
+	std::unordered_map<string,cov_t>::iterator it = mertable->find(cmer);
 	if (it != mertable->end()) {
 		if(strand == FWD) { ((*it).second).fwd += 1; }
 		if(strand == REV) { ((*it).second).rev += 1; }
@@ -84,18 +99,23 @@ void Ref_t::updateCoverage(const string & cmer, unsigned int strand, char sample
 void Ref_t::computeCoverage(char sample) {
 	CanonicalMer_t cmer;
 	
-	map<string,cov_t> * mertable = NULL;
+	unordered_map<string,cov_t> * mertable = NULL;
 	vector<cov_t> * coverage = NULL;
 	
 	if(sample == 'T')      { mertable = mertable_tmr; coverage = tumor_coverage; }
 	else if(sample == 'N') { mertable = mertable_nml; coverage = normal_coverage; }
 	else { cerr << "Error: unrecognized sample " << sample << endl; }
+	
+	assert(mertable != NULL);
+	assert(coverage != NULL);
+	//if (mertable == NULL) { cerr << "Error: null pointer to mer-table!" << endl; } 
+	//if (coverage == NULL) { cerr << "Error: null pointer to coverage vector!" << endl; } 
 
 	unsigned int end = seq.length() - K + 1;
 	for (unsigned i = 0; i < end; i++) 
 	{	
 		cmer.set(seq.substr(i, K));			
-		std::map<string,cov_t>::iterator it = mertable->find(cmer.mer_m);
+		std::unordered_map<string,cov_t>::iterator it = mertable->find(cmer.mer_m);
 		if (it != mertable->end()) {
 			int cov_fwd = ((*it).second).fwd;
 			int cov_rev = ((*it).second).rev;
@@ -147,6 +167,9 @@ int Ref_t::getCovAt(unsigned pos, unsigned int strand, char sample) {
 	else if(sample == 'T') { coverage = tumor_coverage; }
 	else { cerr << "Error: unknown sample " << sample << endl; }
 	
+	assert(coverage != NULL);
+	//if (coverage == NULL) { cerr << "Error: null pointer to coverage vector!" << endl; } 
+	
 	int c = 0;
 	if(coverage->size()>pos) {	
 		if(strand == FWD) { c = coverage->at(pos).fwd; }
@@ -165,6 +188,9 @@ int Ref_t::getMinCovInKbp(unsigned pos, int K, char sample) {
 	else if (sample == 'N') { cov = normal_coverage; }
 	else { cerr << "Error: unknown sample " << sample << endl; }	
 	
+	assert(cov != NULL);
+	//if (cov == NULL) { cerr << "Error: null pointer to coverage vector!" << endl; } 
+	
 	int min = 1000000000;
 	if(cov->size()>=pos) {	
 		for(int i=0; i<K; i++) {
@@ -182,6 +208,9 @@ void Ref_t::printKmerCoverage(char sample) {
 	if(sample == 'N') { coverage = normal_coverage; }
 	else if(sample == 'T') { coverage = tumor_coverage; }
 	else { cerr << "Error: unknown sample " << sample << endl; return; }
+	
+	assert(coverage != NULL);
+	//if (coverage == NULL) { cerr << "Error: null pointer to coverage vector!" << endl; } 
 	
     cerr << "cov " << sample << "+: ";
 	for (unsigned i=0; i<coverage->size(); i++) {
@@ -205,6 +234,11 @@ void Ref_t::clear() {
 
 // reset coverage to 0
 void Ref_t::resetCoverage() {
+	
+	assert(normal_coverage != NULL);
+	assert(tumor_coverage != NULL);
+	//if (normal_coverage == NULL) { cerr << "Error: null pointer to coverage vector for normal!" << endl; } 
+	//if (tumor_coverage == NULL) { cerr << "Error: null pointer to coverage vector for tumor!" << endl; } 
 	
 	normal_coverage->resize(seq.size()); 
 	tumor_coverage->resize(seq.size());

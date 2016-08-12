@@ -385,8 +385,12 @@ void Node_t::updateCovDistrMinQV(const string & qv, unsigned int strand, char sa
 
 	unsigned int i = 0;
 	for ( string::const_iterator it=qv.begin(); it!=qv.end(); ++it) {
-		if( (*it >= MIN_QUAL) && (strand == FWD) ) { (((*cov_distr)[i]).minqv_fwd)++; }
-		if( (*it >= MIN_QUAL) && (strand == REV) ) { (((*cov_distr)[i]).minqv_rev)++; }
+		if(*it >= MIN_QUAL) {
+			if(strand == FWD) { (((*cov_distr)[i]).minqv_fwd)++; }
+			if(strand == REV) { (((*cov_distr)[i]).minqv_rev)++; }
+		}
+		//if( (*it >= MIN_QUAL) && (strand == FWD) ) { (((*cov_distr)[i]).minqv_fwd)++; }
+		//if( (*it >= MIN_QUAL) && (strand == REV) ) { (((*cov_distr)[i]).minqv_rev)++; }
 		i++;
 	}
 }
@@ -466,32 +470,24 @@ int Node_t::minNon0Cov(char sample)
 	return min;
 }
 
-// minCov
-// return the minimum coverage along the node (exlusing lowquality bases)
-//////////////////////////////////////////////////////////////
-int Node_t::minCovMinQV() 
-{
-	int min = 10000000;
-	for (unsigned int i = 0; i < cov_distr_tmr.size(); i++)
-	{
-		int totcov = cov_distr_tmr[i].minqv_fwd + cov_distr_tmr[i].minqv_rev + cov_distr_nml[i].minqv_fwd + cov_distr_nml[i].minqv_rev;
-		if(totcov < min) { min = totcov; } 
-	}
-	return min;
-}
-
-// minCov
+// computeMinCov
 // return the minimum coverage along the node
 //////////////////////////////////////////////////////////////
-int Node_t::minCov() 
+void Node_t::computeMinCov()
 {
 	int min = 10000000;
+	int minQV = 10000000;
 	for (unsigned int i = 0; i < cov_distr_tmr.size(); i++)
 	{
 		int totcov = cov_distr_tmr[i].fwd + cov_distr_tmr[i].rev + cov_distr_nml[i].fwd + cov_distr_nml[i].rev;
+		int totcovQV = cov_distr_tmr[i].minqv_fwd + cov_distr_tmr[i].minqv_rev + cov_distr_nml[i].minqv_fwd + cov_distr_nml[i].minqv_rev;
+		
 		if(totcov < min) { min = totcov; } 
+		if(totcovQV < minQV) { minQV = totcovQV; } 
+		
 	}
-	return min;
+	mincov = min;
+	mincovQV = minQV;
 }
 
 // readOverlaps
@@ -516,35 +512,26 @@ int Node_t::readOverlaps(const Node_t & other)
 // hasOverlappingMate
 // return true if the k-mer comes from the same fragment (overlapping mates)
 //////////////////////////////////////////////////////////////
-bool Node_t::hasOverlappingMate(string & read_name)
+bool Node_t::hasOverlappingMate(string & read_name, int id)
 {	
 	bool ans = false;
-	string name = read_name;
-	
-	char id = name.back();
-	name.pop_back(); name.pop_back(); // remove last two characters (e.g. _1)
 	
 	if(id == '1') {
-		if (mate2_name.find(name) != mate2_name.end()) { ans = true; }
+		if (mate2_name.find(read_name) != mate2_name.end()) { ans = true; }
 	}
 	
 	if(id == '2') {
-		if (mate1_name.find(name) != mate1_name.end()) { ans = true; }
+		if (mate1_name.find(read_name) != mate1_name.end()) { ans = true; }
 	}
 	
 	return ans;
 }
 
 // add mate name to the set of mates containing this kmer
-void Node_t::addMateName(string & read_name) 
-{
-	string name = read_name;
-		
-	char id = name.back();
-	name.pop_back(); name.pop_back(); // remove last two characters (e.g. _1)
-	
-	if(id == '1') { mate1_name.insert(name); }
-	if(id == '2') { mate2_name.insert(name); }
+void Node_t::addMateName(string & read_name, int id) 
+{	
+	if(id == '1') { mate1_name.insert(read_name); }
+	if(id == '2') { mate2_name.insert(read_name); }
 }
 
 // return tumor coverage on the input strand

@@ -152,15 +152,15 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 
 		// add mate name info to the nodes
 		// (used to check for overlapping mates)
-		ui->second->addMateName(readid2info[readid].readname_m);
-		vi->second->addMateName(readid2info[readid].readname_m);
+		ui->second->addMateName(readid2info[readid].readname_m, readid2info[readid].mate_order_m);
+		vi->second->addMateName(readid2info[readid].readname_m, readid2info[readid].mate_order_m);
 
 
 		if (!isRef)
 		{		
 			if (offset == 0) 
 			{ 
-				if( !(ui->second->hasOverlappingMate(readid2info[readid].readname_m)) ) { // do not update coverage for overlapping mates
+				if( !(ui->second->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m)) ) { // do not update coverage for overlapping mates
 					
 					if(readid2info[readid].label_m == TMR) {	
 						ui->second->incTmrCov(strand);
@@ -186,7 +186,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 				}
 			}
 
-			if( !(vi->second->hasOverlappingMate(readid2info[readid].readname_m)) ) { // do not update coverage for overlapping mates
+			if( !(vi->second->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m)) ) { // do not update coverage for overlapping mates
 
 				if(readid2info[readid].label_m == TMR) {
 					vi->second->incTmrCov(strand);
@@ -341,10 +341,10 @@ int Graph_t::countMappedReads()
 // addRead
 ////////////////////////////////////////////////////////////////
 
-ReadId_t Graph_t::addRead(const string & set, const string & readname, const string & seq, const string & qv, char code, int label, unsigned int strand)
+ReadId_t Graph_t::addRead(const string & set, const string & readname, const string & seq, const string & qv, char code, int label, unsigned int strand, int mate_order)
 {
 	ReadId_t retval = readid2info.size();
-	readid2info.push_back(ReadInfo_t(label, set, readname, seq, qv, code, strand));
+	readid2info.push_back(ReadInfo_t(label, set, readname, seq, qv, code, strand, mate_order));
 	return retval;
 }
 
@@ -368,47 +368,25 @@ void Graph_t::printReads()
 	}
 }
 
-// addPair
+// addpaired
 //////////////////////////////////////////////////////////////
 
-void Graph_t::addPair(const string & set,
-	const string & readname,
-	const string & seq1, const string & qv1,
-	const string & seq2, const string & qv2,
-	char code, int label, unsigned int strand)
-{
-	if (code == CODE_MAPPED)
-	{
-		int rd1 = addRead(set, readname+"_1", seq1, qv1, code, label, strand);
-		trimAndLoad(rd1, seq1, qv1, false, strand);
-
-		int rd2 = addRead(set, readname+"_2", seq2, qv2, code, label, strand);
-		trimAndLoad(rd2, seq2, qv2, false, strand);
-
-		addMates(rd1, rd2);
-	}
-}
-
-// addUnpaired
-//////////////////////////////////////////////////////////////
-
-void Graph_t::addUnpaired(const string & set,
+void Graph_t::addAlignment(const string & set,
 	const string & readname,
 	const string & seq,
 	const string & qv,
+	const int mate_id,
 	char code,
 	int label,
 	unsigned int strand)
 {
-	int rd = addRead(set, readname+"_0", seq, qv, code, label, strand);
-	//trimAndLoad(rd, seq, qv, false);
+	int rd = addRead(set, readname, seq, qv, code, label, strand, mate_id);
 	trim(rd, seq, qv, false);
-	
 }
 
 // addpaired
 //////////////////////////////////////////////////////////////
-
+/*
 void Graph_t::addpaired(const string & set,
 	const string & readname,
 	const string & seq,
@@ -419,20 +397,16 @@ void Graph_t::addpaired(const string & set,
 	unsigned int strand)
 {
 	int rd;
-	if(mate_id == 1) {
-		rd = addRead(set, readname+"_1", seq, qv, code, label, strand);
-		trim(rd, seq, qv, false);
-	}
-	else if(mate_id == 2) {
-		rd = addRead(set, readname+"_2", seq, qv, code, label, strand);
+	if(mate_id != 0) {
+		rd = addRead(set, readname, seq, qv, code, label, strand, mate_id);
 		trim(rd, seq, qv, false);
 	}
 	else { // no mate
-		rd = addRead(set, readname+"_0", seq, qv, code, label, strand);
+		rd = addRead(set, readname, seq, qv, code, label, strand, 0);
 		trim(rd, seq, qv, false);
-	}
+	}	
 }
-
+*/
 
 // build graph by trimming and loading the reads
 //////////////////////////////////////////////////////////////
@@ -444,7 +418,7 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 	int refid = 0; 
 	if(!is_ref_added) {
 		string qv ((ref_m->rawseq).size(), 'K'); // create base-quality value string for reference
-		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, qv, 'R', REF, FWD);
+		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, qv, 'R', REF, FWD, 0);
 		is_ref_added = true;
 		if (VERBOSE) { cerr << "refid: " << refid << endl; }
 	}	
@@ -452,17 +426,21 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 	for (unsigned int i = 0; i < readid2info.size(); i++)
 	{
 		if ( !(readid2info[i].isjunk) ) { // skip junk (not A,C,G,T)
-			string seq = readid2info[i].seq_m;
-			string qv = readid2info[i].qv_m;
-			int len = seq.length();
+			string seq; // = readid2info[i].seq_m;
+			string qv; // = readid2info[i].qv_m;
+			int len = (readid2info[i].seq_m).length();
 			int t5 = readid2info[i].trm5;
 			int t3 = readid2info[i].trm3;
 			unsigned int strand = readid2info[i].strand;
 			//string cseq = seq;
 			//string cqv = qv;
 			if (t5 || t3) { 
-				seq = seq.substr(t5, len-t5-t3); 
-				qv = qv.substr(t5, len-t5-t3); 
+				seq = (readid2info[i].seq_m).substr(t5, len-t5-t3); 
+				qv = (readid2info[i].qv_m).substr(t5, len-t5-t3); 
+			}
+			else {
+				seq = readid2info[i].seq_m;
+				qv = readid2info[i].qv_m;
 			}
 			if(readid2info[i].label_m == REF) {
 				loadSequence(i, seq, qv, true, t5, strand);
@@ -471,6 +449,12 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 				loadSequence(i, seq, qv, false, t5, strand);
 			}
 		}
+	}
+	
+	// precompute min coverage values for each node
+	MerTable_t::iterator mi;
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++) {
+		(mi->second)->computeMinCov();
 	}
 	
 	ref_m->computeCoverage('T');
@@ -1530,7 +1514,7 @@ string Graph_t::nodeColor(Node_t * cur, string & who)
 
 	double avgcov = ((double) totalreadbp_m) / ((double) ref_m->rawseq.length());
 
-	if ((color == COLOR_ALL) && ((cur->minCov() <= LOW_COV_THRESHOLD) || (cur->minCov() <= (MIN_COV_RATIO*avgcov))) ) 
+	if ((color == COLOR_ALL) && ((cur->getMinCov() <= LOW_COV_THRESHOLD) || (cur->getMinCov() <= (MIN_COV_RATIO*avgcov))) ) 
 	{
 		color = COLOR_LOW;
 	}
@@ -1875,7 +1859,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	int refid = 0; 
 	if(!is_ref_added) {
 		string qv ((ref_m->rawseq).size(), 'K'); // create base-quality value string for reference
-		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, qv, 'R', REF, FWD);
+		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, qv, 'R', REF, FWD, 0);
 		is_ref_added = true;
 		if (VERBOSE) { cerr << "refid: " << refid << endl; }
 	}
@@ -2636,7 +2620,7 @@ void Graph_t::removeLowCov(bool docompression, int compid)
 			if (node->isSpecial())    { continue; }
 			//if (node->touchRef_m) { continue; }
 
-			if ( (node->minCov() <= LOW_COV_THRESHOLD) || (node->minCov() <= (MIN_COV_RATIO*avgcov)) ||
+			if ( (node->getMinCov() <= LOW_COV_THRESHOLD) || (node->getMinCov() <= (MIN_COV_RATIO*avgcov)) ||
 				(node->getTotTmrCov() == 1 && node->getTotNmlCov() == 1) )
 			//if ( (node->minCovMinQV() <= LOW_COV_THRESHOLD) || (node->minCovMinQV() <= (MIN_COV_RATIO*avgcov)) )
 			{

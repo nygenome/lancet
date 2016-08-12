@@ -424,6 +424,10 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 		if(code == NML) { cerr << "Extract reads from normal" << endl; }
 	}
 	
+	string sampleType;	
+	if(code == TMR) { sampleType = "tumor";  }
+	if(code == NML) { sampleType = "normal"; }
+	
 	double CLIP_PRC = 0.5; // percent of soft-clipped bases in alignment
 	//double MAX_PRC_HIGH_CLIP_READS = 30; // max percent of reads with high soft-clipping rate (>CLIP_PRC)
 	int MIN_XM = 5;
@@ -525,7 +529,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			xa = "";
 			al.GetTag("XA", xa); // get the XA for the read
 			if(xa.empty()) { xa = "null"; }
-			if(xa != "null") {  
+			if(xa != "null") {
 				//cerr << al.Name << "\t" << xa << endl;
 				num_XA_read++; 
 				continue; // skip alignments with alternative hits
@@ -545,23 +549,15 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			if(rg.empty()) { rg = "null"; }
 			
 			if ( (readgroups.find("null") != readgroups.end())  || (readgroups.find(rg) != readgroups.end()) ) { // select reads in the read group RG
-												
-				if (mate>0) { // mated pair
-					//cerr << "PAIRED!!" << endl;
-					if( !(al.IsMapped()) ) { // unmapped read
-						g.addpaired("tumor", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, code, strand);
-						//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_BASTARD, code, strand);
-						num_unmapped++; 
-					}
-					else { // mapped reads
-						g.addpaired("tumor", al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, code, strand);								
-						//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_MAPPED, code, strand);								
-					}
+				
+				if( !(al.IsMapped()) ) { // unmapped read
+					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, code, strand);
+					//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_BASTARD, code, strand);
+					num_unmapped++; 
 				}
-				else { // unpaired
-					//cerr << "UNPAIRED!!" << endl;
-					g.addUnpaired("tumor", al.Name, al.QueryBases, al.Qualities, Graph_t::CODE_MAPPED, code, strand);	
-					//g.addUnpaired("tumor", al.Name, al.QueryBases, oq, Graph_t::CODE_MAPPED, code, strand);	
+				else { // mapped reads
+					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, code, strand);								
+					//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_MAPPED, code, strand);								
 				}
 				//cout << al.Name << endl;
 				readcnt++; tot_reads_window++;

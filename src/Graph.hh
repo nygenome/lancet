@@ -168,25 +168,21 @@ public:
 
 	int countMappedReads();
 
-	ReadId_t addRead(const string & set, const string & readname, const string & seq, const string & qv, char code, int label, unsigned int strand);
+	ReadId_t addRead(const string & set, const string & readname, const string & seq, const string & qv, char code, int label, unsigned int strand, int mate_order);
 
 	void addMates(ReadId_t r1, ReadId_t r2);
 
 	void printReads();
 
-	void addPair(const string & set, const string & readname,
-		const string & seq1, const string & qv1,
-		const string & seq2, const string & qv2,
-		char code, int label, unsigned int strand);
-
-	void addUnpaired(const string & set,
+	void addAlignment(const string & set,
 		const string & readname,
 		const string & seq,
 		const string & qv,
+		const int mate_id,
 		char code,
 		int label,
 		unsigned int strand);
-
+	/*
 	void addpaired(const string & set,
 		const string & readname,
 		const string & seq,
@@ -195,7 +191,8 @@ public:
 		char code,
 		int label,
 		unsigned int strand);
-
+	*/
+		
 	//void loadReadsSFA(const string & filename);
 	void printAlignment(const string &ref_aln, const string &path_aln, Path_t * path);
 	void processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPathsToFile, int &complete, int &perfect, int &withsnps, int &withindel, int &withmix);

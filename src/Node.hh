@@ -41,18 +41,6 @@ using namespace std;
 // Node_t
 //////////////////////////////////////////////////////////////////////////
 
-/*
-typedef struct cov_t
-{
-  int fwd; // total fwd coverage
-  int rev; // total rev coverage 
-  int minqv_fwd; // min base quality fwd coverage
-  int minqv_rev; // min base quality rev coverage
-  //int minmq_fwd; // min mapping quality fwd coverage
-  //int minmq_rev; // min mapping quality rev coverage
-} cov_t;
-*/
-
 class Node_t
 {
 public:
@@ -62,7 +50,7 @@ public:
 
 	Mer_t nodeid_m;
 	
-	int K; // k-mer size
+	unsigned short K; // k-mer size
 	string str_m;
 	float cov_tmr_m_fwd; // tumor coverage forward
 	float cov_tmr_m_rev; // tumor coverage reverse
@@ -77,8 +65,10 @@ public:
 	int  component_m;
 	bool touchRef_m;
 	int  onRefPath_m;
-	int color;
+	unsigned short color;
 	int MIN_QUAL;
+	int mincov;
+	int mincovQV;
 
 	vector<char> cov_status; // T=tumot,N=normal,B=both,E=empty
 	vector<cov_t> cov_distr_tmr;
@@ -151,8 +141,9 @@ public:
 	void updateCovDistrMinQV(const string & qv, unsigned int strand, char sample);
 	void updateCovStatus(char c);
 	void revCovDistr();
-	int minCov();
-	int minCovMinQV();
+	void computeMinCov();
+	int getMinCov() { return mincov; }
+	int getMinCovMinQV() { return mincovQV; }
 	int minNon0Cov(char sample);
 	int avgCovDistr(char sample);
 	
@@ -175,8 +166,8 @@ public:
 	void sortReadStarts();
 	void addContigLink(Mer_t contigid, ReadId_t rid);
 	int cntReadCode(char code);
-	bool hasOverlappingMate(std::string & read_name);
-	void addMateName(std::string & read_name);
+	bool hasOverlappingMate(std::string & read_name, int id);
+	void addMateName(std::string & read_name, int id);
 
 	int readOverlaps(const Node_t & other);
 	

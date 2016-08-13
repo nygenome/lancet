@@ -87,11 +87,7 @@ void Ref_t::updateCoverage(const string & cmer, unsigned int strand, char sample
 	std::unordered_map<string,cov_t>::iterator it = mertable->find(cmer);
 	if (it != mertable->end()) {
 		if(strand == FWD) { ((*it).second).fwd += 1; }
-		if(strand == REV) { ((*it).second).rev += 1; }
-		
-		//if(sample == 'N') { ((*it).second).first += 1; }
-		//else if(sample == 'T') { ((*it).second).second += 1; }
-		//else { cerr << "Error: unknown sample " << sample << endl; return; }
+		else if(strand == REV) { ((*it).second).rev += 1; }
 	}
 }
 
@@ -173,7 +169,7 @@ int Ref_t::getCovAt(unsigned pos, unsigned int strand, char sample) {
 	int c = 0;
 	if(coverage->size()>pos) {	
 		if(strand == FWD) { c = coverage->at(pos).fwd; }
-		if(strand == REV) { c = coverage->at(pos).rev; }
+		else if(strand == REV) { c = coverage->at(pos).rev; }
 	}
 	else { c = -1; }
 	

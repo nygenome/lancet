@@ -91,7 +91,7 @@ public:
 									else { strand = REV; }
 								
 									nodeB->incTmrCov(strand);
-									nodeB->updateCovDistr((int)(nodeB->getTmrCov(strand)),strand,'T');
+									//nodeB->updateCovDistr((int)(nodeB->getTmrCov(strand)),strand,'T');
 									//ref_m->updateCoverage(merB, 'T'); // update referecne k-mer coverage for tumor
 									//nodeB->updateCovDistrMinQV(uc_qv,strand,'T');
 								}
@@ -118,7 +118,7 @@ public:
 									else { strand = REV; }
 								
 									nodeB->incTmrCov(strand);
-									nodeB->updateCovDistr((int)(nodeB->getTmrCov(strand)),strand,'T');
+									//nodeB->updateCovDistr((int)(nodeB->getTmrCov(strand)),strand,'T');
 									//ref_m->updateCoverage(merB, 'T'); // update referecne k-mer coverage for tumor
 									//nodeB->updateCovDistrMinQV(uc_qv,strand,'T');
 								}

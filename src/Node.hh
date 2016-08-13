@@ -127,8 +127,8 @@ public:
 	void setMinQV(int q) { MIN_QUAL = q; }
 	void setK(int k) { K = k; }
 	
-	void incTmrCov(unsigned int strand) { if(strand == FWD) { cov_tmr_m_fwd++; } if(strand == REV) { cov_tmr_m_rev++; } }
-	void incNmlCov(unsigned int strand) { if(strand == FWD) { cov_nml_m_fwd++; } if(strand == REV) { cov_nml_m_rev++; } }
+	void incTmrCov(unsigned int strand) { if(strand == FWD) { cov_tmr_m_fwd++; } else if(strand == REV) { cov_tmr_m_rev++; } }
+	void incNmlCov(unsigned int strand) { if(strand == FWD) { cov_nml_m_fwd++; } else if(strand == REV) { cov_nml_m_rev++; } }
 	//void setTmrCov(int c) { cov_tmr_m = c; }
 	//void setNmlCov(int c) { cov_nml_m = c; }
 	float getTmrCov(unsigned int strand);
@@ -137,8 +137,7 @@ public:
 	float getTotNmlCov() { return cov_nml_m_fwd + cov_nml_m_rev; }
 	float getTotCov() { return cov_tmr_m_fwd + cov_tmr_m_rev + cov_nml_m_fwd + cov_nml_m_rev; }
 	bool isStatusCnt(char c);
-	void updateCovDistr(int c, unsigned int strand, char sample);
-	void updateCovDistrMinQV(const string & qv, unsigned int strand, char sample);
+	void updateCovDistr(int c, const string & qv, unsigned int strand, char sample);
 	void updateCovStatus(char c);
 	void revCovDistr();
 	void computeMinCov();

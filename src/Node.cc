@@ -348,6 +348,19 @@ bool Node_t::isStatusCnt(char c) {
 void Node_t::updateCovStatus(char c) 
 {
 	for (unsigned int i = 0; i < cov_status.size(); i++) {
+		
+		/*
+		switch(cov_status[i]) {
+		    case 'E': cov_status[i] = c;
+					break;
+		    case 'T': if(c == 'N') { cov_status[i] = 'B'; }
+					break;
+		 	case 'N': if(c == 'T') { cov_status[i] = 'B'; }
+					break;
+			default : cov_status[i] = c;
+					break;
+		}
+		*/
 		if(cov_status[i] == 'E') { cov_status[i] = c; }
 		else if(cov_status[i] != c) { cov_status[i] = 'B'; }
 		else { cov_status[i] = c; }
@@ -357,7 +370,7 @@ void Node_t::updateCovStatus(char c)
 // updateCovDistr
 // updated the coverage distribution along the node string
 //////////////////////////////////////////////////////////////
-void Node_t::updateCovDistr(int c, unsigned int strand, char sample) 
+void Node_t::updateCovDistr(int c, const string & qv, unsigned int strand, char sample) 
 {
 	vector<cov_t> * cov_distr = NULL;
 	
@@ -365,33 +378,20 @@ void Node_t::updateCovDistr(int c, unsigned int strand, char sample)
 	else if(sample == 'N') { cov_distr = &cov_distr_nml; }
 	else { cerr << "Error: unrecognized sample " << sample << endl; }
 	
+ 	//string::const_iterator it=qv.begin();
 	for (unsigned int i = 0; i < cov_distr->size(); i++) {
-		if(strand == FWD) { ((*cov_distr)[i]).fwd = c; }
-		if(strand == REV) { ((*cov_distr)[i]).rev = c; }
-	}
-}
-
-// updateCovDistrMinQv
-// updated the coverage distribution along the node with 
-// base-quality value greater than MIN_QUAL
-//////////////////////////////////////////////////////////////
-void Node_t::updateCovDistrMinQV(const string & qv, unsigned int strand, char sample) {
-	
-	vector<cov_t> * cov_distr = NULL;
-	
-	if(sample == 'T')      { cov_distr = &cov_distr_tmr; }
-	else if(sample == 'N') { cov_distr = &cov_distr_nml; }
-	else { cerr << "Error: unrecognized sample " << sample << endl; }
-
-	unsigned int i = 0;
-	for ( string::const_iterator it=qv.begin(); it!=qv.end(); ++it) {
-		if(*it >= MIN_QUAL) {
-			if(strand == FWD) { (((*cov_distr)[i]).minqv_fwd)++; }
-			if(strand == REV) { (((*cov_distr)[i]).minqv_rev)++; }
+		if(strand == FWD) { 
+			((*cov_distr)[i]).fwd = c;
+			//if(*it >= MIN_QUAL) { (((*cov_distr)[i]).minqv_fwd)++; }
+			if(qv[i] >= MIN_QUAL) { (((*cov_distr)[i]).minqv_fwd)++; }
 		}
-		//if( (*it >= MIN_QUAL) && (strand == FWD) ) { (((*cov_distr)[i]).minqv_fwd)++; }
-		//if( (*it >= MIN_QUAL) && (strand == REV) ) { (((*cov_distr)[i]).minqv_rev)++; }
-		i++;
+		else if(strand == REV) { 
+			((*cov_distr)[i]).rev = c;
+			//if(*it >= MIN_QUAL) { (((*cov_distr)[i]).minqv_rev)++; }
+			if(qv[i] >= MIN_QUAL) { (((*cov_distr)[i]).minqv_rev)++; }	
+		}
+		//if (it!=qv.end()) { it++; }
+		//else {cerr << "Error: reached end of quality string (qv)" << endl; }
 	}
 }
 
@@ -516,11 +516,11 @@ bool Node_t::hasOverlappingMate(string & read_name, int id)
 {	
 	bool ans = false;
 	
-	if(id == '1') {
+	if(id == 1) {
 		if (mate2_name.find(read_name) != mate2_name.end()) { ans = true; }
 	}
 	
-	if(id == '2') {
+	if(id == 2) {
 		if (mate1_name.find(read_name) != mate1_name.end()) { ans = true; }
 	}
 	
@@ -530,8 +530,8 @@ bool Node_t::hasOverlappingMate(string & read_name, int id)
 // add mate name to the set of mates containing this kmer
 void Node_t::addMateName(string & read_name, int id) 
 {	
-	if(id == '1') { mate1_name.insert(read_name); }
-	if(id == '2') { mate2_name.insert(read_name); }
+	if(id == 1) { mate1_name.insert(read_name); }
+	if(id == 2) { mate2_name.insert(read_name); }
 }
 
 // return tumor coverage on the input strand

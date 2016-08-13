@@ -164,15 +164,13 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 					
 					if(readid2info[readid].label_m == TMR) {	
 						ui->second->incTmrCov(strand);
-						ui->second->updateCovDistr((int)(ui->second->getTmrCov(strand)),strand,'T');
+						ui->second->updateCovDistr((int)(ui->second->getTmrCov(strand)),uc_qv,strand,'T');
 						ref_m->updateCoverage(uc.mer_m, strand, 'T'); // update referecne k-mer coverage for tumor
-						ui->second->updateCovDistrMinQV(uc_qv, strand,'T');
 					}
 					else if(readid2info[readid].label_m == NML) {
 						ui->second->incNmlCov(strand);
-						ui->second->updateCovDistr((int)(ui->second->getNmlCov(strand)),strand,'N');
+						ui->second->updateCovDistr((int)(ui->second->getNmlCov(strand)),uc_qv,strand,'N');
 						ref_m->updateCoverage(uc.mer_m, strand, 'N'); // update reference k-mer coverage for normal
-						ui->second->updateCovDistrMinQV(uc_qv, strand,'N');
 					}
 
 					if (uc.ori_m == F)
@@ -190,15 +188,13 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 
 				if(readid2info[readid].label_m == TMR) {
 					vi->second->incTmrCov(strand);
-					vi->second->updateCovDistr((int)(vi->second->getTmrCov(strand)),strand,'T');
+					vi->second->updateCovDistr((int)(vi->second->getTmrCov(strand)),vc_qv,strand,'T');
 					ref_m->updateCoverage(vc.mer_m, strand, 'T'); // update reference k-mer coverage for tumor
-					vi->second->updateCovDistrMinQV(vc_qv, strand,'T');
 				}
 				else if(readid2info[readid].label_m == NML) {
 					vi->second->incNmlCov(strand);
-					vi->second->updateCovDistr((int)(vi->second->getNmlCov(strand)),strand,'N');
+					vi->second->updateCovDistr((int)(vi->second->getNmlCov(strand)),vc_qv,strand,'N');
 					ref_m->updateCoverage(vc.mer_m, strand, 'N'); // update reference k-mer coverage for normal
-					vi->second->updateCovDistrMinQV(vc_qv, strand,'N');
 				}
 			}
 		}
@@ -2441,6 +2437,8 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 			node->cov_status.push_back(buddy->cov_status[j]);
 		}
 		
+		node->computeMinCov(); // recompute min coverage 
+		
 		node->cov_tmr_m_fwd = ((ncov_tmr_fwd * amerlen) + (ccov_tmr_fwd * bmerlen)) / (amerlen + bmerlen);
 		node->cov_nml_m_fwd = ((ncov_nml_fwd * amerlen) + (ccov_nml_fwd * bmerlen)) / (amerlen + bmerlen);
 
@@ -2513,7 +2511,7 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 				other->updateEdge(buddy->nodeid_m, Edge_t::fliplink(buddy->edges_m[i].dir_m),
 					node->nodeid_m, Edge_t::fliplink(ne.dir_m));
 			}
-		}
+		}		
 	}
 }
 

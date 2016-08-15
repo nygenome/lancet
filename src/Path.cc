@@ -27,7 +27,7 @@ string Path_t::pathstr()
 {
 	string retval;
 
-	for (unsigned int i = 0; i < nodes_m.size(); i++)
+	for (unsigned int i = 0; i < nodes_m.size(); ++i)
 	{
 		if (i) { retval += ":"; }
 
@@ -49,13 +49,13 @@ int Path_t::pathlen()
 {
 	int len = 0;
 
-	for (unsigned int i = 0; i < nodes_m.size(); i++)
+	for (unsigned int i = 0; i < nodes_m.size(); ++i)
 	{
 		Node_t * n = nodes_m[i];
 
 		if (!n->isSpecial())
 		{
-			len++;
+			++len;
 		}
 	}
 
@@ -71,7 +71,7 @@ string Path_t::str()
 	string retval;
 	Ori_t dir = Edge_t::edgedir_start(edgedir_m[0]);
 
-	for (unsigned int i = 0; i < nodes_m.size(); i++)
+	for (unsigned int i = 0; i < nodes_m.size(); ++i)
 	{				
 		Node_t * n = nodes_m[i];
 		
@@ -118,7 +118,7 @@ vector<cov_t> Path_t::covDistr(char sample)
 	//cerr << "Num nodes in path: " << nodes_m.size() << endl;
 	
 	path_coverage.clear();	
-	for (unsigned int i = 0; i < nodes_m.size(); i++)
+	for (unsigned int i = 0; i < nodes_m.size(); ++i)
 	{
 		node_coverage.clear();
 		Node_t * n = nodes_m[i]; 
@@ -128,12 +128,12 @@ vector<cov_t> Path_t::covDistr(char sample)
 		else { cerr << "Error: unrecognized sample " << sample << endl; }
 				
 		if (dir == R) {
-			for (unsigned int j=C.size(); j>0; j--) { 
+			for (unsigned int j=C.size(); j>0; --j) { 
 				node_coverage.push_back(C[j-1]); 
 			}
 		}
 		else {
-			for (unsigned int j=0; j < C.size(); j++) { 
+			for (unsigned int j=0; j < C.size(); ++j) { 
 				node_coverage.push_back(C[j]); 
 			}
 		}
@@ -142,7 +142,7 @@ vector<cov_t> Path_t::covDistr(char sample)
 						
 			if (path_coverage.size() == 0) { // first node
 								
-				for (unsigned int j=0; j < node_coverage.size(); j++) { 
+				for (unsigned int j=0; j < node_coverage.size(); ++j) { 
 					path_coverage.push_back(node_coverage[j]); 
 				}
 			}
@@ -164,7 +164,7 @@ vector<cov_t> Path_t::covDistr(char sample)
 					path_coverage[p+l] = node_coverage[l];
 				}
 				*/
-				for (unsigned int j = (K-1); j < node_coverage.size(); j++) {
+				for (unsigned int j = (K-1); j < node_coverage.size(); ++j) {
 					path_coverage.push_back(node_coverage[j]);
 				}				
 			}
@@ -179,66 +179,6 @@ vector<cov_t> Path_t::covDistr(char sample)
 	return path_coverage;
 }
 
-// coverage at position
-//////////////////////////////////////////////////////////////
-/*
-int Path_t::covAt(int pos, char sample, unsigned int strand)
-{
-	int retval = -1; 
-	int p = 0;
-	vector<int> C;
-	vector<int> coverage;
-	
-	Ori_t dir = Edge_t::edgedir_start(edgedir_m[0]);
-	
-	for (unsigned int i = 0; i < nodes_m.size(); i++)
-	{
-		coverage.clear();
-		Node_t * n = nodes_m[i];
-		
-		if(sample == 'T') {  // tumor coverage
-			if(strand == FWD) { C = n->cov_distr_tmr_fwd; } 
-			if(strand == REV) { C = n->cov_distr_tmr_rev; } 			
-		}
-		else if(sample == 'N') { // normal coverage
-			if(strand == FWD) { C = n->cov_distr_nml_fwd; } 
-			if(strand == REV) { C = n->cov_distr_nml_rev; } 	
-		}  
-		
-		if (dir == R) {
-			for (unsigned int j=C.size(); j>0; j--) { 
-				coverage.push_back(C[j-1]);
-			}
-		}
-		else {
-			for (unsigned int j=0; j < C.size(); j++) { 
-				coverage.push_back(C[j]); 
-			}
-		}
-		
-		if (!n->isSpecial())
-		{
-			unsigned int j = 0;
-			if (p > 0) { // if not first node, scan only the extra base-pairs for 
-				j = K-1;
-			}
-			for (; j < coverage.size(); j++) {
-				//if(p == pos) { return n->cov_distr[j]; }
-				if(p == pos) { return coverage[j]; }
-				p++;
-			}
-		}
-		
-		if (i < edgedir_m.size())
-		{
-			dir = Edge_t::edgedir_dest(edgedir_m[i]);
-		}
-	}
-
-	return retval;
-}
-*/
-
 // coverage distribution for edges
 //////////////////////////////////////////////////////////////
 
@@ -249,7 +189,7 @@ vector<float> Path_t::readCovNodes()
 	//cerr << "Num Nodes in path: " << nodes_m.size() << endl;
 	
 	nodes_coverage.clear();	
-	for (unsigned int i = 1; i < nodes_m.size(); i++)
+	for (unsigned int i = 1; i < nodes_m.size(); ++i)
 	{
 		Node_t* n1 = nodes_m[i-1];
 		Node_t* n2 = nodes_m[i]; 
@@ -269,7 +209,7 @@ float Path_t::cov(char sample)
 	float strlen = 0;
 	float C = 0;
 	
-	for (unsigned int i = 0; i < nodes_m.size(); i++)
+	for (unsigned int i = 0; i < nodes_m.size(); ++i)
 	{
 		Node_t * n = nodes_m[i];
 		
@@ -296,7 +236,7 @@ float Path_t::mincov(char sample)
 	float mincov = -1;
 	float C = 0;
 
-	for (unsigned int i = 0; i < nodes_m.size(); i++)
+	for (unsigned int i = 0; i < nodes_m.size(); ++i)
 	{
 		Node_t * n = nodes_m[i];
 		
@@ -324,7 +264,7 @@ float Path_t::maxcov(char sample)
 	float maxcov = -1;
 	float C = 0;
 
-	for (unsigned int i = 0; i < nodes_m.size(); i++)
+	for (unsigned int i = 0; i < nodes_m.size(); ++i)
 	{
 		Node_t * n = nodes_m[i];
 		
@@ -352,7 +292,7 @@ Node_t * Path_t::pathcontig(int pos)
 {
 	int curpos = 0;
 
-	for (unsigned int i = 0; i < nodes_m.size(); i++)
+	for (unsigned int i = 0; i < nodes_m.size(); ++i)
 	{
 		Node_t * n = nodes_m[i];
 
@@ -381,7 +321,7 @@ int Path_t::hasCycle(Node_t * node)
 	if (hasCycle_m)
 		return hasCycle_m;
 
-	for (vector<Node_t *>::iterator ni = nodes_m.begin(); ni != nodes_m.end(); ni++)
+	for (vector<Node_t *>::iterator ni = nodes_m.begin(); ni != nodes_m.end(); ++ni)
 	{
 		if (*ni == node)
 		{
@@ -400,7 +340,7 @@ bool Path_t::hasTumorOnlyNode()
 {
 	bool ans = false;
 
-	for (unsigned int i = 0; i < nodes_m.size(); i++)
+	for (unsigned int i = 0; i < nodes_m.size(); ++i)
 	{
 		Node_t * n = nodes_m[i];
 		

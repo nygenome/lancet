@@ -137,16 +137,16 @@ void global_align(const string & S, const string & T,
 
   int i, j;
 
-  for (i = 0; i <= n; i++) { scores[i][0] = i*INDEL; trackback[i][0] = '<'; }
-  for (j = 0; j <= m; j++) { scores[0][j] = j*INDEL; trackback[0][j] = '^'; }
+  for (i = 0; i <= n; ++i) { scores[i][0] = i*INDEL; trackback[i][0] = '<'; }
+  for (j = 0; j <= m; ++j) { scores[0][j] = j*INDEL; trackback[0][j] = '^'; }
 
-  if (V) { cout << " "; for (int i = 1; i <= n; i++) { cout << "    " << S[i-1]; } cout << endl; }
+  if (V) { cout << " "; for (int i = 1; i <= n; ++i) { cout << "    " << S[i-1]; } cout << endl; }
 
-  for (int j = 1; j <= m; j++)
+  for (int j = 1; j <= m; ++j)
   {
     if (V) { cout << T[j-1]; }
 
-    for (int i = 1; i <= n; i++)
+    for (int i = 1; i <= n; ++i)
     {
       int leftscore  = scores[i-1][j] + INDEL;
       int upscore    = scores[i][j-1] + INDEL;
@@ -174,7 +174,7 @@ void global_align(const string & S, const string & T,
   {
     int maxval = scores[0][m];
     i = 0;
-    for (int q = 0; q < n; q++)
+    for (int q = 0; q < n; ++q)
     {
       if (scores[q][m] > maxval)
       {
@@ -196,21 +196,21 @@ void global_align(const string & S, const string & T,
     a.score = s;
 
     if      (t == '*')  { break; }
-    else if (t == '\\') { a.s = S[i-1]; a.t = T[j-1]; i--; j--; }
-    else if (t == '<')  { a.s = S[i-1]; a.t = '-';    i--; }
-    else if (t == '^')  { a.s = '-';    a.t = T[j-1]; j--; }
+    else if (t == '\\') { a.s = S[i-1]; a.t = T[j-1]; --i; --j; }
+    else if (t == '<')  { a.s = S[i-1]; a.t = '-';    --i; }
+    else if (t == '^')  { a.s = '-';    a.t = T[j-1]; --j; }
 
     trace.push_back(a);
   }
 
-  for (int k = trace.size() - 1; k >= 0; k--)
+  for (int k = trace.size() - 1; k >= 0; --k)
   {
     if (V) { cout << "   " << trace[k].s; }
     S_aln.push_back(trace[k].s);
   }
   if (V) { cout << endl; }
 
-  for (int k = trace.size() - 1; k >= 0; k--)
+  for (int k = trace.size() - 1; k >= 0; --k)
   {
     if (V) { cout << "   " << trace[k].t; }
     T_aln.push_back(trace[k].t);
@@ -219,7 +219,7 @@ void global_align(const string & S, const string & T,
 
   if (V) 
   {
-    for (int k = trace.size() - 1; k >= 0; k--)
+    for (int k = trace.size() - 1; k >= 0; --k)
     {
       printf(" %3d", trace[k].score);
     }
@@ -254,17 +254,17 @@ void global_align_aff(const string & S, const string & T,
   // base conditions
   int i, j;
 
-  for (j = 0; j <= m; j++) { X[0][j] = mk_cell(GAP_OPEN + j*GAP_EXTEND, '^'); M[0][j] = X[0][j]; }
-  for (i = 0; i <= n; i++) { Y[i][0] = mk_cell(GAP_OPEN + i*GAP_EXTEND, '<'); M[i][0] = Y[i][0]; }
+  for (j = 0; j <= m; ++j) { X[0][j] = mk_cell(GAP_OPEN + j*GAP_EXTEND, '^'); M[0][j] = X[0][j]; }
+  for (i = 0; i <= n; ++i) { Y[i][0] = mk_cell(GAP_OPEN + i*GAP_EXTEND, '<'); M[i][0] = Y[i][0]; }
   M[0][0] = mk_cell(0, '*');
 
-  if (V) { cout << " "; for (int i = 1; i <= n; i++) { cout << "     " << S[i-1]; } cout << endl; }
+  if (V) { cout << " "; for (int i = 1; i <= n; ++i) { cout << "     " << S[i-1]; } cout << endl; }
 
-  for (int j = 1; j <= m; j++)
+  for (int j = 1; j <= m; ++j)
   {
     if (V) { cout << T[j-1]; }
 
-    for (int i = 1; i <= n; i++)
+    for (int i = 1; i <= n; ++i)
     {
       X[i][j] = maxx(X[i-1][j].score+GAP_EXTEND, M[i-1][j].score+GAP_OPEN);
 
@@ -290,7 +290,7 @@ void global_align_aff(const string & S, const string & T,
   {
     int maxval = M[0][m].score;
     i = 0;
-    for (int q = 0; q < n; q++)
+    for (int q = 0; q < n; ++q)
     {
       if (M[q][m].score > maxval)
       {
@@ -318,13 +318,13 @@ void global_align_aff(const string & S, const string & T,
 
     if      (t == '*')  { break; }
 
-    else if (forcex)    { a.s = S[i-1]; a.t = '-'; z=x; if (X[i][j].tb == '<') { forcex = false; } i--; }
-    else if (t == '<')  { a.s = S[i-1]; a.t = '-'; z=x; if (X[i][j].tb == '-') { forcex = true;  } i--; }
+    else if (forcex)    { a.s = S[i-1]; a.t = '-'; z=x; if (X[i][j].tb == '<') { forcex = false; } --i; }
+    else if (t == '<')  { a.s = S[i-1]; a.t = '-'; z=x; if (X[i][j].tb == '-') { forcex = true;  } --i; }
 
-    else if (forcey)    { a.s = '-'; a.t = T[j-1]; z=y; if (Y[i][j].tb == '^') { forcey = false; } j--; }
-    else if (t == '^')  { a.s = '-'; a.t = T[j-1]; z=y; if (Y[i][j].tb == '|') { forcey = true;  } j--; }
+    else if (forcey)    { a.s = '-'; a.t = T[j-1]; z=y; if (Y[i][j].tb == '^') { forcey = false; } --j; }
+    else if (t == '^')  { a.s = '-'; a.t = T[j-1]; z=y; if (Y[i][j].tb == '|') { forcey = true;  } --j; }
 
-    else if (t == '\\') { a.s = S[i-1]; a.t = T[j-1]; i--; j--; }
+    else if (t == '\\') { a.s = S[i-1]; a.t = T[j-1]; --i; --j; }
     
     else { cerr << "WTF!" << endl; exit(1); }
 
@@ -335,14 +335,14 @@ void global_align_aff(const string & S, const string & T,
     trace.push_back(a);
   }
 
-  for (int k = trace.size() - 1; k >= 0; k--)
+  for (int k = trace.size() - 1; k >= 0; --k)
   {
     if (V) { cout << "   " << trace[k].s; }
     S_aln.push_back(trace[k].s);
   }
   if (V) { cout << endl; }
 
-  for (int k = trace.size() - 1; k >= 0; k--)
+  for (int k = trace.size() - 1; k >= 0; --k)
   {
     if (V) { cout << "   " << trace[k].t; }
     T_aln.push_back(trace[k].t);
@@ -351,7 +351,7 @@ void global_align_aff(const string & S, const string & T,
 
   if (V) 
   {
-    for (int k = trace.size() - 1; k >= 0; k--)
+    for (int k = trace.size() - 1; k >= 0; --k)
     {
       printf(" %3d", trace[k].score);
     }
@@ -387,17 +387,17 @@ void global_cov_align_aff(const string & S, const string & T, const vector<int> 
   // base conditions
   int i, j;
 
-  for (j = 0; j <= m; j++) { X[0][j] = mk_cell(GAP_OPEN + j*GAP_EXTEND, '^'); M[0][j] = X[0][j]; }
-  for (i = 0; i <= n; i++) { Y[i][0] = mk_cell(GAP_OPEN + i*GAP_EXTEND, '<'); M[i][0] = Y[i][0]; }
+  for (j = 0; j <= m; ++j) { X[0][j] = mk_cell(GAP_OPEN + j*GAP_EXTEND, '^'); M[0][j] = X[0][j]; }
+  for (i = 0; i <= n; ++i) { Y[i][0] = mk_cell(GAP_OPEN + i*GAP_EXTEND, '<'); M[i][0] = Y[i][0]; }
   M[0][0] = mk_cell(0, '*');
 
-  if (V) { cout << " "; for (int i = 1; i <= n; i++) { cout << "     " << S[i-1]; } cout << endl; }
+  if (V) { cout << " "; for (int i = 1; i <= n; ++i) { cout << "     " << S[i-1]; } cout << endl; }
 
-  for (int j = 1; j <= m; j++)
+  for (int j = 1; j <= m; ++j)
   {
     if (V) { cout << T[j-1]; }
 
-    for (int i = 1; i <= n; i++)
+    for (int i = 1; i <= n; ++i)
     {
       X[i][j] = maxx(X[i-1][j].score+GAP_EXTEND, M[i-1][j].score+GAP_OPEN);
 
@@ -423,7 +423,7 @@ void global_cov_align_aff(const string & S, const string & T, const vector<int> 
   {
     int maxval = M[0][m].score;
     i = 0;
-    for (int q = 0; q < n; q++)
+    for (int q = 0; q < n; ++q)
     {
       if (M[q][m].score > maxval)
       {
@@ -451,13 +451,13 @@ void global_cov_align_aff(const string & S, const string & T, const vector<int> 
 
     if      (t == '*')  { break; }
 
-    else if (forcex)    { a.s = S[i-1]; a.t = '-'; a.ct = CT[j]; z=x; if (X[i][j].tb == '<') { forcex = false; } i--; }
-    else if (t == '<')  { a.s = S[i-1]; a.t = '-'; a.ct = CT[j]; z=x; if (X[i][j].tb == '-') { forcex = true;  } i--; }
+    else if (forcex)    { a.s = S[i-1]; a.t = '-'; a.ct = CT[j]; z=x; if (X[i][j].tb == '<') { forcex = false; } --i; }
+    else if (t == '<')  { a.s = S[i-1]; a.t = '-'; a.ct = CT[j]; z=x; if (X[i][j].tb == '-') { forcex = true;  } --i; }
 
-    else if (forcey)    { a.s = '-'; a.t = T[j-1]; a.ct = CT[j-1]; z=y; if (Y[i][j].tb == '^') { forcey = false; } j--; }
-    else if (t == '^')  { a.s = '-'; a.t = T[j-1]; a.ct = CT[j-1]; z=y; if (Y[i][j].tb == '|') { forcey = true;  } j--; }
+    else if (forcey)    { a.s = '-'; a.t = T[j-1]; a.ct = CT[j-1]; z=y; if (Y[i][j].tb == '^') { forcey = false; } --j; }
+    else if (t == '^')  { a.s = '-'; a.t = T[j-1]; a.ct = CT[j-1]; z=y; if (Y[i][j].tb == '|') { forcey = true;  } --j; }
 
-	else if (t == '\\') { a.s = S[i-1]; a.t = T[j-1]; a.ct = CT[j-1]; i--; j--; }
+	else if (t == '\\') { a.s = S[i-1]; a.t = T[j-1]; a.ct = CT[j-1]; --i; --j; }
     
     else { cerr << "WTF!" << endl; exit(1); }
 
@@ -468,21 +468,21 @@ void global_cov_align_aff(const string & S, const string & T, const vector<int> 
     trace.push_back(a);
   }
 
-  for (int k = trace.size() - 1; k >= 0; k--)
+  for (int k = trace.size() - 1; k >= 0; --k)
   {
     if (V) { cout << "   " << trace[k].s; }
     S_aln.push_back(trace[k].s);
   }
   if (V) { cout << endl; }
 
-  for (int k = trace.size() - 1; k >= 0; k--)
+  for (int k = trace.size() - 1; k >= 0; --k)
   {
     if (V) { cout << "   " << trace[k].t; }
     T_aln.push_back(trace[k].t);
   }
   if (V) { cout << endl; }
   
-  for (int k = trace.size() - 1; k >= 0; k--)
+  for (int k = trace.size() - 1; k >= 0; --k)
   {
     if (V) { cout << "   " << trace[k].ct; }
     CT_aln.push_back(trace[k].ct);
@@ -491,7 +491,7 @@ void global_cov_align_aff(const string & S, const string & T, const vector<int> 
   
   if (V) 
   {
-    for (int k = trace.size() - 1; k >= 0; k--)
+    for (int k = trace.size() - 1; k >= 0; --k)
     {
       printf(" %3d", trace[k].score);
     }

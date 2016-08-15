@@ -93,6 +93,7 @@ public:
 
 	int K;	
 	int MAX_TIP_LEN;
+	int MAX_LINK_LEN;
 	int MAX_INDEL_LEN;
 	int MIN_THREAD_READS;
 	int COV_THRESHOLD;
@@ -129,7 +130,7 @@ public:
 	}
 
 	void setDB(VariantDB_t *db) { vDB = db; }
-	void setK(int k) { K = k; }
+	void setK(int k) { K = k; MAX_LINK_LEN = (int)floor((double)K/3.0); }
 	void setVerbose(bool v) { verbose = v; }
 	void setMoreVerbose(bool v) { VERBOSE = v; }
 	void setMinQualTrim(int mq) { MIN_QUAL_TRIM = mq; }
@@ -225,6 +226,7 @@ public:
 	void removeNode(Node_t * node);
 	void removeLowCov(bool docompression, int compid);
 	void removeTips(int compid);
+	void removeShortLinks(int compid);
     void greedyTrim();
 	void threadReads(int compid);
 	void checkReadStarts(int compid);

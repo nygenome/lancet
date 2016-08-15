@@ -44,16 +44,12 @@ void Ref_t::indexMers()
 		
 		assert(mertable_nml != NULL);
 		assert(mertable_tmr != NULL);
-		//if (mertable_nml == NULL) { cerr << "Error: null pointer to mer-table for normal!" << endl; } 
-		//if (mertable_tmr == NULL) { cerr << "Error: null pointer to mer-table for tumor!" << endl; } 
 		
 		CanonicalMer_t cmer;
 
-		for (unsigned int i = 0; i < seq.length() - K + 1; i++)
+		for (unsigned int i = 0; i < seq.length() - K + 1; ++i)
 		{
 			cmer.set(seq.substr(i, K));
-		    //mertable.insert(std::pair<string,int>(cmer.mer_m,0));
-		    //mertable.insert(std::pair<string,std::pair<int,int>>(cmer.mer_m,std::make_pair(0,0)));
 			
 			cov_t c;
 		    mertable_nml->insert(std::pair<string,cov_t>(cmer.mer_m,c));
@@ -104,11 +100,9 @@ void Ref_t::computeCoverage(char sample) {
 	
 	assert(mertable != NULL);
 	assert(coverage != NULL);
-	//if (mertable == NULL) { cerr << "Error: null pointer to mer-table!" << endl; } 
-	//if (coverage == NULL) { cerr << "Error: null pointer to coverage vector!" << endl; } 
 
 	unsigned int end = seq.length() - K + 1;
-	for (unsigned i = 0; i < end; i++) 
+	for (unsigned i = 0; i < end; ++i) 
 	{	
 		cmer.set(seq.substr(i, K));			
 		std::unordered_map<string,cov_t>::iterator it = mertable->find(cmer.mer_m);
@@ -129,7 +123,7 @@ void Ref_t::computeCoverage(char sample) {
 			*/
 			
 			if(i==0) {
-				for (int j=i; j<K; j++) { 
+				for (int j=i; j<K; ++j) { 
 					coverage->at(j).fwd = cov_fwd; 				
 					coverage->at(j).fwd = cov_rev; 
 				}
@@ -189,7 +183,7 @@ int Ref_t::getMinCovInKbp(unsigned pos, int K, char sample) {
 	
 	int min = 1000000000;
 	if(cov->size()>=pos) {	
-		for(int i=0; i<K; i++) {
+		for(int i=0; i<K; ++i) {
 			int C = cov->at(pos+i).fwd + cov->at(pos+i).rev;
 			if(C<min) { min = C; } 
 		}
@@ -209,11 +203,13 @@ void Ref_t::printKmerCoverage(char sample) {
 	//if (coverage == NULL) { cerr << "Error: null pointer to coverage vector!" << endl; } 
 	
     cerr << "cov " << sample << "+: ";
-	for (unsigned i=0; i<coverage->size(); i++) {
+	for (unsigned i=0; i<coverage->size(); ++i) {
 	    cerr << " " << coverage->at(i).fwd;
 	}
+	cerr << endl;
+	
     cerr << "cov " << sample << "-: ";
-	for (unsigned i=0; i<coverage->size(); i++) {
+	for (unsigned i=0; i<coverage->size(); ++i) {
 	    cerr << " " << coverage->at(i).rev;
 	}
 	cerr << " len: " << coverage->size() << endl;
@@ -239,7 +235,7 @@ void Ref_t::resetCoverage() {
 	normal_coverage->resize(seq.size()); 
 	tumor_coverage->resize(seq.size());
 	
-	for (unsigned i=0; i<normal_coverage->size(); i++) { 
+	for (unsigned i=0; i<normal_coverage->size(); ++i) { 
 		normal_coverage->at(i).fwd = 0;
 		normal_coverage->at(i).rev = 0;
 		tumor_coverage->at(i).fwd = 0;

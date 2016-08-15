@@ -27,7 +27,7 @@
 
 bool Node_t::isTandem()
 {
-	for (unsigned int i = 0; i < edges_m.size(); i++)
+	for (unsigned int i = 0; i < edges_m.size(); ++i)
 	{
 		if (edges_m[i].nodeid_m == nodeid_m)
 		{
@@ -51,7 +51,7 @@ void Node_t::addEdge(Mer_t nodeid, Edgedir_t dir, ReadId_t readid)
 
 	int edgeid = -1;
 
-	for (unsigned int i = 0; i < edges_m.size(); i++)
+	for (unsigned int i = 0; i < edges_m.size(); ++i)
 	{
 		if ((edges_m[i].nodeid_m == nodeid) &&
 			(edges_m[i].dir_m == dir))
@@ -86,7 +86,7 @@ void Node_t::updateEdge(const Mer_t & oldid, Edgedir_t olddir,
 	const Mer_t & newid, Edgedir_t newdir)
 {
 	bool found = false;
-	for (unsigned int i = 0; i < edges_m.size(); i++)
+	for (unsigned int i = 0; i < edges_m.size(); ++i)
 	{
 		if (edges_m[i].nodeid_m == oldid &&
 			edges_m[i].dir_m == olddir)
@@ -114,7 +114,7 @@ void Node_t::removeEdge(const Mer_t & nodeid, Edgedir_t dir)
 {
 	bool found = false;
 
-	for (unsigned int i = 0; i < edges_m.size(); i++)
+	for (unsigned int i = 0; i < edges_m.size(); ++i)
 	{
 		if (edges_m[i].nodeid_m == nodeid &&
 			edges_m[i].dir_m == dir)
@@ -143,7 +143,7 @@ int Node_t::getBuddy(Ori_t dir)
 	//if (isRef()) { return retval; }
 	if (isSpecial()) { return retval; }
 
-	for (unsigned int i = 0; i < edges_m.size(); i++)
+	for (unsigned int i = 0; i < edges_m.size(); ++i)
 	{
 		if (edges_m[i].isDir(dir))
 		{
@@ -181,9 +181,11 @@ int Node_t::markRef(Ref_t * ref, int K)
 
 	touchRef_m = false;
 
-	for (unsigned int i = 0; i < str_m.length()-K+1; i++)
+	for (unsigned int i = 0; i < str_m.length()-K+1; ++i)
 	{
-		cmer.set(str_m.substr(i, K));
+		Mer_t m = str_m.substr(i, K);
+		cmer.set(m);
+		//cmer.set(str_m.substr(i, K));
 
 		if (ref->hasMer(cmer.mer_m))
 		{
@@ -203,11 +205,11 @@ int Node_t::markRef(Ref_t * ref, int K)
 int Node_t::degree(Ori_t dir)
 {
 	int retval = 0;
-	for (unsigned int i = 0; i < edges_m.size(); i++)
+	for (unsigned int i = 0; i < edges_m.size(); ++i)
 	{
 		if (edges_m[i].isDir(dir))
 		{
-			retval++;
+			++retval;
 		}
 	}
 
@@ -228,7 +230,7 @@ ostream & Node_t::print(ostream & out) const
 	out << "\t*c\t" << cov_nml_m_rev;
 	out << "\t*r\t" << isRef();
 
-	for (unsigned int i = 0; i < edges_m.size(); i++)
+	for (unsigned int i = 0; i < edges_m.size(); ++i)
 	{
 		out << "\t" << edges_m[i];
 	}
@@ -265,7 +267,7 @@ void Node_t::revreads()
 
 	int len = strlen();
 
-	for (unsigned int i = 0; i < readstarts_m.size(); i++)
+	for (unsigned int i = 0; i < readstarts_m.size(); ++i)
 	{
 		ReadStart_t & rs = readstarts_m[i];
 		rs.nodeoffset_m = len - 1 - rs.nodeoffset_m;
@@ -307,12 +309,12 @@ int Node_t::cntReadCode(char code)
 	unordered_set<ReadId_t>::iterator si;
 	for (si = reads_m.begin();
 	si != reads_m.end();
-	si++)
+	++si)
 	{
 		if ( (*si) < 0 || (*si) > (int)readid2info->size() ) { continue; } // skip over illegal values
 		if (readid2info->at(*si).code_m == code)
 		{
-			retval++;
+			++retval;
 		}
 	}
 
@@ -329,10 +331,10 @@ bool Node_t::isStatusCnt(char c) {
 	int cnt = 0;
 	unsigned int N = 0;
 	
-	for (unsigned int i = (K-1); i < cov_status.size(); i++) {
+	for (unsigned int i = (K-1); i < cov_status.size(); ++i) {
 		//cerr << cov_status[i] << " ";
-		N++;
-		if(cov_status[i] == c) { cnt++; }
+		++N;
+		if(cov_status[i] == c) { ++cnt; }
 	}
 	
 	double prcnt = (double(cnt)/double(N));
@@ -347,7 +349,7 @@ bool Node_t::isStatusCnt(char c) {
 //////////////////////////////////////////////////////////////
 void Node_t::updateCovStatus(char c) 
 {
-	for (unsigned int i = 0; i < cov_status.size(); i++) {
+	for (unsigned int i = 0; i < cov_status.size(); ++i) {
 		
 		/*
 		switch(cov_status[i]) {
@@ -379,16 +381,16 @@ void Node_t::updateCovDistr(int c, const string & qv, unsigned int strand, char 
 	else { cerr << "Error: unrecognized sample " << sample << endl; }
 	
  	//string::const_iterator it=qv.begin();
-	for (unsigned int i = 0; i < cov_distr->size(); i++) {
+	for (unsigned int i = 0; i < cov_distr->size(); ++i) {
 		if(strand == FWD) { 
 			((*cov_distr)[i]).fwd = c;
 			//if(*it >= MIN_QUAL) { (((*cov_distr)[i]).minqv_fwd)++; }
-			if(qv[i] >= MIN_QUAL) { (((*cov_distr)[i]).minqv_fwd)++; }
+			if(qv[i] >= MIN_QUAL) { ++(((*cov_distr)[i]).minqv_fwd); }
 		}
 		else if(strand == REV) { 
 			((*cov_distr)[i]).rev = c;
 			//if(*it >= MIN_QUAL) { (((*cov_distr)[i]).minqv_rev)++; }
-			if(qv[i] >= MIN_QUAL) { (((*cov_distr)[i]).minqv_rev)++; }	
+			if(qv[i] >= MIN_QUAL) { ++(((*cov_distr)[i]).minqv_rev); }	
 		}
 		//if (it!=qv.end()) { it++; }
 		//else {cerr << "Error: reached end of quality string (qv)" << endl; }
@@ -408,12 +410,12 @@ int Node_t::avgCovDistr(char sample)
 	
 	int sum = 0;
 	int cnt = 0;
-	for (unsigned int i = 0; i < cov_distr.size(); i++)
+	for (unsigned int i = 0; i < cov_distr.size(); ++i)
 	{
 		int totcov = cov_distr[i].fwd + cov_distr[i].rev;
 		if(totcov !=0) {
 			sum += totcov;
-			cnt++;
+			++cnt;
 		}
 	}
 	//cerr << "SPANNER: (" << sum << "," << cnt << ")" << endl; 
@@ -444,7 +446,7 @@ void Node_t::revCovDistr()
 	while(i<j){
 		swap(cov_distr_tmr[i], cov_distr_tmr[j]);
 		swap(cov_distr_nml[i], cov_distr_nml[j]);
-		i++;j--;
+		++i;--j;
 	}
 }
 
@@ -461,7 +463,7 @@ int Node_t::minNon0Cov(char sample)
 	else { cerr << "Error: unrecognized sample " << sample << endl; }
 	
 	int min = 10000000;
-	for (unsigned int i = 0; i < cov_distr.size(); i++)
+	for (unsigned int i = 0; i < cov_distr.size(); ++i)
 	{
 		int totcov = cov_distr[i].fwd + cov_distr[i].rev;
 		if( (totcov > 0) && (totcov < min) ) { min = totcov; }
@@ -477,7 +479,7 @@ void Node_t::computeMinCov()
 {
 	int min = 10000000;
 	int minQV = 10000000;
-	for (unsigned int i = 0; i < cov_distr_tmr.size(); i++)
+	for (unsigned int i = 0; i < cov_distr_tmr.size(); ++i)
 	{
 		int totcov = cov_distr_tmr[i].fwd + cov_distr_tmr[i].rev + cov_distr_nml[i].fwd + cov_distr_nml[i].rev;
 		int totcovQV = cov_distr_tmr[i].minqv_fwd + cov_distr_tmr[i].minqv_rev + cov_distr_nml[i].minqv_fwd + cov_distr_nml[i].minqv_rev;
@@ -498,11 +500,11 @@ int Node_t::readOverlaps(const Node_t & other)
 	int retval = 0;
 	unordered_set<ReadId_t>::const_iterator it;
 	
-	for (auto it = other.reads_m.begin(); it != other.reads_m.end(); it++) {
+	for (auto it = other.reads_m.begin(); it != other.reads_m.end(); ++it) {
 
 		if (reads_m.find(*it) != reads_m.end())
 		{
-			retval++;
+			++retval;
 		}
 	}
 

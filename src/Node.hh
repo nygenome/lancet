@@ -131,6 +131,7 @@ public:
 	void incNmlCov(unsigned int strand) { if(strand == FWD) { cov_nml_m_fwd++; } else if(strand == REV) { cov_nml_m_rev++; } }
 	//void setTmrCov(int c) { cov_tmr_m = c; }
 	//void setNmlCov(int c) { cov_nml_m = c; }
+	int getSize() { return (str_m.size()-K+1); }
 	float getTmrCov(unsigned int strand);
 	float getNmlCov(unsigned int strand);
 	float getTotTmrCov() { return cov_tmr_m_fwd + cov_tmr_m_rev; }

@@ -33,19 +33,19 @@ bool Edge_t::isDir(Ori_t dir)
 int Edge_t::readOverlaps(const Edge_t & other)
 {
 	set<ReadId_t> myreads;
-	for (unsigned int i = 0; i < readids_m.size(); i++)
+	for (unsigned int i = 0; i < readids_m.size(); ++i)
 	{
 		myreads.insert(readids_m[i]);
 	}
 
 	int retval = 0;
-	for (unsigned int j = 0; j < other.readids_m.size(); j++)
+	for (unsigned int j = 0; j < other.readids_m.size(); ++j)
 	{
 		int jj = other.readids_m[j];
 
 		if (myreads.find(jj) != myreads.end())
 		{
-			retval++;
+			++retval;
 		}
 	}
 
@@ -57,7 +57,7 @@ ostream & Edge_t::print(ostream & out) const
 	out << toString(dir_m) << ":" << nodeid_m;
 
 	out << " [";
-	for (unsigned int r = 0; r < readids_m.size(); r++)
+	for (unsigned int r = 0; r < readids_m.size(); ++r)
 	{
 		if (r) { out << ","; }
 		//out << readid2info[edges_m[i].readids_m[r]].readname_m;

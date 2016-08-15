@@ -118,7 +118,7 @@ string rc_str(const string & str)
 {
 	string retval;
 
-	for (int i = str.length()-1; i >= 0; i--)
+	for (int i = str.length()-1; i >= 0; --i)
 	{
 		retval.push_back(rrc(str[i]));
 	}
@@ -139,7 +139,7 @@ void reverse(string & str)
 		char tmp = str[i];
 		str[i] = str[j];
 		str[j] = tmp; 
-		i++;j--;
+		++i;--j;
 	}	
 }
 
@@ -151,7 +151,7 @@ bool isNseq(const string & seq)
 	bool result = true;
 
 	int end = seq.length();
-	for (int i = 0; i < end; i++)
+	for (int i = 0; i < end; ++i)
 	{
 
 		if ( (seq[i] != 'N') || (seq[i] != 'n') ) {
@@ -173,7 +173,7 @@ bool isRepeat(const string & seq, int K)
 	set<string> mers;
 
 	int end = seq.length() - K;
-	for (int offset = 0; offset < end; offset++)
+	for (int offset = 0; offset < end; ++offset)
 	{
 		string s = seq.substr(offset,K);
 
@@ -193,7 +193,7 @@ bool isAlmostRepeat(const string & seq, int K, int max)
 	bool result = false;
 	
 	int end = seq.length() - K;
-	for (int offset = 0; offset < end; offset++)
+	for (int offset = 0; offset < end; ++offset)
 	{
 		//string s = seq.substr(offset,K);
 
@@ -221,14 +221,14 @@ bool kMismatch(size_t s, size_t e, const string & t, size_t start, int max) { //
 		while(j<L && i+j<t.size()) {
 			//if(t[i+j] != p[j]) {
 			if(t[i+j] != t[s+j]) {
-				count++;
+				++count;
 				if(count>max) { flag = false; break; }
 			}
-			j++;
+			++j;
 		}
 		//if(flag && j==p.size()) { return true; }
 		if(flag && j==L) { return true; }
-		i++;
+		++i;
 	}
 	return false;
 }
@@ -311,12 +311,12 @@ void parseMD(string & md, map<int,int> & M, int start, string & qual, int min_qv
 			p_old = p2-1;
 		}
 		else {
-			pos++;
+			++pos;
 			assert( (pos-start) >= 0 );
 			if(qual[pos-start] >= min_qv) {
 				//cerr << qual[pos-start] << ">=?" << min_qv << endl;
 				mit = M.find(pos);
-				if (mit != M.end()) { ((*mit).second)++; }
+				if (mit != M.end()) { ++((*mit).second); }
 				else { M.insert(std::pair<int,int>(pos,1)); }
 			}
 			//cerr << md[p] << "|";
@@ -365,20 +365,20 @@ bool findTandems(const string & seq, const string & tag, int max_unit_len, int m
 	int offsets[OFFSET_TABLE_SIZE][OFFSET_TABLE_SIZE];
 
 	// initialize the offsets
-	for (unsigned int merlen = 1; merlen <= MAX_UNIT_LEN; merlen++)
+	for (unsigned int merlen = 1; merlen <= MAX_UNIT_LEN; ++merlen)
 	{
-		for (unsigned int phase = 0; phase < merlen; phase++)
+		for (unsigned int phase = 0; phase < merlen; ++phase)
 		{
 			offsets[merlen][phase] = phase;
 		}
 	}
 
 	// now scan the sequence, considering mers starting at position i
-	for (unsigned int i = 0; i < seq.length(); i++)
+	for (unsigned int i = 0; i < seq.length(); ++i)
 	{
     
 		// consider all possible merlens from 1 to max
-		for (unsigned int merlen = 1; merlen <= MAX_UNIT_LEN; merlen++)
+		for (unsigned int merlen = 1; merlen <= MAX_UNIT_LEN; ++merlen)
 		{
 			int phase = i % merlen;
 			int offset = offsets[merlen][phase];
@@ -388,7 +388,7 @@ bool findTandems(const string & seq, const string & tag, int max_unit_len, int m
 			while ((j < merlen) && 
 				(i+j < seq.length()) && 
 					(seq[i+j] == seq[offset+j])) 
-						{ j++; }
+						{ ++j; }
 
 			// is the end of the tandem?
 			if (j != merlen || (i+j+1 == seq.length()))
@@ -410,10 +410,10 @@ bool findTandems(const string & seq, const string & tag, int max_unit_len, int m
 							unsigned int units = (i-offset+j) / ml;
 
 							int allmatch = 1;
-							for (unsigned int index = 1; allmatch && (index < units); index++)
+							for (unsigned int index = 1; allmatch && (index < units); ++index)
 							{
 								// compare the bases of the current unit to those of unit0
-								for (unsigned int m = 0; m < ml; m++)
+								for (unsigned int m = 0; m < ml; ++m)
 								{
 									if (seq[offset+m] != seq[offset+index*ml+m])
 									{
@@ -423,7 +423,7 @@ bool findTandems(const string & seq, const string & tag, int max_unit_len, int m
 								}
 							}
 
-							if (!allmatch) { ml++; }
+							if (!allmatch) { ++ml; }
 							else           { break; }
 						}
 
@@ -440,7 +440,7 @@ bool findTandems(const string & seq, const string & tag, int max_unit_len, int m
 							if ( (pos >= (start-delta)) && (pos <= (end+delta)) ) { 
 								ans = true; 
 								len = L; 
-								for (unsigned int z = 0; z < merlen; z++) { 
+								for (unsigned int z = 0; z < merlen; ++z) { 
 									motif += seq[offset+z];
 								}
 							}
@@ -455,9 +455,9 @@ bool findTandems(const string & seq, const string & tag, int max_unit_len, int m
 							//cerr << "\t" << (i - offset) / merlen << "+" << j << "\t";
 
 							// left flank - tandem - right flank
-							for (unsigned int z = offset-FLANK; z < (unsigned int)offset;    z++) { if (z >= 0) { /*cerr << (char) tolower(seq[z]);*/ } }
-							for (unsigned int z = offset;       z < i+j;       z++) { /*cerr << seq[z];*/ }
-							for (unsigned int z = i+j;          z < i+j+FLANK; z++) { if (z < seq.length()) { /*cerr << (char) tolower(seq[z]);*/ } }
+							for (unsigned int z = offset-FLANK; z < (unsigned int)offset;    ++z) { if (z >= 0) { /*cerr << (char) tolower(seq[z]);*/ } }
+							for (unsigned int z = offset;       z < i+j;       ++z) { /*cerr << seq[z];*/ }
+							for (unsigned int z = i+j;          z < i+j+FLANK; ++z) { if (z < seq.length()) { /*cerr << (char) tolower(seq[z]);*/ } }
 
 							//cerr << "\t" << phase;
 

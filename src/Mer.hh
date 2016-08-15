@@ -54,7 +54,7 @@ public:
 	CanonicalMer_t(Mer_t mer) 
 		{ set(mer); }
 
-	void set(Mer_t mer)
+	void set(string mer)
 	{
 		Mer_t rmer = rc2(mer);
 
@@ -90,7 +90,7 @@ public:
 	{
 		Mer_t retval;
 
-		for (int i = mer.length()-1; i >= 0; i--)
+		for (int i = mer.length()-1; i >= 0; --i)
 		{
 			retval.push_back(rrc(mer[i]));
 		}
@@ -111,7 +111,7 @@ public:
 			c = rrc(retval[i]);
 			retval[i]= rrc(retval[j]);
 			retval[j] = c;
-			i++; j--;
+			++i; --j;
 	    }
 		
 		return retval;

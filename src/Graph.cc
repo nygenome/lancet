@@ -34,7 +34,7 @@ void Graph_t::clear(bool flag)
 	totalreadbp_m = 0;
 
 	MerTable_t::iterator mi;
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
 		delete mi->second;
 	}
@@ -75,7 +75,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 
 	int end = seq.length() - K;
 	int offset = 0;
-	for (; offset < end; offset++)
+	for (; offset < end; ++offset)
 	{
 		if (offset == 0) {
 			uc.set(seq.substr(offset,   K));
@@ -220,7 +220,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 					if(verbose) { cerr << "WARNING: Cycles detected in the reads" << endl << endl; }
 				}
 
-				readCycles++;
+				++readCycles;
 			}
 
 			//readid = -1;
@@ -242,16 +242,16 @@ void Graph_t::trim(int readid, const string & seq, const string & qv, bool isRef
 	int len = seq.length();
 	string cseq = seq;
 
-	for (int i = 0; i < len; i++) { cseq[i] = toupper(cseq[i]); }
+	for (int i = 0; i < len; ++i) { cseq[i] = toupper(cseq[i]); }
 
-	while ((!isDNA(seq[trim5]) || (qv[trim5] < MIN_QUAL_TRIM)) && (trim5 < len)) { trim5++; }
+	while ((!isDNA(seq[trim5]) || (qv[trim5] < MIN_QUAL_TRIM)) && (trim5 < len)) { ++trim5; }
 
 	if (trim5 < len) {
-		while ((!isDNA(seq[len-1-trim3]) || (qv[len-1-trim3] < MIN_QUAL_TRIM)) && (trim3 < len)) { trim3++; }
+		while ((!isDNA(seq[len-1-trim3]) || (qv[len-1-trim3] < MIN_QUAL_TRIM)) && (trim3 < len)) { ++trim3; }
 
 		readid2info[readid].isjunk = false;
 		
-		for (int i = trim5; i < len-trim3; i++)
+		for (int i = trim5; i < len-trim3; ++i)
 		{
 			if (!isDNA(seq[i])) {
 				// skip the junk
@@ -274,19 +274,19 @@ void Graph_t::trimAndLoad(int readid, const string & seq, const string & qv, boo
 	int len = seq.length();
 	string cseq = seq;
 
-	for (int i = 0; i < len; i++) { cseq[i] = toupper(cseq[i]); }
+	for (int i = 0; i < len; ++i) { cseq[i] = toupper(cseq[i]); }
 
 	int trim5 = 0;
-	while ((!isDNA(seq[trim5]) || (qv[trim5] < MIN_QUAL_TRIM)) && (trim5 < len)) { trim5++; }
+	while ((!isDNA(seq[trim5]) || (qv[trim5] < MIN_QUAL_TRIM)) && (trim5 < len)) { ++trim5; }
 
 	if (trim5 < len)
 	{
 		int trim3 = 0;
-		while ((!isDNA(seq[len-1-trim3]) || (qv[len-1-trim3] < MIN_QUAL_TRIM)) && (trim3 < len)) { trim3++; }
+		while ((!isDNA(seq[len-1-trim3]) || (qv[len-1-trim3] < MIN_QUAL_TRIM)) && (trim3 < len)) { ++trim3; }
 
 		bool cleanRead = true;
 
-		for (int i = trim5; i < len-trim3; i++)
+		for (int i = trim5; i < len-trim3; ++i)
 		{
 			if (!isDNA(seq[i]))
 			{
@@ -308,11 +308,11 @@ int Graph_t::countBastardReads()
 {
 	int bastards = 0;
 
-	for (unsigned int i = 0; i < readid2info.size(); i++)
+	for (unsigned int i = 0; i < readid2info.size(); ++i)
 	{
 		if (readid2info[i].code_m == CODE_BASTARD)
 		{
-			bastards++;
+			++bastards;
 		}
 	}
 
@@ -323,11 +323,11 @@ int Graph_t::countMappedReads()
 {
 	int mapped = 0;
 
-	for (unsigned int i = 0; i < readid2info.size(); i++)
+	for (unsigned int i = 0; i < readid2info.size(); ++i)
 	{
 		if (readid2info[i].code_m == CODE_MAPPED)
 		{
-			mapped++;
+			++mapped;
 		}
 	}
 
@@ -358,7 +358,7 @@ void Graph_t::addMates(ReadId_t r1, ReadId_t r2)
 
 void Graph_t::printReads()
 {
-	for (unsigned int i = 0; i < readid2info.size(); i++)
+	for (unsigned int i = 0; i < readid2info.size(); ++i)
 	{
 		cout << i << "\t" << readid2info[i].readname_m << "\t" << readid2info[i].set_m << endl;
 	}
@@ -419,7 +419,7 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 		if (VERBOSE) { cerr << "refid: " << refid << endl; }
 	}	
 	
-	for (unsigned int i = 0; i < readid2info.size(); i++)
+	for (unsigned int i = 0; i < readid2info.size(); ++i)
 	{
 		if ( !(readid2info[i].isjunk) ) { // skip junk (not A,C,G,T)
 			string seq; // = readid2info[i].seq_m;
@@ -449,7 +449,7 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 	
 	// precompute min coverage values for each node
 	MerTable_t::iterator mi;
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++) {
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi) {
 		(mi->second)->computeMinCov();
 	}
 	
@@ -473,7 +473,7 @@ bool Graph_t::hasCycle() {
 		
 		MerTable_t::iterator mi;
 	
-		for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++) {
+		for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi) {
 			Node_t * node = mi->second;
 
 			//if (node->isRef())    { continue; }
@@ -506,7 +506,7 @@ bool Graph_t::hasTumorOnlyKmer() {
 		
 		MerTable_t::iterator mi;
 	
-		for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++) {
+		for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi) {
 			Node_t * node = mi->second;
 
 			if (node->isTumor() && !node->isNormal()) { 
@@ -525,7 +525,7 @@ void Graph_t::hasCycleRec(Node_t * node, Ori_t dir, bool *ans) {
 		
 		node->setColor(GREY);
 			
-		for (unsigned int i = 0; i < node->edges_m.size(); i++) {
+		for (unsigned int i = 0; i < node->edges_m.size(); ++i) {
 						
 			Edge_t & edge = node->edges_m[i];
 			if (edge.isDir(dir)) {
@@ -574,7 +574,7 @@ bool Graph_t::findRepeatsInGraphPaths(Node_t * source, Node_t * sink, Ori_t dir,
 				
 		if (path == NULL) { break; }
 		
-		complete++;
+		++complete;
 		
 		if(isAlmostRepeat(path->str(), K, MAX_MISMATCH)) {
 			answer = true;
@@ -582,7 +582,7 @@ bool Graph_t::findRepeatsInGraphPaths(Node_t * source, Node_t * sink, Ori_t dir,
 			break;
 		}
 		
-		for (unsigned int i = 0; i < path->edges_m.size(); i++) {
+		for (unsigned int i = 0; i < path->edges_m.size(); ++i) {
 			(path->edges_m[i])->setFlag(1);
 			edges.push_back(path->edges_m[i]);
 		}
@@ -592,7 +592,7 @@ bool Graph_t::findRepeatsInGraphPaths(Node_t * source, Node_t * sink, Ori_t dir,
 	}
 	
 	// clear edge flags for next call to eka graph traversal
-	for (unsigned int i = 0; i < edges.size(); i++) {
+	for (unsigned int i = 0; i < edges.size(); ++i) {
 		edges[i]->setFlag(0);
 	}
 	//edges.clear();
@@ -607,12 +607,12 @@ void Graph_t::printAlignment(const string &ref_aln, const string &path_aln, Path
 	cerr << "r':" << ref_aln << endl;
 	cerr << "p':" << path_aln << " " << path->cov('A') << " [" << path->mincov('A') << " - " << path->maxcov('A') << "]" << endl;	
 	cerr << "d':"; 
-	for (unsigned int i = 0; i < ref_aln.length(); i++)
+	for (unsigned int i = 0; i < ref_aln.length(); ++i)
 	{
-		if (ref_aln[i] == path_aln[i]) { path->match_bp++;  cerr << ' '; }
-		else if (ref_aln[i] == '-')    { path->ins_bp++;    cerr << '^'; }
-		else if (path_aln[i] == '-')   { path->del_bp++;    cerr << 'v'; }
-		else                           { path->snp_bp++;    cerr << 'x'; }
+		if (ref_aln[i] == path_aln[i]) { ++(path->match_bp);  cerr << ' '; }
+		else if (ref_aln[i] == '-')    { ++(path->ins_bp);    cerr << '^'; }
+		else if (path_aln[i] == '-')   { ++(path->del_bp);    cerr << 'v'; }
+		else                           { ++(path->snp_bp);    cerr << 'x'; }
 	}
 	cerr << "\n"; 
 }
@@ -665,25 +665,25 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	//print coverage distribution along the sequence path
 	if (verbose) { 
 		cerr << "t+':"; 
-		for (unsigned int i=0; i<coverageT.size(); i++) {
+		for (unsigned int i=0; i<coverageT.size(); ++i) {
 			cerr << coverageT[i].fwd << " ";
 		}
 		cerr << endl;
 
 		cerr << "t-':"; 
-		for (unsigned int i=0; i<coverageT.size(); i++) {
+		for (unsigned int i=0; i<coverageT.size(); ++i) {
 			cerr << coverageT[i].rev << " ";
 		}
 		cerr << endl;
 		
 		cerr << "n+':"; 
-		for (unsigned int i=0; i<coverageN.size(); i++) {
+		for (unsigned int i=0; i<coverageN.size(); ++i) {
 			cerr << coverageN[i].fwd << " ";
 		}
 		cerr << endl;
 
 		cerr << "n-':"; 
-		for (unsigned int i=0; i<coverageN.size(); i++) {
+		for (unsigned int i=0; i<coverageN.size(); ++i) {
 			cerr << coverageN[i].rev << " ";
 		}
 		cerr << endl;
@@ -716,7 +716,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		}
 		*/
 		
-		for (unsigned int i = 0; i < ref_aln.length(); i++) {	
+		for (unsigned int i = 0; i < ref_aln.length(); ++i) {	
 			
 			/*
 			int toadd = min( (int)(pathpos+K-1), (int)(coverageN.size()-1));
@@ -730,19 +730,19 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			if (ref_aln[i] == '-') {
 				code = '^'; // insertion
 				pos_in_ref = refpos; // save value of position in reference before increment
-				pathpos++;           
+				++pathpos;           
 			}
 			else if (path_aln[i] == '-') { 
 				code = 'v'; // deletion
 				pos_in_ref = refpos; // save value of position in reference before increment
-				refpos++;            
+				++refpos;            
 			}
 			else { 
 				code = '=';
 				if (ref_aln[i] != path_aln[i]) { code = 'x'; }
 				pos_in_ref = refpos; // save value of position in reference before increment
-				refpos++;
-				pathpos++;
+				++refpos;
+				++pathpos;
 			}
 
 			// pathpos is a 1-based coordinate, need to subtract 1 to correctly search 
@@ -839,15 +839,18 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				assert(pr >= 0);
 				int pa=i-1; // alternative index
 				assert(pa >= 0);
-				while( (ref_aln[pr] != 'A') && (ref_aln[pr] != 'C') && (ref_aln[pr]) != 'G' && (ref_aln[pr] != 'T') ) { pr--; }
-				while( (path_aln[pa] != 'A') && (path_aln[pa] != 'C') && (path_aln[pa] != 'G') && (path_aln[pa] != 'T') ) { pa--; }
+				while( (ref_aln[pr] != 'A') && (ref_aln[pr] != 'C') && (ref_aln[pr]) != 'G' && (ref_aln[pr] != 'T') ) { --pr; }
+				while( (path_aln[pa] != 'A') && (path_aln[pa] != 'C') && (path_aln[pa] != 'G') && (path_aln[pa] != 'T') ) { --pa; }
 				
 
 				if (((code == '^') && (ts > 0) && (transcript[ts-1].code == code) && (transcript[ts-1].pos == rrpos)) ||
 					((code == 'v') && (ts > 0) && (transcript[ts-1].code == code) && ((transcript[ts-1].pos + transcript[ts-1].ref.length()) == rrpos)))
 				{
 					// extend the indel
-					if(within_tumor_node) { transcript[ts-1].isSomatic = true; }
+					if(within_tumor_node) { 
+						transcript[ts-1].isSomatic = true; 
+						//transcript[ts-1].nodesize = spanner->getSize();
+					}
 					transcript[ts-1].ref += ref_aln[i];
 					transcript[ts-1].qry += path_aln[i];
 					transcript[ts-1].end_pos = P; // update end position (in the path)
@@ -900,11 +903,11 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			<< " ins: "   << path->ins_bp
 			<< " del: "   << path->del_bp;
 		}
-		for (unsigned int ti = 0; ti < transcript.size(); ti++)
+		for (unsigned int ti = 0; ti < transcript.size(); ++ti)
 		{
 			// if the alignment left-shifts the indel, coverage and alignment can be out of sinc. 
 			// Fix: add coverage for K-1 bp after variant end position
-			for (int j=0; j<K; j++) {						
+			for (int j=0; j<K; ++j) {						
 				unsigned int idx1 = transcript[ti].end_pos + j; 
 				// add coverage
 				if (idx1 < coverageN.size()) { // check for out of range
@@ -916,6 +919,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					//if (spanner->isTumor() && !spanner->isNormal()) { 
 						//cerr << "Within tumor only node" << endl;
 						transcript[ti].isSomatic = true;
+						//transcript[ti].nodesize = spanner->getSize();
 						
 						// print read ids
 						/*
@@ -1008,10 +1012,10 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		}
 		if(verbose) { cerr << endl; }
 
-		if      ((path->snp_bp + path->ins_bp + path->del_bp) == 0) { perfect++;   }
-		else if ((path->snp_bp) == 0)                               { withindel++; }
-		else if ((path->ins_bp + path->del_bp) == 0)                { withsnps++;  }
-		else                                                        { withmix++;   }
+		if      ((path->snp_bp + path->ins_bp + path->del_bp) == 0) { ++perfect;   }
+		else if ((path->snp_bp) == 0)                               { ++withindel; }
+		else if ((path->ins_bp + path->del_bp) == 0)                { ++withsnps;  }
+		else                                                        { ++withmix;   }
 
 		if(printPathsToFile) {
 			fprintf(fp,  ">p_%s:%d-%d_%d len=%d cov=%0.2f mincov=%0.2f maxcov=%0.2f pathlen=%d hasCycle=%d match=%d snp=%d ins=%d del=%d pathstr=%s\n",
@@ -1022,10 +1026,10 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			fprintf(fp, "%s\n", path->str().c_str());
 		}
 
-		for (unsigned int i = 0; i < path->nodes_m.size(); i++)
+		for (unsigned int i = 0; i < path->nodes_m.size(); ++i)
 		{
 			Node_t * cur = path->nodes_m[i];
-			cur->onRefPath_m++;
+			++(cur->onRefPath_m);
 		}
 	}
 	catch(std::out_of_range& e) {
@@ -1046,7 +1050,7 @@ void Graph_t::processShortPath(Node_t * source, Ref_t * ref, FILE * fp, bool pri
 	const string & refseq = ref->seq;
 	
 	Node_t * node = getNode(source->edges_m[0]);
-	node->onRefPath_m++;
+	++(node->onRefPath_m);
 
 	string str = node->str_m;
 
@@ -1084,12 +1088,12 @@ void Graph_t::processShortPath(Node_t * source, Ref_t * ref, FILE * fp, bool pri
 
 	assert(ref_aln.length() == path_aln.length());
 
-	for (unsigned int i = 0; i < ref_aln.length(); i++)
+	for (unsigned int i = 0; i < ref_aln.length(); ++i)
 	{
-		if (ref_aln[i] == path_aln[i]) { match_bp++; }
-		else if (ref_aln[i] == '-')    { ins_bp++; }
-		else if (path_aln[i] == '-')   { del_bp++; }
-		else                           { snp_bp++; }
+		if (ref_aln[i] == path_aln[i]) { ++match_bp; }
+		else if (ref_aln[i] == '-')    { ++ins_bp; }
+		else if (path_aln[i] == '-')   { ++del_bp; }
+		else                           { ++snp_bp; }
 	}
 
 	cerr << ">sp" << complete
@@ -1099,10 +1103,10 @@ void Graph_t::processShortPath(Node_t * source, Ref_t * ref, FILE * fp, bool pri
 		<< " del: " << del_bp
 		<< endl;
 
-	if      ((snp_bp + ins_bp + del_bp) == 0) { perfect++;   }
-	else if ((snp_bp) == 0)                   { withindel++; }
-	else if ((ins_bp + del_bp) == 0)          { withsnps++;  }
-	else                                      { withmix++;   }
+	if      ((snp_bp + ins_bp + del_bp) == 0) { ++perfect;   }
+	else if ((snp_bp) == 0)                   { ++withindel; }
+	else if ((ins_bp + del_bp) == 0)          { ++withsnps;  }
+	else                                      { ++withmix;   }
 
 	if(printPathsToFile) {
 		fprintf(fp,  ">p_%d len=%d cov=%0.2f mincov=%0.2f maxcov=%0.2f pathlen=%d match=%d snp=%d ins=%d del=%d pathstr=%s\n",
@@ -1140,7 +1144,7 @@ Path_t * Graph_t::bfs(Node_t * source, Node_t * sink, Ori_t dir, Ref_t * ref)
 	
 	while (!Q.empty())
 	{
-		visit++;
+		++visit;
 
 		if ((DFS_LIMIT) && (visit > DFS_LIMIT)) {
 			if(verbose) { cerr << "WARNING: DFS_LIMIT (" << DFS_LIMIT << ") exceeded" << endl; }
@@ -1156,7 +1160,7 @@ Path_t * Graph_t::bfs(Node_t * source, Node_t * sink, Ori_t dir, Ref_t * ref)
 		if ( (cur == sink) && (path->flag == 0) )
 		{
 			// success!
-			complete++;
+			++complete;
 			if (best == NULL) { best = new Path_t(path,K); }
 			else if(path->score > best->score) { 
 				Path_t * old_best = best;
@@ -1168,26 +1172,26 @@ Path_t * Graph_t::bfs(Node_t * source, Node_t * sink, Ori_t dir, Ref_t * ref)
 		else if (path->len_m > reflen + MAX_INDEL_LEN)
 		{
 			// abort
-			toolong++;
+			++toolong;
 			//cerr << "too long: " << path->pathstr() << " " << path->str() << endl;
 		}
 		else
 		{
 			int tried = 0;
 
-			for (unsigned int i = 0; i < cur->edges_m.size(); i++)
+			for (unsigned int i = 0; i < cur->edges_m.size(); ++i)
 			{
 				Edge_t * edge = &(cur->edges_m[i]);	
 				
 				if (edge->isDir(path->dir_m))
 				{
-					tried++;
+					++tried;
 
 					Node_t * other = getNode(*edge);
 
 					if (!path->hasCycle_m && path->hasCycle(other))
 					{
-						allcycles++;
+						++allcycles;
 						//cerr << "Cycle detected in BFS!!" << endl;
 					}
 
@@ -1207,7 +1211,7 @@ Path_t * Graph_t::bfs(Node_t * source, Node_t * sink, Ori_t dir, Ref_t * ref)
 
 			if (tried == 0)
 			{
-				deadend++;
+				++deadend;
 				//cerr << "deadend: " <<  cur->nodeid_m << endl;
 			}
 		}
@@ -1232,8 +1236,8 @@ Path_t * Graph_t::bfs(Node_t * source, Node_t * sink, Ori_t dir, Ref_t * ref)
 			// source to single node
 			assert(source->edges_m.size() == 1);
 
-			complete++;
-			shortpaths++;			
+			++complete;
+			++shortpaths;			
 		}
 		//path = NULL;
 		best = NULL;
@@ -1268,14 +1272,14 @@ void Graph_t::eka(Node_t * source, Node_t * sink, Ori_t dir,
 				
 		if (path == NULL) { break; }
 				
-		if (path->hasCycle_m) { allcycles++; }
-		complete++;
+		if (path->hasCycle_m) { ++allcycles; }
+		++complete;
 		
 		//if(path->hasTumorOnlyNode()) {
 			processPath(path, ref, fp, printPathsToFile, complete, perfect, withsnps, withindel, withmix);
 		//}
 		
-		for (unsigned int i = 0; i < path->edges_m.size(); i++) {
+		for (unsigned int i = 0; i < path->edges_m.size(); ++i) {
 			(path->edges_m[i])->setFlag(1);
 		}
 
@@ -1356,7 +1360,7 @@ void Graph_t::dfs(Node_t * source, Node_t * sink, Ori_t dir,
 	
 	while (!Q.empty())
 	{
-		visit++;
+		++visit;
 
 		if ((DFS_LIMIT) && (visit > DFS_LIMIT))
 		{
@@ -1374,32 +1378,32 @@ void Graph_t::dfs(Node_t * source, Node_t * sink, Ori_t dir,
 		if (cur == sink)
 		{
 			// success!
-			complete++;
+			++complete;
 			processPath(path, ref, fp, printPathsToFile, complete, perfect, withsnps, withindel, withmix);
 		}
 		else if (path->len_m > reflen + MAX_INDEL_LEN)
 		{
 			// abort
-			toolong++;
+			++toolong;
 			//cerr << "too long: " << path->pathstr() << " " << path->str() << endl;
 		}
 		else
 		{
 			int tried = 0;
 
-			for (unsigned int i = 0; i < cur->edges_m.size(); i++)
+			for (unsigned int i = 0; i < cur->edges_m.size(); ++i)
 			{
 				Edge_t & edge = cur->edges_m[i];
 				if (edge.isDir(path->dir_m))
 				{
-					tried++;
+					++tried;
 
 					Node_t * other = getNode(edge);
 					if (DFS_VERBOSE) { cerr << "     ==> " << other->nodeid_m << endl; }
 
 					if (!path->hasCycle_m && path->hasCycle(other))
 					{
-						allcycles++;
+						++allcycles;
 					}
 
 					Path_t * newpath = new Path_t(path,K);
@@ -1415,7 +1419,7 @@ void Graph_t::dfs(Node_t * source, Node_t * sink, Ori_t dir,
 
 			if (tried == 0)
 			{
-				deadend++;
+				++deadend;
 				//cerr << "deadend: " <<  cur->nodeid_m << endl;
 			}
 		}
@@ -1439,8 +1443,8 @@ void Graph_t::dfs(Node_t * source, Node_t * sink, Ori_t dir,
 			// source to single node
 			assert(source->edges_m.size() == 1);
 
-			complete++;
-			shortpaths++;
+			++complete;
+			++shortpaths;
 			
 			processShortPath(source, ref, fp, printPathsToFile, complete, perfect, withsnps, withindel, withmix);
 		}
@@ -1492,16 +1496,16 @@ string Graph_t::nodeColor(Node_t * cur, string & who)
 	map<string, int> whocnt;
 
 	unordered_set<ReadId_t>::const_iterator si;
-	for (si = cur->reads_m.begin(); si != cur->reads_m.end(); si++)
+	for (si = cur->reads_m.begin(); si != cur->reads_m.end(); ++si)
 	{
-		whocnt[readid2info[*si].set_m]++;
+		++(whocnt[readid2info[*si].set_m]);
 	}
 
 	bool isTumor = cur->isTumor();
 	bool isNormal = cur->isNormal();
 	
 	map<string, int>::iterator mi;
-	for (mi = whocnt.begin(); mi != whocnt.end(); mi++)
+	for (mi = whocnt.begin(); mi != whocnt.end(); ++mi)
 	{
 		if (mi != whocnt.begin()) { whostr << " "; }
 		whostr << mi->first << ":" << mi->second;
@@ -1564,7 +1568,7 @@ void Graph_t::printDot(const string & filename, int compid)
 
 	if (PRINT_DOT_READS)
 	{
-		for (unsigned int i = 0; i < readid2info.size(); i++)
+		for (unsigned int i = 0; i < readid2info.size(); ++i)
 		{
 			fprintf(fp, "// %s %d %s -> %d (%s)\n",
 				readid2info[i].set_m.c_str(),
@@ -1597,13 +1601,13 @@ void Graph_t::printDot(const string & filename, int compid)
 	int nodes = 0;
 
 	MerTable_t::iterator mi;
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
 		// only print nodes in the selected component
 		if(mi->second->component_m != compid) { continue; }
 		//if( (mi->second->component_m != compid) && !(mi->second->isSource()) && !(mi->second->isSink()) ) { continue; }
 		 
-		nodes++;
+		++nodes;
 
 		Node_t * cur = mi->second;
 		cur->setRead2InfoList(&readid2info);
@@ -1657,7 +1661,7 @@ void Graph_t::printDot(const string & filename, int compid)
 
 			unordered_set<ReadId_t>::const_iterator ri;
 
-			for (ri = cur->reads_m.begin(); ri != cur->reads_m.end(); ri++)
+			for (ri = cur->reads_m.begin(); ri != cur->reads_m.end(); ++ri)
 			{
 				//fprintf(fp, " %s", readid2info[e.readids_m[j]].readname_m.c_str());
 				fprintf(fp, " %d", *ri);
@@ -1667,7 +1671,7 @@ void Graph_t::printDot(const string & filename, int compid)
 
 			fprintf(fp, "  //readstarts:");
 
-			for (unsigned int i = 0; i < cur->readstarts_m.size(); i++)
+			for (unsigned int i = 0; i < cur->readstarts_m.size(); ++i)
 			{
 				fprintf(fp, " %d:%c%d",
 					cur->readstarts_m[i].readid_m,
@@ -1682,7 +1686,7 @@ void Graph_t::printDot(const string & filename, int compid)
 			ContigLinkMap_t::iterator li;
 			for (li = cur->contiglinks_m.begin();
 			li != cur->contiglinks_m.end();
-			li++)
+			++li)
 			{
 				fprintf(fp, " %s(%d)", li->first.c_str(), li->second->linkCnt());
 			}
@@ -1690,7 +1694,7 @@ void Graph_t::printDot(const string & filename, int compid)
 			fprintf(fp, "\n");
 		}
 
-		for (unsigned int i = 0; i < cur->edges_m.size(); i++)
+		for (unsigned int i = 0; i < cur->edges_m.size(); ++i)
 		{
 			Edge_t & e = cur->edges_m[i];
 
@@ -1722,7 +1726,7 @@ void Graph_t::printDot(const string & filename, int compid)
 			{
 				fprintf(fp, "    //reads:");
 
-				for (unsigned int j = 0; j < e.readids_m.size(); j++)
+				for (unsigned int j = 0; j < e.readids_m.size(); ++j)
 				{
 					//fprintf(fp, " %s", readid2info[e.readids_m[j]].readname_m.c_str());
 					fprintf(fp, " %d", e.readids_m[j]);
@@ -1753,19 +1757,19 @@ void Graph_t::printFasta(const string & filename)
 	int nodes = 0;
 
 	MerTable_t::iterator mi;
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
-		nodes++;
+		++nodes;
 		Node_t * cur = mi->second;
 
         int fdeg = 0;
         int rdeg = 0;
 
-        for (unsigned int i = 0; i < cur->edges_m.size(); i++)
+        for (unsigned int i = 0; i < cur->edges_m.size(); ++i)
         {
             Edge_t & edge = cur->edges_m[i];
-            if (edge.isDir(F)) { fdeg++; }
-            else               { rdeg++; }
+            if (edge.isDir(F)) { ++fdeg; }
+            else               { ++rdeg; }
         }
 
 		fprintf(fp, ">%d:%s len=%d cov=%0.2f fdeg=%d rdeg=%d\n", nodes, cur->nodeid_m.c_str(), cur->strlen(), cur->getTotCov(), fdeg, rdeg);
@@ -1789,7 +1793,7 @@ void Graph_t::printPairs(const string & filename)
 	Path_t pairpath(K);
 
 	MerTable_t::iterator mi;
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
 		Node_t * cur = mi->second;
 
@@ -1797,7 +1801,7 @@ void Graph_t::printPairs(const string & filename)
 		{
 		// print isolated contigs
 
-			nodes++;
+			++nodes;
 			fprintf(fp, ">%d:%s len=%d cov=%0.2f\n", nodes, cur->nodeid_m.c_str(), cur->strlen(), cur->getTotCov());
 			fprintf(fp, "%s\n",  cur->str_m.c_str());
 		}
@@ -1805,7 +1809,7 @@ void Graph_t::printPairs(const string & filename)
 		{
 			// print contig pairs, making sure a given pair is only printed once
 
-			for (unsigned int i = 0; i < cur->edges_m.size(); i++)
+			for (unsigned int i = 0; i < cur->edges_m.size(); ++i)
 			{
 				Edge_t & e = cur->edges_m[i];
 
@@ -1813,7 +1817,7 @@ void Graph_t::printPairs(const string & filename)
 				{
 					if ((e.dir_m == FF) || (cur->nodeid_m < e.nodeid_m))
 					{
-						nodes++;
+						++nodes;
 
 						Node_t * other = getNode(e);
 
@@ -1884,7 +1888,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	// Find the first matching mer with sufficient coverage
 	source_tmp = NULL;
 	ambiguous_match = false;
-	for (offset = 0; offset < (int) ref_m->rawseq.length(); offset++)
+	for (offset = 0; offset < (int) ref_m->rawseq.length(); ++offset)
 	{	
 		tmp_mer.set(ref_m->rawseq.substr(offset, K));
 		source_tmp = getNode(tmp_mer);
@@ -1921,7 +1925,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	// Find the last matching mer
 	sink_tmp = NULL;
 	ambiguous_match = false;
-	for (offset = ref_m->rawseq.length()-K; offset >= 0; offset--)
+	for (offset = ref_m->rawseq.length()-K; offset >= 0; --offset)
 	{
 		tmp_mer.set(ref_m->rawseq.substr(offset, K));
 		sink_tmp = getNode(tmp_mer);
@@ -1984,7 +1988,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	if (CLIP_REF_ENDS)
 	{
 		if (VERBOSE) { cerr << "checking for other source edges" << endl; }
-		for (int i = source_m->edges_m.size()-1; i >= 0; i--)
+		for (int i = source_m->edges_m.size()-1; i >= 0; --i)
 		{
 			if (Edge_t::edgedir_start(source_m->edges_m[i].dir_m) == Edge_t::flipdir(source_mer.ori_m))
 			{
@@ -2020,7 +2024,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	if (CLIP_REF_ENDS) 
 	{
 		if (VERBOSE) { cerr << "checking for other sink edges" << endl; }
-		for (int i = sink_m->edges_m.size()-1; i >= 0; i--)
+		for (int i = sink_m->edges_m.size()-1; i >= 0; --i)
 		{
 			if (Edge_t::edgedir_start(sink_m->edges_m[i].dir_m) == sink_mer.ori_m)
 			{
@@ -2055,9 +2059,9 @@ void Graph_t::markRefNodes()
 	int refnodes = 0;
 
 	MerTable_t::iterator mi;
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
-		nodes++;
+		++nodes;
 		refnodes += mi->second->markRef(ref_m, K);
 		mi->second->component_m = 0;
 	}
@@ -2076,20 +2080,20 @@ int Graph_t::markConnectedComponents()
 	ref_m->refcompids.clear();
 
 	MerTable_t::iterator mi;
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
-		nodes++;
+		++nodes;
 		mi->second->component_m = 0;
 	}
 
 	int comp = 0;
 	int refcomp = 0;
 
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
 		if (mi->second->component_m != 0) { continue; }
 
-		comp++;
+		++comp;
 
 		deque<Node_t *> Q;
 		Q.push_back(mi->second);
@@ -2105,9 +2109,9 @@ int Graph_t::markConnectedComponents()
 			{
 				cur->component_m = comp;
 
-				if (cur->touchRef_m) { touches++; }
+				if (cur->touchRef_m) { ++touches; }
 
-				for (unsigned int i = 0; i < cur->edges_m.size(); i++)
+				for (unsigned int i = 0; i < cur->edges_m.size(); ++i)
 				{
 					Node_t * next = getNode(cur->edges_m[i]);
 					Q.push_back(next);
@@ -2125,7 +2129,7 @@ int Graph_t::markConnectedComponents()
 
 		if (touches)
 		{
-			refcomp++;
+			++refcomp;
 			ref_m->refcompids.insert(comp);
 		}
 	}
@@ -2144,7 +2148,7 @@ int Graph_t::markConnectedComponents()
 	}
 
 	set<int>::iterator si;
-	for (si = ref_m->refcompids.begin(); si != ref_m->refcompids.end(); si++)
+	for (si = ref_m->refcompids.begin(); si != ref_m->refcompids.end(); ++si)
 	{
 		if(verbose) { cerr << " " << *si; }
 	}
@@ -2165,19 +2169,19 @@ void Graph_t::denovoNodes(const string & filename, const string & refname)
 	FILE * fp = xfopen(filename, "w");
 
 	MerTable_t::iterator mi;
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
 		Node_t * cur = mi->second;
 
 		map<string, int> who;
 
 		unordered_set<ReadId_t>::const_iterator si;
-		for (si = cur->reads_m.begin(); si != cur->reads_m.end(); si++)
+		for (si = cur->reads_m.begin(); si != cur->reads_m.end(); ++si)
 		{
 			string & set = readid2info[*si].set_m;
 			if (set != "ref")
 			{
-				who[set]++;
+				++(who[set]);
 			}
 		}
 
@@ -2219,13 +2223,13 @@ void Graph_t::alignRefNodes()
 	int refpathnodes = 0;
 
 	MerTable_t::iterator mi;
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
 		Node_t * cur = mi->second;
 
 		if (cur->onRefPath_m)
 		{
-			refpathnodes++;
+			++refpathnodes;
 		}
 	}
 
@@ -2431,7 +2435,7 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 		}
 		*/
 		
-		for (unsigned int j = (K-1); j < buddy->cov_distr_tmr.size(); j++) {
+		for (unsigned int j = (K-1); j < buddy->cov_distr_tmr.size(); ++j) {
 			node->cov_distr_tmr.push_back(buddy->cov_distr_tmr[j]); // tumor
 			node->cov_distr_nml.push_back(buddy->cov_distr_nml[j]); // normal
 			node->cov_status.push_back(buddy->cov_status[j]);
@@ -2447,14 +2451,14 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 		
 		// reads
 		unordered_set<ReadId_t>::const_iterator ri;
-		for (ri = buddy->reads_m.begin(); ri != buddy->reads_m.end(); ri++)
+		for (ri = buddy->reads_m.begin(); ri != buddy->reads_m.end(); ++ri)
 		{
 			node->reads_m.insert(*ri);
 		}
 
 		// add buddy read starts
 		int shift = amerlen;
-		for (unsigned int i = 0; i < buddy->readstarts_m.size(); i++)
+		for (unsigned int i = 0; i < buddy->readstarts_m.size(); ++i)
 		{
 			ReadStart_t & rs = buddy->readstarts_m[i];
 			node->readstarts_m.push_back(ReadStart_t(rs.readid_m, rs.nodeoffset_m+shift, rs.trim5_m, rs.ori_m));
@@ -2482,7 +2486,7 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 		node->edges_m.erase(node->edges_m.begin()+uniqueid);
 
 		// now move over the buddy edges
-		for (int i = 0; i < (int) buddy->edges_m.size(); i++)
+		for (int i = 0; i < (int) buddy->edges_m.size(); ++i)
 		{
 			if (i == buniqueid) { continue; }
 
@@ -2525,7 +2529,7 @@ void Graph_t::compress(int compid)
 
 	MerTable_t::iterator mi;
 
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
 		if(mi->second->component_m == compid) { //only analyze the selected connected component 
 		
@@ -2549,7 +2553,7 @@ void Graph_t::cleanDead()
 	set<Mer_t> deadnodes;
 
 	MerTable_t::iterator mi;
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
 		if (mi->second->dead_m) 
 		{
@@ -2560,7 +2564,7 @@ void Graph_t::cleanDead()
 	if(verbose) { cerr << "  removing " << deadnodes.size() << " dead nodes" << endl; }
 
 	set<Mer_t>::iterator di;
-	for (di = deadnodes.begin(); di != deadnodes.end(); di++)
+	for (di = deadnodes.begin(); di != deadnodes.end(); ++di)
 	{
 		mi = nodes_m.find(*di);
 		assert(mi != nodes_m.end());
@@ -2582,7 +2586,7 @@ void Graph_t::removeNode(Node_t * node)
 
 	node->dead_m = true;
 
-	for(unsigned int i = 0; i < node->edges_m.size(); i++)
+	for(unsigned int i = 0; i < node->edges_m.size(); ++i)
 	{
 		Node_t * nn = getNode(node->edges_m[i]);
 
@@ -2608,7 +2612,7 @@ void Graph_t::removeLowCov(bool docompression, int compid)
 
 	MerTable_t::iterator mi;
 
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
 		if(mi->second->component_m == compid) { //only process the selected connected component 
 		
@@ -2622,7 +2626,7 @@ void Graph_t::removeLowCov(bool docompression, int compid)
 				(node->getTotTmrCov() == 1 && node->getTotNmlCov() == 1) )
 			//if ( (node->minCovMinQV() <= LOW_COV_THRESHOLD) || (node->minCovMinQV() <= (MIN_COV_RATIO*avgcov)) )
 			{
-				lowcovnodes++;
+				++lowcovnodes;
 				removeNode(node);
 			}
 		}
@@ -2637,6 +2641,44 @@ void Graph_t::removeLowCov(bool docompression, int compid)
 }
 
 
+// removeShortLinks
+/////////////////////////////////////////////////////////////
+
+void Graph_t::removeShortLinks(int compid)
+{
+	int links = 0;
+
+	if (verbose) { cerr << endl << "remove short links: "; }
+
+	MerTable_t::iterator mi;
+
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
+	{
+		if(mi->second->component_m == compid) { //only process the selected connected component 
+		
+			Node_t * cur = mi->second;
+
+			//if (cur->isRef()) { continue; }
+			if (cur->isSpecial()) { continue; }
+
+			int deg = cur->edges_m.size();
+			int len = cur->getSize();
+
+			if ((deg >= 2) && (len < MAX_LINK_LEN))
+			{
+				removeNode(cur);
+				++links;
+			}
+		}
+	}
+
+	if(verbose) { cerr << " removed links: " << links << endl; }
+
+	if (links) { compress(compid); }
+
+	if(verbose) { printStats(compid); }
+}
+
 // removeTips
 //////////////////////////////////////////////////////////////
 
@@ -2647,14 +2689,14 @@ void Graph_t::removeTips(int compid)
 
 	do
 	{
-		round++;
+		++round;
 		tips = 0;
 
 		if (verbose) { cerr << endl << "remove tips round: " << round; }
 
 		MerTable_t::iterator mi;
 
-		for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+		for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 		{
 			if(mi->second->component_m == compid) { //only process the selected connected component 
 			
@@ -2669,7 +2711,7 @@ void Graph_t::removeTips(int compid)
 				if ((deg <= 1) && (len < MAX_TIP_LEN))
 				{
 					removeNode(cur);
-					tips++;
+					++tips;
 				}
 			}
 		}
@@ -2713,7 +2755,7 @@ void Graph_t::greedyTrim()
 
   vector<string> nodelist;
 
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
     nodelist.push_back(mi->first);
   }
@@ -2721,7 +2763,7 @@ void Graph_t::greedyTrim()
   CovCmp covcmp(this);
   sort (nodelist.begin(), nodelist.end(), covcmp);
 
-  for (unsigned int i = 0; i < nodelist.size(); i++)
+  for (unsigned int i = 0; i < nodelist.size(); ++i)
   {
     mi = nodes_m.find(nodelist[i]);
 
@@ -2739,22 +2781,22 @@ void Graph_t::greedyTrim()
     Edge_t bestf(cur->edges_m[0]); float covf = -1; int degf = 0;
     Edge_t bestr(cur->edges_m[0]); float covr = -1; int degr = 0;
 
-    for (unsigned int j = 0; j < cur->edges_m.size(); j++)
+    for (unsigned int j = 0; j < cur->edges_m.size(); ++j)
     {
       Edge_t & edge = cur->edges_m[j];
       Node_t * other = getNode(edge);
 
-      if (edge.isDir(F)) { degf++; if (other->getTotCov() > covf) { bestf = edge; covf = other->getTotCov(); } }
-      else               { degr++; if (other->getTotCov() > covr) { bestr = edge; covr = other->getTotCov(); } }
+      if (edge.isDir(F)) { ++degf; if (other->getTotCov() > covf) { bestf = edge; covf = other->getTotCov(); } }
+      else               { ++degr; if (other->getTotCov() > covr) { bestr = edge; covr = other->getTotCov(); } }
     }
 
     // prune away all the other edges
 
     if (degf > 1 || degr > 1)
     {
-      branches++;
+      ++branches;
 
-      for (unsigned int i = 0; i < cur->edges_m.size(); i++)
+      for (unsigned int i = 0; i < cur->edges_m.size(); ++i)
       {
         Edge_t & edge = cur->edges_m[i];
         Node_t * other = getNode(edge);
@@ -2820,7 +2862,7 @@ void Graph_t::threadReads(int compid)
 	while (thread)
 	{
 		thread = 0;
-		threadround++;
+		++threadround;
 
 		cerr << endl << "threading round: " << threadround << " " << nodes_m.size() << " nodes" << endl;
 
@@ -2836,7 +2878,7 @@ void Graph_t::threadReads(int compid)
 			cerr << "================================================================" << endl;
 		}
 
-		for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+		for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 		{
 			
 			if(mi->second->component_m == compid) { //only process the selected connected component 
@@ -2854,7 +2896,7 @@ void Graph_t::threadReads(int compid)
 					vector<unsigned int> threaded;
 					threaded.resize(numedges);
 
-					for (unsigned int ti = 0; ti < numedges; ti++)
+					for (unsigned int ti = 0; ti < numedges; ++ti)
 					{
 						threaded[ti] = 0;
 					}
@@ -2865,7 +2907,7 @@ void Graph_t::threadReads(int compid)
 						cerr << "=Checking: " << cur->nodeid_m << " " << cur->strlen() << "bp" << endl;
 						cerr << "================================================================" << endl;
 
-						for (unsigned int i = 0; i < numedges; i++)
+						for (unsigned int i = 0; i < numedges; ++i)
 						{
 							cerr << "  " << i << ": " << cur->nodeid_m << ":" << cur->edges_m[i] << endl;
 						}
@@ -2880,7 +2922,7 @@ void Graph_t::threadReads(int compid)
 
 					// Find reads that span across the node
 
-					for (unsigned int e1i = 0; e1i < numedges; e1i++)
+					for (unsigned int e1i = 0; e1i < numedges; ++e1i)
 					{
 						Edge_t & e1 = cur->edges_m[e1i];
 						Node_t * n1 = getNode(e1);
@@ -2888,12 +2930,12 @@ void Graph_t::threadReads(int compid)
 						if (e1.startdir() != F) { continue; }
 
 						set<ReadId_t> e1reads;
-						for (unsigned int j = 0; j < e1.readids_m.size(); j++)
+						for (unsigned int j = 0; j < e1.readids_m.size(); ++j)
 						{
 							e1reads.insert(e1.readids_m[j]);
 						}
 
-						for (unsigned int e2i = 0; e2i < numedges; e2i++)
+						for (unsigned int e2i = 0; e2i < numedges; ++e2i)
 						{
 							Edge_t & e2 = cur->edges_m[e2i];
 							Node_t * n2 = getNode(e2);
@@ -2908,7 +2950,7 @@ void Graph_t::threadReads(int compid)
 
 							if (VERBOSE) cerr << e1i << ":" << e1.label() << " == " << e2i << ":" << e2.label() << " :";
 
-							for (unsigned int j = 0; j < e2.readids_m.size(); j++)
+							for (unsigned int j = 0; j < e2.readids_m.size(); ++j)
 							{
 								int jj = e2.readids_m[j];
 
@@ -2932,7 +2974,7 @@ void Graph_t::threadReads(int compid)
 
 							for (s1 =  n1->reads_m.begin();
 							s1 != n1->reads_m.end();
-							s1++)
+							++s1)
 							{
 								s2 = n2->reads_m.find(readid2info[*s1].mateid_m);
 
@@ -2948,8 +2990,8 @@ void Graph_t::threadReads(int compid)
 
 							if ( (int)overlap.size() >= MIN_THREAD_READS)
 							{
-								threaded[e1i]++;
-								threaded[e2i]++;
+								++(threaded[e1i]);
+								++(threaded[e2i]);
 							}
 						}
 					}
@@ -2957,11 +2999,11 @@ void Graph_t::threadReads(int compid)
 					// see what fraction of nodes were completely threaded
 
 					unsigned int threadcnt = 0;
-					for (unsigned int ti = 0; ti < numedges; ti++)
+					for (unsigned int ti = 0; ti < numedges; ++ti)
 					{
 						if (threaded[ti] > 0)
 						{
-							threadcnt++;
+							++threadcnt;
 						}
 					}
 				
@@ -2980,19 +3022,19 @@ void Graph_t::threadReads(int compid)
 						int copy = 0;
 						vector<Node_t*> newnodes;
 
-						for (unsigned int e1i = 0; e1i < numedges; e1i++)
+						for (unsigned int e1i = 0; e1i < numedges; ++e1i)
 						{
 							Edge_t & e1 = cur->edges_m[e1i];
 
 							if (e1.startdir() != F) { continue; }
 
 							set<ReadId_t> e1reads;
-							for (unsigned int j = 0; j < e1.readids_m.size(); j++)
+							for (unsigned int j = 0; j < e1.readids_m.size(); ++j)
 							{
 								e1reads.insert(e1.readids_m[j]);
 							}
 
-							for (unsigned int e2i = 0; e2i < numedges; e2i++)
+							for (unsigned int e2i = 0; e2i < numedges; ++e2i)
 							{
 								Edge_t & e2 = cur->edges_m[e2i];
 
@@ -3000,7 +3042,7 @@ void Graph_t::threadReads(int compid)
 
 								set<ReadId_t> overlap;
 
-								for (unsigned int j = 0; j < e2.readids_m.size(); j++)
+								for (unsigned int j = 0; j < e2.readids_m.size(); ++j)
 								{
 									int jj = e2.readids_m[j];
 
@@ -3014,7 +3056,7 @@ void Graph_t::threadReads(int compid)
 
 								if ((int)overlap.size() >= MIN_THREAD_READS)
 								{
-									copy++;
+									++copy;
 
 									char buffer [1024];
 									sprintf(buffer, "%s_%d", cur->nodeid_m.c_str(), copy);
@@ -3027,7 +3069,7 @@ void Graph_t::threadReads(int compid)
 											<< "  r[" << overlap.size() << "]:";
 
 										set<ReadId_t>::iterator si;
-										for (si = overlap.begin(); si != overlap.end(); si++) { cerr << " " << *si; }
+										for (si = overlap.begin(); si != overlap.end(); ++si) { cerr << " " << *si; }
 										cerr << endl;
 
 										cerr << "  making " << buffer << endl << endl;
@@ -3060,7 +3102,7 @@ void Graph_t::threadReads(int compid)
 								
 									// reads and edges
 									set<ReadId_t>::iterator si;
-									for (si = overlap.begin(); si != overlap.end(); si++)
+									for (si = overlap.begin(); si != overlap.end(); ++si)
 									{
 										copy->addEdge(e1.nodeid_m, e1.dir_m, *si);
 										copy->addEdge(e2.nodeid_m, e2.dir_m, *si);
@@ -3081,7 +3123,7 @@ void Graph_t::threadReads(int compid)
 							{ 
 								cerr << "cleaning up: " << cur->nodeid_m << endl; 
 
-								for (unsigned int e1i = 0; e1i < cur->edges_m.size(); e1i++)
+								for (unsigned int e1i = 0; e1i < cur->edges_m.size(); ++e1i)
 								{
 									Edge_t & e1 = cur->edges_m[e1i];
 									cerr << "   " << e1 << endl;
@@ -3090,23 +3132,23 @@ void Graph_t::threadReads(int compid)
 
 							removeNode(cur);
 
-							thread++;
+							++thread;
 
-							for (unsigned int j = 0; j < newnodes.size(); j++)
+							for (unsigned int j = 0; j < newnodes.size(); ++j)
 							{
 								Node_t * nn = newnodes[j];
 								nodes_m.insert(make_pair(nn->nodeid_m, nn));
 
 								if (VERBOSE) { cerr << "  swapping in: " << nn->nodeid_m << endl; }
 
-								for (unsigned int k = 0; k < nn->edges_m.size(); k++)
+								for (unsigned int k = 0; k < nn->edges_m.size(); ++k)
 								{
 									Edge_t & e = nn->edges_m[k];
 									Node_t * other = getNode(e.nodeid_m);
 
 									if (VERBOSE) { cerr << "    edge: " << e << endl; }
 
-									for (unsigned int r = 0; r < e.readids_m.size(); r++)
+									for (unsigned int r = 0; r < e.readids_m.size(); ++r)
 									{
 										other->addEdge(nn->nodeid_m, Edge_t::fliplink(e.dir_m), e.readids_m[r]);
 									}
@@ -3152,13 +3194,13 @@ void Graph_t::checkReadStarts(int compid)
 
 	MerTable_t::iterator mi;
 
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
 		if(mi->second->component_m == compid) { //only analyze the selected connected component 
 
 			Node_t * cur = mi->second;
 
-			for (unsigned int i = 0; i < cur->readstarts_m.size(); i++)
+			for (unsigned int i = 0; i < cur->readstarts_m.size(); ++i)
 			{
 				ReadStart_t & rstart = cur->readstarts_m[i];
 				ReadId_t rid         = rstart.readid_m;
@@ -3167,7 +3209,7 @@ void Graph_t::checkReadStarts(int compid)
 				string ckmer;
 				string rkmer = rinfo.seq_m.substr(rstart.trim5_m, K);
 
-				all++;
+				++all;
 
 				if (rstart.ori_m == R)
 				{
@@ -3192,7 +3234,7 @@ void Graph_t::checkReadStarts(int compid)
 
 					if (rkmer != ckmer)
 					{
-						bad++;
+						++bad;
 						cerr << "mismatch: " << cur->str_m << endl;
 					}
 					else
@@ -3214,11 +3256,11 @@ void Graph_t::updateContigReadStarts()
 {
 	MerTable_t::iterator mi;
 
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
 		Node_t * cur = mi->second;
 
-		for (unsigned int i = 0; i < cur->readstarts_m.size(); i++)
+		for (unsigned int i = 0; i < cur->readstarts_m.size(); ++i)
 		{
 			ReadId_t rid = cur->readstarts_m[i].readid_m;
 
@@ -3239,11 +3281,11 @@ void Graph_t::bundleMates()
 
 	int links = 0;
 
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
 		Node_t * cur = mi->second;
 
-		for (unsigned int i = 0; i < cur->readstarts_m.size(); i++)
+		for (unsigned int i = 0; i < cur->readstarts_m.size(); ++i)
 		{
 			ReadId_t mateid = readid2info[cur->readstarts_m[i].readid_m].mateid_m;
 
@@ -3254,7 +3296,7 @@ void Graph_t::bundleMates()
 				if (matecontig != "")
 				{
 					cur->addContigLink(matecontig, cur->readstarts_m[i].readid_m);
-					links++;
+					++links;
 				}
 			}
 		}
@@ -3265,7 +3307,7 @@ void Graph_t::bundleMates()
 
 	// bundle consistent links
 
-	for (mi = nodes_m.begin(); mi != nodes_m.end(); mi++)
+	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi)
 	{
 		Node_t * cur = mi->second;
 
@@ -3277,7 +3319,7 @@ void Graph_t::bundleMates()
 
 			for (mi =  cur->contiglinks_m.begin();
 			mi != cur->contiglinks_m.end();
-			mi++)
+			++mi)
 			{
 				ContigLinkList_t * list = mi->second;
 
@@ -3298,7 +3340,7 @@ void Graph_t::bundleMates()
 				int lastpos = -1;
 				int lastmpos = -1;
 
-				for (unsigned int i = 0; i < list->linkCnt(); i++)
+				for (unsigned int i = 0; i < list->linkCnt(); ++i)
 				{
 					ContigLink_t & link = list->linklist_m[i];
 
@@ -3321,13 +3363,13 @@ void Graph_t::bundleMates()
 
 					if (cur == other)
 					{
-						internal++;
+						++internal;
 
 						if      (linkdir == FR) { linkdist = mstart.nodeoffset_m - rstart.nodeoffset_m; }
 						else if (linkdir == RF) { linkdist = rstart.nodeoffset_m - mstart.nodeoffset_m; }
 						else
 						{
-							invalid++;
+							++invalid;
 						}
 					}
 					else
@@ -3375,7 +3417,7 @@ void Graph_t::bundleMates()
 
 				//cerr << "--" << endl;
 
-				for (int i = 0; i < 4; i++)
+				for (int i = 0; i < 4; ++i)
 				{
 					int cnt = bundles[i].linkCnt();
 					int dups = bundles[i].dupCnt();
@@ -3420,7 +3462,7 @@ void Graph_t::scaffoldContigs()
 void Graph_t::printGraph()
 {
 	MerTable_t::iterator gi;
-	for (gi = nodes_m.begin(); gi != nodes_m.end(); gi++)
+	for (gi = nodes_m.begin(); gi != nodes_m.end(); ++gi)
 	{
 		cout << gi->second << endl;
 	}
@@ -3435,7 +3477,7 @@ void Graph_t::printStats(int compid)
 	int span = 0;
 
 	MerTable_t::iterator gi;
-	for (gi = nodes_m.begin(); gi != nodes_m.end(); gi++)
+	for (gi = nodes_m.begin(); gi != nodes_m.end(); ++gi)
 	{
 		if(gi->second->component_m == compid) {
 			edgecnt += gi->second->edges_m.size();

@@ -185,14 +185,14 @@ public:
 		for (unsigned int i = 0; i < n; i++) {
 			cerr << cov_distr[i] << " ";
 		}
-		cerr << endl;
+		cerr << "(node size = " << nodesize << ")" << endl;
 		*/
 		
 		sort (cov_distr.begin(), cov_distr.end());  
 		
-		for (unsigned int i = 0; i < n; i++) {
+		for (unsigned int i = 0; i < n; ++i) {
 			sum += cov_distr[i];
-			if(cov_distr[i] != 0) { sum_non0 += cov_distr[i]; n_non0++; }
+			if(cov_distr[i] != 0) { sum_non0 += cov_distr[i]; ++n_non0; }
 			if(cov_distr[i] < min_cov) { min_cov = cov_distr[i]; }
 			if(cov_distr[i] < min_nonzero_cov && cov_distr[i] != 0) { min_nonzero_cov = cov_distr[i]; }
 		}

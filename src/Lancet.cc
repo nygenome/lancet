@@ -176,7 +176,7 @@ int loadRefs(const string reference, const string region, vector< map<string, Re
 	string START = hdr.substr(x+1, y-x-1);
 	string END   = hdr.substr(y+1, string::npos);
 	
-	for (unsigned int i = 0; i < s.length(); i++) { s[i] = toupper(s[i]); }
+	for (unsigned int i = 0; i < s.length(); ++i) { s[i] = toupper(s[i]); }
 
 	// split into overalpping windows if sequence is too long
 	int end = s.length();
@@ -218,10 +218,10 @@ int loadRefs(const string reference, const string region, vector< map<string, Re
 		ref->hdr = hdr;
 		
 		reftable[T].insert(make_pair(hdr, ref));
-		num_windows++;
+		++num_windows;
 		
 		// move to next reftable
-		T++;
+		++T;
 		if( (num_windows%num_threads) == 0) { T=0; }
 	}
 	
@@ -244,7 +244,7 @@ void loadBed(const string bedfile, vector< map<string, Ref_t *> > &reftable, int
 			size_t x = line.find_first_of('#');
 			if(x == 0) { continue; } // skip comments
 			
-			num_regions++;
+			++num_regions;
 			//cerr << line << '\n';
 			
 			// extrat coordinates			
@@ -511,10 +511,10 @@ int main(int argc, char** argv)
 	MIN_QUAL_TRIM = MIN_QV_TRIM + QV_RANGE;
 	MIN_QUAL_CALL = MIN_QV_CALL + QV_RANGE;
 
-	if (TUMOR == "") { cerr << "ERROR: Must provide the tumor BAM file (-t)" << endl; errflg++; }
-	if (NORMAL == "") { cerr << "ERROR: Must provide the normal BAM file (-n)" << endl; errflg++; }		
-	if (REFFILE == "") { cerr << "ERROR: Must provide a reference genome file (-r)" << endl; errflg++; }
-	if ( (BEDFILE == "") && (REGION == "") ) { cerr << "ERROR: Must provide region (-p) or BED file (-B)" << endl; errflg++; }
+	if (TUMOR == "") { cerr << "ERROR: Must provide the tumor BAM file (-t)" << endl; ++errflg; }
+	if (NORMAL == "") { cerr << "ERROR: Must provide the normal BAM file (-n)" << endl; ++errflg; }		
+	if (REFFILE == "") { cerr << "ERROR: Must provide a reference genome file (-r)" << endl; ++errflg; }
+	if ( (BEDFILE == "") && (REGION == "") ) { cerr << "ERROR: Must provide region (-p) or BED file (-B)" << endl; ++errflg; }
 
 	if (errflg) { exit(EXIT_FAILURE); }
 	
@@ -553,7 +553,7 @@ int main(int argc, char** argv)
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-		for( i=0; i < NUM_THREADS; i++ ) {
+		for( i=0; i < NUM_THREADS; ++i ) {
 			cerr << "starting thread " << (i+1) << " on " << reftables[i].size() << " windows" << endl;
 		
 			assemblers[i] = new Microassembler();
@@ -605,7 +605,7 @@ int main(int argc, char** argv)
 		
 		// free attribute and wait for the other threads
 		pthread_attr_destroy(&attr);
-		for( i=0; i < NUM_THREADS; i++ ){
+		for( i=0; i < NUM_THREADS; ++i ){
 			rc = pthread_join(threads[i], &status);
 			if (rc){
 				cerr << "Error:unable to join," << rc << endl;
@@ -626,7 +626,7 @@ int main(int argc, char** argv)
 		//merge variant from all threads
 		cerr << "Merge variants" << endl;
 		VariantDB_t variantDB; // variants DB
-		for( i=0; i < NUM_THREADS; i++ ) {
+		for( i=0; i < NUM_THREADS; ++i ) {
 			
 			tot_skip += assemblers[i]->num_skip;
 			tot_svn_only += assemblers[i]->num_snv_only_regions;

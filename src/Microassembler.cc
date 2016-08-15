@@ -74,7 +74,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 {	
 	if (refname != "")
 	{
-		graphCnt++;
+		++graphCnt;
 		
 		//VERBOSE = false;
 		
@@ -103,7 +103,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 		bool cycleInGraph = false;
 
 		// dinamic kmer mode
-		for (int k=minkmer; k<=maxkmer; k++) {
+		for (int k=minkmer; k<=maxkmer; ++k) {
 			g.setK(k);
 			refinfo->setK(k);
 			
@@ -157,7 +157,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 			//cerr << "Num components = " << numcomp << endl;
 			
 			// process each connected components
-			for (int c=1; c<=numcomp; c++) { 
+			for (int c=1; c<=numcomp; ++c) { 
 				
 				char comp[21]; // enough to hold all numbers up to 64-bits
 				sprintf(comp, "%d", c);
@@ -189,7 +189,11 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 				// Remove tips
 				g.removeTips(c);
 				if (PRINT_ALL) { g.printDot(out_prefix + ".4t.c" + comp + ".dot",c); }
-
+				
+				// Remove short links (nodes connected by only a few kmers are likely to be chimeric connections)
+				g.removeShortLinks(c);
+				if (PRINT_ALL) { g.printDot(out_prefix + ".5s.c" + comp + ".dot",c); }
+				
 				// skip analysis if there is a cycle in the graph 
 				if (g.hasCycle()) { g.clear(false); cycleInGraph = true; break; }
 
@@ -307,19 +311,19 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 					if(T=='X') {
 						//cerr << "X:" << pos << "|";
 						mit = mapX.find(pos);
-						if (mit != mapX.end()) { ((*mit).second)++; }
+						if (mit != mapX.end()) { ++((*mit).second); }
 						else { mapX.insert(std::pair<int,int>(pos,1)); }
 					}
 					if(T=='I') {
 						//cerr << "I:" << pos << "|";
 						mit = mapI.find(pos);
-						if (mit != mapI.end()) { ((*mit).second)++; }
+						if (mit != mapI.end()) { ++((*mit).second); }
 						else { mapI.insert(std::pair<int,int>(pos,1)); }
 					}
 					if(T=='D') {
 						//cerr << "D:" << pos << "|";
 						mit = mapD.find(pos);
-						if (mit != mapD.end()) { ((*mit).second)++; }
+						if (mit != mapD.end()) { ++((*mit).second); }
 						else { mapD.insert(std::pair<int,int>(pos,1)); }
 					}
 					
@@ -342,7 +346,7 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 					for (std::vector<int>::iterator it = genomePositions.begin() ; it != genomePositions.end(); ++it) {
 						//cerr << (*it) << " ";
 						mit = mapSC.find((*it));
-						if (mit != mapSC.end()) { ((*mit).second)++; }
+						if (mit != mapSC.end()) { ++((*mit).second); }
 						else { mapSC.insert(std::pair<int,int>((*it),1)); }
 					}
 				}
@@ -401,13 +405,13 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 	//cerr << endl;
 	
 	if(code == TMR) {
-		if(snv_evidence && !indel_evidence && !softclip_evidence)   { num_snv_only_regions++; /*ans = false*/; }
-		if(!snv_evidence && indel_evidence && !softclip_evidence)   { num_indel_only_regions++; }
-		if(!snv_evidence && !indel_evidence && softclip_evidence)   { num_softclip_only_regions++; }
-		if(!snv_evidence && (indel_evidence || softclip_evidence))  { num_indel_or_softclip_regions++; }	
-		if((snv_evidence || indel_evidence) && !softclip_evidence)  { num_snv_or_indel_regions++; }	
-		if((snv_evidence || softclip_evidence) && !indel_evidence)  { num_snv_or_softclip_regions++; }	
-		if(snv_evidence || indel_evidence || softclip_evidence)     { num_snv_or_indel_or_softclip_regions++; }
+		if(snv_evidence && !indel_evidence && !softclip_evidence)   { ++num_snv_only_regions; /*ans = false*/; }
+		if(!snv_evidence && indel_evidence && !softclip_evidence)   { ++num_indel_only_regions; }
+		if(!snv_evidence && !indel_evidence && softclip_evidence)   { ++num_softclip_only_regions; }
+		if(!snv_evidence && (indel_evidence || softclip_evidence))  { ++num_indel_or_softclip_regions; }	
+		if((snv_evidence || indel_evidence) && !softclip_evidence)  { ++num_snv_or_indel_regions; }	
+		if((snv_evidence || softclip_evidence) && !indel_evidence)  { ++num_snv_or_softclip_regions; }	
+		if(snv_evidence || indel_evidence || softclip_evidence)     { ++num_snv_or_indel_or_softclip_regions; }
 	}
 
 	if(!snv_evidence && !indel_evidence && !softclip_evidence) { ans = false; }
@@ -503,12 +507,12 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			al.GetTag("XS", xs); // get the XS tag for the read
 			//if(as.empty()) { as = -1; }
 			//if(xs.empty()) { xs = -1; }
-			if( as==xs && as!=-1 && xs!=-1 ) { num_equal_AS_XS_read++; continue; } // skip alignments equal alignment score for AS and XS
+			if( as==xs && as!=-1 && xs!=-1 ) { ++num_equal_AS_XS_read; continue; } // skip alignments equal alignment score for AS and XS
 			
 			// XM	Number of mismatches in the alignment
 			nm = 0;
 			al.GetTag("XM", nm); // get the XM tag for the read
-			if(nm >= MIN_XM) { num_high_XM_read++; /*continue;*/ } // skip alignments with too many mis-matches
+			if(nm >= MIN_XM) { ++num_high_XM_read; /*continue;*/ } // skip alignments with too many mis-matches
 			
 			// XT type: Unique/Repeat/N/Mate-sw
 			//
@@ -521,8 +525,8 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			xt = "";
 			al.GetTag("XT", xt); // get the XT tag for the read
 			if(xt.empty()) { xt = "null"; }
-			if(xt == "R") { num_XT_R_read++; continue; } // skip alignments which are marked XT:R
-			if(xt == "M") { num_XT_M_read++; /*continue;*/ } // skip alignments which are marked XT:M
+			if(xt == "R") { ++num_XT_R_read; continue; } // skip alignments which are marked XT:R
+			if(xt == "M") { ++num_XT_M_read; /*continue;*/ } // skip alignments which are marked XT:M
 			
 			
 			// XA  Alternative hits; format: (chr,pos,CIGAR,NM;)
@@ -531,7 +535,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			if(xa.empty()) { xa = "null"; }
 			if(xa != "null") {
 				//cerr << al.Name << "\t" << xa << endl;
-				num_XA_read++; 
+				++num_XA_read; 
 				continue; // skip alignments with alternative hits
 			}
 			
@@ -540,7 +544,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 				for (vector<int>::iterator it = clipSizes.begin() ; it != clipSizes.end(); ++it) {
 					double prc_sc = (double)(*it)/(double)al.Length;
 					//cerr << (*it) << " " << al.Length << " " << prc_sc << endl;
-					if(prc_sc >= CLIP_PRC) { num_high_softclip_read++; break; }
+					if(prc_sc >= CLIP_PRC) { ++num_high_softclip_read; break; }
 				}				
 			}
 									
@@ -553,14 +557,14 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 				if( !(al.IsMapped()) ) { // unmapped read
 					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, code, strand);
 					//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_BASTARD, code, strand);
-					num_unmapped++; 
+					++num_unmapped; 
 				}
 				else { // mapped reads
 					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, code, strand);								
 					//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_MAPPED, code, strand);								
 				}
 				//cout << al.Name << endl;
-				readcnt++; tot_reads_window++;
+				++readcnt; ++tot_reads_window;
 				totalreadbp += (al.QueryBases).length();
 				
 				//void addMates(ReadId_t r1, ReadId_t r2)
@@ -676,9 +680,9 @@ int Microassembler::processReads() {
 	int counter = 0;
 	double progress;
 	double old_progress = 0;
-	for ( ri=reftable->begin() ; ri != reftable->end(); ri++ ) {
+	for ( ri=reftable->begin() ; ri != reftable->end(); ++ri ) {
 
-		counter++;
+		++counter;
 		progress = floor(100*(double(counter)/(double)reftable->size()));
 		if (progress > old_progress) {
 			cerr << "Thread " << ID << " is " << progress << "\% done." << endl;
@@ -730,10 +734,10 @@ int Microassembler::processReads() {
 			if(!skipT && !skipN) { 
 				processGraph(g, graphref, minK, maxK);
 			}
-			else { num_skip++; g.clear(true); }
+			else { ++num_skip; g.clear(true); }
 		}
 		else {
-			num_skip++;
+			++num_skip;
 			if(verbose) { cerr << "Skip region: not enough evidence for variation." << endl; }
 		}
 	}

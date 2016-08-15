@@ -137,8 +137,6 @@ public:
 	bool hasTumorOnlyNode();
 	vector<cov_t> covDistr(char sample);
 	vector<float> readCovNodes();
-	//int covAt(int pos, char sample, unsigned int strand);
-
 };
 
 #endif

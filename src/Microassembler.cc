@@ -190,7 +190,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 				g.removeTips(c);
 				if (PRINT_ALL) { g.printDot(out_prefix + ".4t.c" + comp + ".dot",c); }
 				
-				// Remove short links (nodes connected by only a few kmers are likely to be chimeric connections)
+				// Remove short links (nodes connected by only a few low coverage kmers are likely to be chimeric connections)
 				g.removeShortLinks(c);
 				if (PRINT_ALL) { g.printDot(out_prefix + ".5s.c" + comp + ".dot",c); }
 				

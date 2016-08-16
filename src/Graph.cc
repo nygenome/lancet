@@ -2648,6 +2648,8 @@ void Graph_t::removeShortLinks(int compid)
 {
 	int links = 0;
 
+	double avgcov = ((double) totalreadbp_m) / ((double) ref_m->rawseq.length());
+
 	if (verbose) { cerr << endl << "remove short links: "; }
 
 	MerTable_t::iterator mi;
@@ -2664,7 +2666,8 @@ void Graph_t::removeShortLinks(int compid)
 			int deg = cur->edges_m.size();
 			int len = cur->getSize();
 
-			if ((deg >= 2) && (len < MAX_LINK_LEN))
+			//if ((deg >= 2) && (len < MAX_LINK_LEN) )
+			if ((deg >= 2) && (len < MAX_LINK_LEN) && (cur->getMinCov() <= floor(sqrt(avgcov))) )
 			{
 				removeNode(cur);
 				++links;

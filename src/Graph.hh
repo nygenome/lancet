@@ -130,7 +130,7 @@ public:
 	}
 
 	void setDB(VariantDB_t *db) { vDB = db; }
-	void setK(int k) { K = k; MAX_LINK_LEN = (int)floor((double)K/3.0); }
+	void setK(int k) { K = k; MAX_LINK_LEN = (int)floor((double)K/2.0); }
 	void setVerbose(bool v) { verbose = v; }
 	void setMoreVerbose(bool v) { VERBOSE = v; }
 	void setMinQualTrim(int mq) { MIN_QUAL_TRIM = mq; }

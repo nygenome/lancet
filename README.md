@@ -2,7 +2,7 @@ lancet
 ======
 
 Lancet is a somatic variant caller (SNVs and indels) for short read data. Lancet uses a localized micro-assembly strategy to detect somatic mutation with high sensitivity and accuracy on a tumor/normal pair.
-Lancet is based on the colored de Bruijn graph assembly paradigm where tumor and normal reads are jointly analyzed within the same graph. On-the-fly repeat composition analysis and self-tuning k-mer strategy are used together to increase specificity in regions characterized by complex repeat structures. Lancet requires the raw reads to be aligned with BWA (See [BWA](http://bio-bwa.sourceforge.net/bwa.shtml) description for more info). Lancet is implemented in C++.
+Lancet is based on the colored de Bruijn graph assembly paradigm where tumor and normal reads are jointly analyzed within the same graph. On-the-fly repeat composition analysis and self-tuning k-mer strategy are used together to increase specificity in regions characterized by low complexity sequences. Lancet requires the raw reads to be aligned with BWA (See [BWA](http://bio-bwa.sourceforge.net/bwa.shtml) description for more info). Lancet is implemented in C++.
 
 * Version: 1.0.0
 * Author: Giuseppe Narzisi, [New York Genome Center](https://www.nygenome.org)
@@ -67,7 +67,7 @@ Below is the current list of filters:
 
 The DeBruijn graph representation of a genomic region can be exported to file in [DOT](http://www.graphviz.org/doc/info/lang.html) format using the -A flag. 
 
-**NOTE:** *The following procedure does not scale well when applied to larger graphs. Please render a graph only to inspect a small genomic region of a few hundred basepairs. The -A flag must not be used during regular variant calling over the whole genome.*
+**NOTE:** *The following procedure does not scale to larger graphs. Please render a graph only to inspect a small genomic region of a few hundred basepairs. The -A flag must not be used during regular variant calling over the whole genome.*
 
 For example the following command:
 

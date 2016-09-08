@@ -435,6 +435,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	double CLIP_PRC = 0.5; // percent of soft-clipped bases in alignment
 	//double MAX_PRC_HIGH_CLIP_READS = 30; // max percent of reads with high soft-clipping rate (>CLIP_PRC)
 	int MIN_XM = 5;
+	int MIN_DELTA = 5; // min difference for AS adn XS tags (AS-XS)
 	
 	// iterate through all alignments
 	//int num_PCR_duplicates = 0;
@@ -507,7 +508,9 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			al.GetTag("XS", xs); // get the XS tag for the read
 			//if(as.empty()) { as = -1; }
 			//if(xs.empty()) { xs = -1; }
-			if( as==xs && as!=-1 && xs!=-1 ) { ++num_equal_AS_XS_read; continue; } // skip alignments equal alignment score for AS and XS
+			int delta = abs(as-xs);			
+			//if( as==xs && as!=-1 && xs!=-1 ) { ++num_equal_AS_XS_read; continue; } // skip alignments with equal score for AS and XS
+			if( (delta <= MIN_DELTA) && as!=-1 && xs!=-1 ) { ++num_equal_AS_XS_read; continue; } // skip alignments where AS and XS are very close
 			
 			// XM	Number of mismatches in the alignment
 			nm = 0;

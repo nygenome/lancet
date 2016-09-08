@@ -1593,7 +1593,7 @@ void Graph_t::printDot(const string & filename, int compid)
     }
     else
     {
-	  fprintf(fp, "  graph [bgcolor=black,layout=neato,rankdir=LR]\n");
+	  fprintf(fp, "  graph [bgcolor=black,size=\"80,110\",layout=neato,ratio=compress,rankdir=LR]\n");
 	  fprintf(fp, "  node [shape=circle,style=filled,fontsize=1,fixedsize=true,hight=1,width=1];\n");
 	  fprintf(fp, "  edge [fixedsize=true,len=1.2];\n");
     }

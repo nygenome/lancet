@@ -12,7 +12,7 @@ all: bamtools htslib src
 
 .PHONY : src
 src:
-	cd src; make; cd ../
+	cd src; make; cp Lancet ../; cd ../
 
 .PHONY : bamtools
 bamtools:
@@ -28,4 +28,4 @@ htslib:
 
 #.PHONY : clean
 clean:
-	 rm src/Lancet; rm -rf $(ABS_BAMTOOLS_DIR)/build; rm -rf $(ABS_BAMTOOLS_DIR)/include; rm -rf $(ABS_BAMTOOLS_DIR)/lib; rm -rf $(ABS_BAMTOOLS_DIR)/bin; cd $(ABS_HTSLIB_DIR); make clean;
+	 rm Lancet src/Lancet; rm -rf $(ABS_BAMTOOLS_DIR)/build; rm -rf $(ABS_BAMTOOLS_DIR)/include; rm -rf $(ABS_BAMTOOLS_DIR)/lib; rm -rf $(ABS_BAMTOOLS_DIR)/bin; cd $(ABS_HTSLIB_DIR); make clean;

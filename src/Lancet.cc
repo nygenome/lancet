@@ -309,14 +309,14 @@ int main(int argc, char** argv)
 	
 	// initilize filter thresholds
 	Filters filters;
-	filters.minPhredFisher = 7;
+	filters.minPhredFisher = 5;
 	filters.minCovNormal = 10;
 	filters.maxCovNormal = 1000000;
 	filters.minCovTumor = 4;
 	filters.maxCovTumor = 1000000;
 	filters.minVafTumor = 0.05;
 	filters.maxVafNormal = 0;
-	filters.minAltCntTumor = 4;
+	filters.minAltCntTumor = 3;
 	filters.maxAltCntNormal = 0;
 	filters.minStrandBias = 1;
 	
@@ -369,7 +369,7 @@ int main(int argc, char** argv)
 		
 		"\nFlags\n"
 		"   --active-region-off, -W    : turn off active region module\n"		
-		"   --kmer-recovery-on, -R     : turn on k-mer recovery (experimental)\n"
+		"   --kmer-recovery, -R        : turn on k-mer recovery (experimental)\n"
 		"   --print-graph, -A          : print graph (in .dot format) after every stage\n"
 		"   --verbose, -v              : be verbose\n"
 		"   --more-verbose, -V         : be more verbose\n"

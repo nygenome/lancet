@@ -110,6 +110,15 @@ The final graph (after compression) containing one single variant is depicted be
 ### Complete command-line options
 
 ```
+  |                           |
+  |      _` | __ \   __|  _ \ __|
+  |     (   | |   | (     __/ |
+ _____|\__,_|_|  _|\___|\___|\__|
+
+Program: Lancet (micro-assembly somatic variant caller)
+Version: 1.0.0 (beta), September 18 2016
+Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>
+
 Usage: Lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>
  [-h for full list of commands]
 
@@ -137,11 +146,10 @@ Optional
    --max-indel-len, -T       <int>         : limit on size of detectable indel [default: 500]
    --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: 2]
    --num-threads, -X         <int>         : number of parallel threads [default: 1]
-   --rg-file, -g             <string>      : read group file
    --node-str-len, -L        <int>         : length of sequence to display at graph node (default: 100)
 
 Filters
-   --min-alt-count-tumor, -a  <int>        : minimum alternative count in the tumor [default: 4]
+   --min-alt-count-tumor, -a  <int>        : minimum alternative count in the tumor [default: 3]
    --max-alt-count-normal, -m <int>        : maximum alternative count in the normal [default: 0]
    --min-vaf-tumor, -e        <float>      : minimum variant allele frequency (AlleleCov/TotCov) in the tumor [default: 0.05]
    --max-vaf-normal, -i       <float>      : maximum variant allele frequency (AlleleCov/TotCov) in the normal [default: 0]
@@ -149,7 +157,7 @@ Filters
    --max-coverage-tumor, -y   <int>        : maximum coverage in the tumor [default: 1000000]
    --min-coverage-normal, -z  <int>        : minimum coverage in the normal [default: 10]
    --max-coverage-normal, -j  <int>        : maximum coverage in the normal [default: 1000000]
-   --min-phred-fisher, -s     <float>      : minimum fisher exact test score [default: 10]
+   --min-phred-fisher, -s     <float>      : minimum fisher exact test score [default: 5]
    --min-strand-bias, -f      <float>      : minimum strand bias threshold [default: 1]
 
 Short Tandem Repeat parameters
@@ -160,7 +168,7 @@ Short Tandem Repeat parameters
 
 Flags
    --active-region-off, -W    : turn off active region module
-   --kmer-recovery-on, -R     : turn on k-mer recovery
+   --kmer-recovery, -R        : turn on k-mer recovery (experimental)
    --print-graph, -A          : print graph (in .dot format) after every stage
    --verbose, -v              : be verbose
    --more-verbose, -V         : be more verbose

@@ -31,10 +31,10 @@ make
 A simple lancet command should look something like this:
 
 ```
-Lancet --tumor T.bam --normal N.bam --ref ref.fa --reg 22:1-51304566 --num-threads 8
+Lancet --tumor T.bam --normal N.bam --ref ref.fa --reg 22:1-51304566 --num-threads 8 > out.vcf
 ```
 
-The command above will detect somatic variants in the tumor/normal pair of bam files (T.bam and N.bam) for chromosome 22 using 8 threads.
+The command above detects somatic variants in the tumor/normal pair of bam files (*T.bam* and *N.bam*) for chromosome 22 using 8 threads and saves the variant calls in the out VCF file *out.vcf*.
 
 ### Output
 
@@ -72,10 +72,10 @@ The DeBruijn graph representation of a genomic region can be exported to file in
 For example the following command:
 
 ```
-Lancet -A --tumor T.bam --normal N.bam --ref ref.fa --reg chr:start-end
+Lancet -A --tumor T.bam --normal N.bam --ref ref.fa --reg chr:start-end > out.vcf
 ```
 
-will export the DeBruijn graph after every stage of the assembly (low covergae removal, tips removal, compression) to the follwing set of files:
+will export the DeBruijn graph after every stage of the assembly (low covergae removal, tips removal, compression) to the following set of files:
 
 1. chr:start-end.0.dot (initial graph)
 2. chr:start-end.1l.cX.dot (after first low coverage nodes removal)

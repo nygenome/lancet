@@ -28,6 +28,7 @@
 #include <string>
 #include <assert.h>
 #include <unordered_set>
+#include <vector>
 
 #include "Mer.hh"
 #include "Ref.hh"

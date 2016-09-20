@@ -27,6 +27,7 @@
 #include <fstream>
 #include <string>
 #include <set>
+#include <vector>
 
 #include "Mer.hh"
 #include "ReadInfo.hh"

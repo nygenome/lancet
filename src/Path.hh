@@ -26,6 +26,7 @@
 
 #include <string>
 #include <sstream>
+#include <vector>
 
 #include "Edge.hh"
 #include "Node.hh"

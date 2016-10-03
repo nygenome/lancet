@@ -62,11 +62,9 @@ public:
 	unsigned short trim5;
 	unsigned short trim3;
 
-	// mapping of mers to fwd/rev counts (mer,cov_t)  
-	//map<string,cov_t> * mertable_nml = NULL;
-	//map<string,cov_t> * mertable_tmr = NULL;
-	unordered_map<string,cov_t> * mertable_nml = NULL;
-	unordered_map<string,cov_t> * mertable_tmr = NULL;
+	// mapping of mers to fwd/rev counts (mer,cov_t)
+	unordered_map<string,cov_t> * mertable_nml;
+	unordered_map<string,cov_t> * mertable_tmr;
 	
 	set<int> refcompids;
 
@@ -76,11 +74,17 @@ public:
 
 	bool indexed_m;
 
-	vector<cov_t> * normal_coverage = NULL; // normal k-mer coverage across the reference
-	vector<cov_t> * tumor_coverage = NULL; // tumor k-mer coverage across the reference
+	vector<cov_t> * normal_coverage; // normal k-mer coverage across the reference
+	vector<cov_t> * tumor_coverage; // tumor k-mer coverage across the reference
 	
 	Ref_t(int k) : indexed_m(0) 
-		{ K = k; }
+	{
+		K = k; 
+		mertable_nml = NULL;
+		mertable_tmr = NULL;
+		normal_coverage = NULL;
+		tumor_coverage = NULL;
+	}
 	
 	void setHdr(string hdr_) { hdr = hdr_; }
 	void setRawSeq(string rawseq_) { rawseq = rawseq_; }

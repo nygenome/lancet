@@ -609,7 +609,10 @@ int Microassembler::processReads() {
 	BamReader readerN;	
 	SamHeader headerN;
 	RefVector referencesN;
-			
+	
+	string index_filename;
+	bool index_found = false;
+		
 	// attempt to open our BamMultiReader
 	if ( !readerT.Open(TUMOR) ) {
 		cerr << "Could not open tumor BAM files." << endl;
@@ -618,8 +621,18 @@ int Microassembler::processReads() {
 	// retrieve 'metadata' from BAM files, these are required by BamWriter
 	headerT = readerT.GetHeader();
 	referencesT = readerT.GetReferenceData();
-	readerT.LocateIndex(); // locate and load BAM index file
-	sample_name_tumor = retriveSampleName(headerT); // extract sammple name
+	
+	index_found = readerT.LocateIndex(); // locate and load BAM index file (.bam.bai)
+	if(!index_found) {
+		index_filename = GetBaseFilename(TUMOR.c_str())+".bai";
+		index_found = readerT.OpenIndex(index_filename); //try with different extension .bai
+		if(!index_found) {
+			cerr << "ERROR: index not found for BAM file " << TUMOR << endl;
+			exit(1);
+		}
+	}
+	
+	sample_name_tumor = retriveSampleName(headerT); // extract tumor sample name 
 
 	if ( !readerN.Open(NORMAL) ) {
 		cerr << "Could not open normal BAM files." << endl;
@@ -628,8 +641,18 @@ int Microassembler::processReads() {
 	// retrieve 'metadata' from BAM files, these are required by BamWriter
 	headerN = readerN.GetHeader();
 	referencesN = readerN.GetReferenceData();
-	readerN.LocateIndex(); // locate and load BAM index file
-	sample_name_normal = retriveSampleName(headerN); // extract sammple name
+	
+	index_found = readerN.LocateIndex(); // locate and load BAM index file (.bam.bai)
+	if(!index_found) {
+		index_filename = GetBaseFilename(NORMAL.c_str())+".bai";		
+		index_found = readerN.OpenIndex(index_filename); //try with different extension .bai
+		if(!index_found) {
+			cerr << "ERROR: index not found for BAM file " << NORMAL << endl;
+			exit(1);
+		}
+	}
+	
+	sample_name_normal = retriveSampleName(headerN); // extract normal sammple name
 
 	//load the read group information
 	if(RG_FILE.compare("") != 0) {

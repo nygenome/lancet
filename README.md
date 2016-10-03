@@ -31,7 +31,7 @@ make
 A simple lancet command should look something like this:
 
 ```
-Lancet --tumor T.bam --normal N.bam --ref ref.fa --reg 22:1-51304566 --num-threads 8 > out.vcf
+lancet --tumor T.bam --normal N.bam --ref ref.fa --reg 22:1-51304566 --num-threads 8 > out.vcf
 ```
 
 The command above detects somatic variants in the tumor/normal pair of bam files (*T.bam* and *N.bam*) for chromosome 22 using 8 threads and saves the variant calls in the out VCF file *out.vcf*.
@@ -72,7 +72,7 @@ The DeBruijn graph representation of a genomic region can be exported to file in
 For example the following command:
 
 ```
-Lancet -A --tumor T.bam --normal N.bam --ref ref.fa --reg chr:start-end > out.vcf
+lancet -A --tumor T.bam --normal N.bam --ref ref.fa --reg chr:start-end > out.vcf
 ```
 
 will export the DeBruijn graph after every stage of the assembly (low covergae removal, tips removal, compression) to the following set of files:
@@ -115,11 +115,11 @@ The final graph (after compression) containing one single variant is depicted be
   |     (   | |   | (     __/ |
  _____|\__,_|_|  _|\___|\___|\__|
 
-Program: Lancet (micro-assembly somatic variant caller)
+Program: lancet (micro-assembly somatic variant caller)
 Version: 1.0.0 (beta), September 18 2016
 Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>
 
-Usage: Lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>
+Usage: lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>
  [-h for full list of commands]
 
 Required

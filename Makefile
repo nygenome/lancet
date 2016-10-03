@@ -8,11 +8,11 @@ CXX := g++
 CXXFLAGS := -Wno-deprecated -Wall -O3 -fexceptions -g -Wl,-rpath,$(ABS_BAMTOOLS_DIR)/lib/
 INCLUDES := -I$(ABS_BAMTOOLS_DIR)/include/ -L$(ABS_BAMTOOLS_DIR)/lib/
 
-all: bamtools htslib src
+all: bamtools htslib lancet
 
-.PHONY : src
-src:
-	cd src; make; cp Lancet ../; cd ../
+.PHONY : lancet
+lancet:
+	cd src; make; cp lancet ../; cd ../
 
 .PHONY : bamtools
 bamtools:
@@ -28,4 +28,4 @@ htslib:
 
 #.PHONY : clean
 clean:
-	 rm Lancet src/Lancet; rm -rf $(ABS_BAMTOOLS_DIR)/build; rm -rf $(ABS_BAMTOOLS_DIR)/include; rm -rf $(ABS_BAMTOOLS_DIR)/lib; rm -rf $(ABS_BAMTOOLS_DIR)/bin; cd $(ABS_HTSLIB_DIR); make clean;
+	 rm lancet src/lancet; rm -rf $(ABS_BAMTOOLS_DIR)/build; rm -rf $(ABS_BAMTOOLS_DIR)/include; rm -rf $(ABS_BAMTOOLS_DIR)/lib; rm -rf $(ABS_BAMTOOLS_DIR)/bin; cd $(ABS_HTSLIB_DIR); make clean;

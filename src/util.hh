@@ -29,6 +29,12 @@
 #include <assert.h>
 #include <map>
 
+#ifdef UNICODE //Test to see if we're using wchar_ts or not.
+    typedef std::wstring StringType;
+#else
+    typedef std::string StringType;
+#endif
+
 //-- Include hash_map
 #ifdef __GNUC__
 #if __GNUC__ < 3
@@ -54,6 +60,7 @@
   #define HASHMAP std
 #endif
 
+StringType GetBaseFilename(const char *filename);
 FILE * xfopen(const std::string & filename, const std::string & mode);
 void xfclose(FILE * fp);
 std::string itos(int i);

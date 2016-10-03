@@ -292,11 +292,11 @@ int main(int argc, char** argv)
 	
 	stringstream HEADER;
 	HEADER << LOGO1.str() <<
-		"\nProgram: Lancet (micro-assembly somatic variant caller)\n"
+		"\nProgram: lancet (micro-assembly somatic variant caller)\n"
 		"Version: "<< VERSION << "\n"
 		"Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>\n";
 	
-	string USAGE = "\nUsage: Lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>\n [-h for full list of commands]\n\n";
+	string USAGE = "\nUsage: lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>\n [-h for full list of commands]\n\n";
 
 	if (argc == 1)
 	{

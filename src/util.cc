@@ -27,6 +27,20 @@
 using namespace std;
 
 
+// return file name without extension
+StringType GetBaseFilename(const char *filename)
+{
+    StringType fName(filename);
+    size_t pos = fName.rfind(".");
+    if(pos == StringType::npos)  //No extension.
+        return fName;
+
+    if(pos == 0)    //. is at the front. Not an extension.
+        return fName;
+
+    return fName.substr(0, pos);
+}
+
 // xfopen
 //////////////////////////////////////////////////////////////////////////
 

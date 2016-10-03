@@ -13,7 +13,7 @@ Lancet is freely available for academic and non-commercial research purposes ([`
 
 Building and running lancet from source requires a GNU-like environment with 
 
-1. GCC
+1. GCC (>= 4.8.x)
 2. GNU Make
 3. GNU CMake
 

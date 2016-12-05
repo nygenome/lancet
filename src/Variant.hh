@@ -75,10 +75,7 @@ public:
 	Filters * filters; // filter thresholds
 
 	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_fwd_, int ref_cov_normal_rev_, int ref_cov_tumor_fwd_, int ref_cov_tumor_rev_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters * fs, int k, string str_)
-	{ 	
-		
-		filters = NULL; // filter thresholds
-		
+	{ 			
 		kmer = k;
 		str = str_;
 		filters = fs;

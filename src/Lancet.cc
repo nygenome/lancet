@@ -1,4 +1,4 @@
-#include "Microassembler.hh"
+#include "Lancet.hh"
 
 /****************************************************************************
 ** Lancet.cc
@@ -23,75 +23,91 @@
 **
 *************************** /COPYRIGHT **************************************/
 
-string VERSION = "1.0.0 (beta), September 18 2016";
+// print usage info to stderr
+void printUsage() {
 
-/****  configuration parameters ****/
-int NUM_THREADS = 1;
+	stringstream LOGO1;
+	LOGO1 <<
+		"\n"
+		"  |                           |  \n"
+		"  |      _` | __ \\   __|  _ \\ __|\n"
+		"  |     (   | |   | (     __/ |  \n"
+		" _____|\\__,_|_|  _|\\___|\\___|\\__|\n";
 
-bool ACTIVE_REGIONS = true;
-bool verbose = false;
-bool VERBOSE = false;
-bool KMER_RECOVERY = false;
-bool PRINT_ALL = false;
-bool PRINT_DOT_READS = true;
-int MIN_QV_TRIM = 10;
-int MIN_QV_CALL = 17;
-int QV_RANGE = '!';
-int MIN_QUAL_TRIM = MIN_QV_TRIM + QV_RANGE;
-int MIN_QUAL_CALL = MIN_QV_CALL + QV_RANGE;
-int MIN_MAP_QUAL = 15;
-int WINDOW_SIZE = 600;
+	stringstream HEADER;
+	HEADER << LOGO1.str() <<
+		"\nProgram: lancet (micro-assembly somatic variant caller)\n"
+		"Version: "<< VERSION << "\n"
+		"Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>\n";
 
-string TUMOR;
-string NORMAL;
-string RG_FILE;
-string REFFILE;
-string BEDFILE;
-string REGION;
+	string USAGE = "\nUsage: lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>\n [-h for full list of commands]\n\n";
 
-int minK = 11;
-int maxK = 100;
-int MAX_TIP_LEN = minK;
-unsigned int MIN_THREAD_READS = 1;
-int COV_THRESHOLD = 5;
-double MIN_COV_RATIO = 0.01;
-int LOW_COV_THRESHOLD = 1;
-int MAX_AVG_COV = 10000;
-int NODE_STRLEN = 100;
-int DFS_LIMIT = 1000000;
-int MAX_INDEL_LEN = 500;
-int MAX_MISMATCH = 2;
+	cerr << HEADER.str() << USAGE;
+}
+
+// print help text to stderr
+void printHelpText(Filters & filters) {
+		
+	stringstream helptext;
+	helptext <<
+		"Required\n"
+		"   --tumor, -t              <BAM file>    : BAM file of mapped reads for tumor\n"
+		"   --normal, -n             <BAM file>    : BAM file of mapped reads for normal\n"
+		"   --ref, -r                <FASTA file>  : FASTA file of reference genome\n"
+		"   --reg, -p                <string>      : genomic region (in chr:start-end format)\n"
+		"   --bed, -B                <string>      : genomic regions from file (BED format)\n"
+
+		"\nOptional\n"
+		"   --min-k, k                <int>         : min kmersize [default: " << minK << "]\n"
+		"   --max-k, -K               <int>         : max kmersize [default: " << maxK << "]\n"
+		"   --trim-lowqual, -q        <int>         : trim bases below qv at 5' and 3' [default: " << MIN_QV_TRIM << "]\n"
+		"   --min-base-qual, -C       <int>         : minimum base quality required to consider a base for SNV calling [default: " << MIN_QV_CALL << "]\n"
+		"   --quality-range, -Q       <char>        : quality value range [default: " << (char) QV_RANGE << "]\n"
+		"   --min-map-qual, -b        <inr>         : minimum read mapping quality in Phred-scale [default: " << MIN_MAP_QUAL << "]\n"
+		"   --tip-len, -l             <int>         : max tip length [default: " << MAX_TIP_LEN << "]\n"
+		"   --cov-thr, -c             <int>         : coverage threshold [default: " << COV_THRESHOLD << "]\n"
+		"   --cov-ratio, -x           <float>       : minimum coverage ratio [default: " << MIN_COV_RATIO << "]\n"
+		"   --max-avg-cov, -u         <int>         : maximum average coverage allowed per region [default: " << MAX_AVG_COV << "]\n"
+		"   --low-cov, -d             <int>         : low coverage threshold [default: " << LOW_COV_THRESHOLD << "]\n"
+		"   --window-size, -w         <int>         : window size of the region to assemble (in base-pairs) [default: " << WINDOW_SIZE << "]\n"
+		"   --dfs-limit, -F           <int>         : limit dfs/bfs graph traversal search space [default: " << DFS_LIMIT << "]\n"
+		"   --max-indel-len, -T       <int>         : limit on size of detectable indel [default: " << MAX_INDEL_LEN << "]\n"
+		"   --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: " << MAX_MISMATCH << "]\n"
+		"   --num-threads, -X         <int>         : number of parallel threads [default: " << NUM_THREADS << "]\n"
+//		"   --rg-file, -g             <string>      : read group file\n"
+		"   --node-str-len, -L        <int>         : length of sequence to display at graph node (default: " << NODE_STRLEN << ")\n"
+
+		"\nFilters\n"
+		"   --min-alt-count-tumor, -a  <int>        : minimum alternative count in the tumor [default: " << filters.minAltCntTumor << "]\n"
+		"   --max-alt-count-normal, -m <int>        : maximum alternative count in the normal [default: " << filters.maxAltCntNormal << "]\n"
+		"   --min-vaf-tumor, -e        <float>      : minimum variant allele frequency (AlleleCov/TotCov) in the tumor [default: " << filters.minVafTumor << "]\n"
+		"   --max-vaf-normal, -i       <float>      : maximum variant allele frequency (AlleleCov/TotCov) in the normal [default: " << filters.maxVafNormal << "]\n"
+		"   --min-coverage-tumor, -o   <int>        : minimum coverage in the tumor [default: " << filters.minCovTumor << "]\n"
+		"   --max-coverage-tumor, -y   <int>        : maximum coverage in the tumor [default: " << filters.maxCovTumor << "]\n"
+		"   --min-coverage-normal, -z  <int>        : minimum coverage in the normal [default: " << filters.minCovNormal << "]\n"
+		"   --max-coverage-normal, -j  <int>        : maximum coverage in the normal [default: " << filters.maxCovNormal << "]\n"
+		"   --min-phred-fisher, -s     <float>      : minimum fisher exact test score [default: " << filters.minPhredFisher << "]\n"
+		"   --min-strand-bias, -f      <float>      : minimum strand bias threshold [default: " << filters.minStrandBias << "]\n"
+			
+		"\nShort Tandem Repeat parameters\n"
+		"   --max-unit-length, -U      <int>        : maximum unit length of the motif [default: " << MAX_UNIT_LEN << "]\n"
+		"   --min-report-unit, -N      <int>        : minimum number of units to report [default: " << MIN_REPORT_UNITS << "]\n"
+		"   --min-report-len, -Y       <int>        : minimum length of tandem in base pairs [default: " << MIN_REPORT_LEN << "]\n"
+		"   --dist-from-str, -D        <int>        : distance (in bp) of variant from STR locus [default: " << DIST_FROM_STR << "]\n"
+		
+		"\nFlags\n"
+		"   --active-region-off, -W    : turn off active region module\n"		
+		"   --kmer-recovery, -R        : turn on k-mer recovery (experimental)\n"
+		"   --print-graph, -A          : print graph (in .dot format) after every stage\n"
+		"   --verbose, -v              : be verbose\n"
+		"   --more-verbose, -V         : be more verbose\n"
+		"\n";
 	
-//STR parameters
-int MAX_UNIT_LEN = 4;
-int MIN_REPORT_UNITS = 3;
-int MIN_REPORT_LEN = 7;
-int DIST_FROM_STR = 1;
+	printUsage();
+	cerr << helptext.str();
+}
 
-bool SCAFFOLD_CONTIGS = 0;
-int INSERT_SIZE = 150;
-int INSERT_STDEV = 15;
-
-int num_windows = 0;
-
-// constants
-//////////////////////////////////////////////////////////////////////////
-
-const char Graph_t::CODE_MAPPED = 'M';
-const char Graph_t::CODE_BASTARD = 'B';
-
-const string Graph_t::COLOR_ALL    = "white"; 
-const string Graph_t::COLOR_LOW    = "grey";
-const string Graph_t::COLOR_NOVO   = "darkorange3";
-const string Graph_t::COLOR_TUMOR  = "red";
-const string Graph_t::COLOR_NORMAL = "green";
-const string Graph_t::COLOR_SHARED = "blue"; //"deepskyblue4";
-const string Graph_t::COLOR_SOURCE = "orange\" style=\"filled";
-const string Graph_t::COLOR_SINK   = "yellow\" style=\"filled";
-const string Graph_t::COLOR_TOUCH  = "magenta";
-
-/***********************************/
-
+// print configuration to file
 void printConfiguration(ostream & out, Filters & filters)
 {
 	out << "tumor-BAM: "        << TUMOR << endl;
@@ -281,26 +297,12 @@ static void* execute(void* ptr) {
 // main
 //////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
-{			
-	stringstream LOGO1;
-	LOGO1 <<
-		"\n"
-		"  |                           |  \n"
-		"  |      _` | __ \\   __|  _ \\ __|\n"
-		"  |     (   | |   | (     __/ |  \n"
-		" _____|\\__,_|_|  _|\\___|\\___|\\__|\n";
-	
-	stringstream HEADER;
-	HEADER << LOGO1.str() <<
-		"\nProgram: lancet (micro-assembly somatic variant caller)\n"
-		"Version: "<< VERSION << "\n"
-		"Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>\n";
-	
-	string USAGE = "\nUsage: lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>\n [-h for full list of commands]\n\n";
+{
 
 	if (argc == 1)
 	{
-		cerr << HEADER.str() << USAGE;
+		//cerr << HEADER.str() << USAGE;
+		printUsage();
 		exit(0);
 	}
 
@@ -314,67 +316,12 @@ int main(int argc, char** argv)
 	filters.maxCovNormal = 1000000;
 	filters.minCovTumor = 4;
 	filters.maxCovTumor = 1000000;
-	filters.minVafTumor = 0.05;
+	filters.minVafTumor = 0.04;
 	filters.maxVafNormal = 0;
 	filters.minAltCntTumor = 3;
 	filters.maxAltCntNormal = 0;
 	filters.minStrandBias = 1;
 	
-	stringstream helptext;
-	helptext << HEADER.str() << USAGE <<
-		"Required\n"
-		"   --tumor, -t              <BAM file>    : BAM file of mapped reads for tumor\n"
-		"   --normal, -n             <BAM file>    : BAM file of mapped reads for normal\n"
-		"   --ref, -r                <FASTA file>  : FASTA file of reference genome\n"
-		"   --reg, -p                <string>      : genomic region (in chr:start-end format)\n"
-		"   --bed, -B                <string>      : genomic regions from file (BED format)\n"
-
-		"\nOptional\n"
-		"   --min-k, k                <int>         : min kmersize [default: " << minK << "]\n"
-		"   --max-k, -K               <int>         : max kmersize [default: " << maxK << "]\n"
-		"   --trim-lowqual, -q        <int>         : trim bases below qv at 5' and 3' [default: " << MIN_QV_TRIM << "]\n"
-		"   --min-base-qual, -C       <int>         : minimum base quality required to consider a base for SNV calling [default: " << MIN_QV_CALL << "]\n"
-		"   --quality-range, -Q       <char>        : quality value range [default: " << (char) QV_RANGE << "]\n"
-		"   --min-map-qual, -b        <inr>         : minimum read mapping quality in Phred-scale [default: " << MIN_MAP_QUAL << "]\n"
-		"   --tip-len, -l             <int>         : max tip length [default: " << MAX_TIP_LEN << "]\n"
-		"   --cov-thr, -c             <int>         : coverage threshold [default: " << COV_THRESHOLD << "]\n"
-		"   --cov-ratio, -x           <float>       : minimum coverage ratio [default: " << MIN_COV_RATIO << "]\n"
-		"   --max-avg-cov, -u         <int>         : maximum average coverage allowed per region [default: " << MAX_AVG_COV << "]\n"
-		"   --low-cov, -d             <int>         : low coverage threshold [default: " << LOW_COV_THRESHOLD << "]\n"
-		"   --window-size, -w         <int>         : window size of the region to assemble (in base-pairs) [default: " << WINDOW_SIZE << "]\n"
-		"   --dfs-limit, -F           <int>         : limit dfs/bfs graph traversal search space [default: " << DFS_LIMIT << "]\n"
-		"   --max-indel-len, -T       <int>         : limit on size of detectable indel [default: " << MAX_INDEL_LEN << "]\n"
-		"   --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: " << MAX_MISMATCH << "]\n"
-		"   --num-threads, -X         <int>         : number of parallel threads [default: " << NUM_THREADS << "]\n"
-//		"   --rg-file, -g             <string>      : read group file\n"
-		"   --node-str-len, -L        <int>         : length of sequence to display at graph node (default: " << NODE_STRLEN << ")\n"
-
-		"\nFilters\n"
-		"   --min-alt-count-tumor, -a  <int>        : minimum alternative count in the tumor [default: " << filters.minAltCntTumor << "]\n"
-		"   --max-alt-count-normal, -m <int>        : maximum alternative count in the normal [default: " << filters.maxAltCntNormal << "]\n"
-		"   --min-vaf-tumor, -e        <float>      : minimum variant allele frequency (AlleleCov/TotCov) in the tumor [default: " << filters.minVafTumor << "]\n"
-		"   --max-vaf-normal, -i       <float>      : maximum variant allele frequency (AlleleCov/TotCov) in the normal [default: " << filters.maxVafNormal << "]\n"
-		"   --min-coverage-tumor, -o   <int>        : minimum coverage in the tumor [default: " << filters.minCovTumor << "]\n"
-		"   --max-coverage-tumor, -y   <int>        : maximum coverage in the tumor [default: " << filters.maxCovTumor << "]\n"
-		"   --min-coverage-normal, -z  <int>        : minimum coverage in the normal [default: " << filters.minCovNormal << "]\n"
-		"   --max-coverage-normal, -j  <int>        : maximum coverage in the normal [default: " << filters.maxCovNormal << "]\n"
-		"   --min-phred-fisher, -s     <float>      : minimum fisher exact test score [default: " << filters.minPhredFisher << "]\n"
-		"   --min-strand-bias, -f      <float>      : minimum strand bias threshold [default: " << filters.minStrandBias << "]\n"
-			
-		"\nShort Tandem Repeat parameters\n"
-		"   --max-unit-length, -U      <int>        : maximum unit length of the motif [default: " << MAX_UNIT_LEN << "]\n"
-		"   --min-report-unit, -N      <int>        : minimum number of units to report [default: " << MIN_REPORT_UNITS << "]\n"
-		"   --min-report-len, -Y       <int>        : minimum length of tandem in base pairs [default: " << MIN_REPORT_LEN << "]\n"
-		"   --dist-from-str, -D        <int>        : distance (in bp) of variant from STR locus [default: " << DIST_FROM_STR << "]\n"
-		
-		"\nFlags\n"
-		"   --active-region-off, -W    : turn off active region module\n"		
-		"   --kmer-recovery, -R        : turn on k-mer recovery (experimental)\n"
-		"   --print-graph, -A          : print graph (in .dot format) after every stage\n"
-		"   --verbose, -v              : be verbose\n"
-		"   --more-verbose, -V         : be more verbose\n"
-		"\n";
-
 	bool errflg = false;
 	int ch;
 
@@ -502,7 +449,8 @@ int main(int argc, char** argv)
 
 		if (errflg)
 		{
-			cout << helptext.str();
+			//cout << helptext.str();
+			printHelpText(filters);
 			exit (EXIT_FAILURE);
 		}
 	}

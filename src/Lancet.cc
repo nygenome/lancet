@@ -294,6 +294,199 @@ static void* execute(void* ptr) {
 	pthread_exit(NULL);
 }
 
+//lancet_function(tumor, normal, ref, reg, numthreads)
+
+
+// main
+//////////////////////////////////////////////////////////////////////////
+int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, string bed_file, int numthreads)
+{
+
+	TUMOR = tumor_bam;
+	NORMAL = normal_bam;
+	REFFILE = ref_fasta;
+	REGION = reg;
+	BEDFILE = bed_file;
+	NUM_THREADS = numthreads;
+	
+	// initilize filter thresholds
+	Filters filters;
+	filters.minPhredFisher = 5;
+	filters.minCovNormal = 10;
+	filters.maxCovNormal = 1000000;
+	filters.minCovTumor = 4;
+	filters.maxCovTumor = 1000000;
+	filters.minVafTumor = 0.04;
+	filters.maxVafNormal = 0;
+	filters.minAltCntTumor = 3;
+	filters.maxAltCntNormal = 0;
+	filters.minStrandBias = 1;
+
+	// update min base quality values
+	MIN_QUAL_TRIM = MIN_QV_TRIM + QV_RANGE;
+	MIN_QUAL_CALL = MIN_QV_CALL + QV_RANGE;
+
+	bool errflg = false;
+
+	if (TUMOR == "") { cerr << "ERROR: Must provide the tumor BAM file (-t)" << endl; ++errflg; }
+	if (NORMAL == "") { cerr << "ERROR: Must provide the normal BAM file (-n)" << endl; ++errflg; }		
+	if (REFFILE == "") { cerr << "ERROR: Must provide a reference genome file (-r)" << endl; ++errflg; }
+	if ( (BEDFILE == "") && (REGION == "") ) { cerr << "ERROR: Must provide region (-p) or BED file (-B)" << endl; ++errflg; }
+
+	if (errflg) { exit(EXIT_FAILURE); }
+	
+    ofstream params_file;
+    params_file.open ("config.txt");
+	printConfiguration(params_file, filters); // save parameters setting to file
+    params_file.close();
+
+	if(verbose) { printConfiguration(cerr, filters); }
+	
+	// run the assembler on each region
+	try {
+		
+		//Microassembler* driver = new Microassembler();
+		//driver->run(argc, argv);
+		//assembler->vDB.printToVCF();
+
+		pthread_t threads[NUM_THREADS];
+		pthread_attr_t attr;
+		void * status;
+		int rc;
+		int i;		
+		vector<Microassembler*> assemblers(NUM_THREADS, new Microassembler());
+		vector< map<string, Ref_t *> > reftables(NUM_THREADS, map<string, Ref_t *>()); // table of references to analyze
+		
+		if (BEDFILE != "") {
+			loadBed(BEDFILE,reftables,NUM_THREADS);
+		}
+		if (REGION != "") {
+			loadRefs(REFFILE,REGION,reftables,NUM_THREADS, 0);
+		}
+		
+		cerr << num_windows << " total windows to process" << endl << endl;
+		
+		// Initialize and set thread joinable
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+		for( i=0; i < NUM_THREADS; ++i ) {
+			cerr << "starting thread " << (i+1) << " on " << reftables[i].size() << " windows" << endl;
+		
+			assemblers[i] = new Microassembler();
+
+			assemblers[i]->ACTIVE_REGION_MODULE = ACTIVE_REGIONS;
+			assemblers[i]->KMER_RECOVERY = KMER_RECOVERY;
+			assemblers[i]->verbose = verbose;
+			assemblers[i]->VERBOSE = VERBOSE;
+			assemblers[i]->PRINT_DOT_READS = PRINT_DOT_READS;
+			assemblers[i]->PRINT_ALL = PRINT_ALL;
+			assemblers[i]->MIN_QV_CALL = MIN_QV_CALL;
+			assemblers[i]->MIN_QV_TRIM = MIN_QV_TRIM;
+			assemblers[i]->QV_RANGE = QV_RANGE;
+			assemblers[i]->MIN_QUAL_TRIM = MIN_QUAL_TRIM;
+			assemblers[i]->MIN_QUAL_CALL = MIN_QUAL_CALL;
+			assemblers[i]->MIN_MAP_QUAL = MIN_MAP_QUAL;
+			assemblers[i]->TUMOR = TUMOR;
+			assemblers[i]->NORMAL = NORMAL;
+			assemblers[i]->RG_FILE = RG_FILE;
+			assemblers[i]->REFFILE = REFFILE;
+			assemblers[i]->minK = minK;
+			assemblers[i]->maxK = maxK;
+			assemblers[i]->MAX_TIP_LEN = MAX_TIP_LEN;
+			assemblers[i]->MIN_THREAD_READS = MIN_THREAD_READS;
+			assemblers[i]->COV_THRESHOLD = COV_THRESHOLD;
+			assemblers[i]->MIN_COV_RATIO = MIN_COV_RATIO;
+			assemblers[i]->LOW_COV_THRESHOLD = LOW_COV_THRESHOLD;
+			assemblers[i]->MAX_AVG_COV = MAX_AVG_COV;
+			assemblers[i]->NODE_STRLEN = NODE_STRLEN;
+			assemblers[i]->DFS_LIMIT = DFS_LIMIT;
+			assemblers[i]->MAX_INDEL_LEN = MAX_INDEL_LEN;
+			assemblers[i]->MAX_MISMATCH = MAX_MISMATCH;		
+			assemblers[i]->MAX_UNIT_LEN = MAX_UNIT_LEN;
+			assemblers[i]->MIN_REPORT_UNITS = MIN_REPORT_UNITS;
+			assemblers[i]->MIN_REPORT_LEN = MIN_REPORT_LEN;
+			assemblers[i]->DIST_FROM_STR = DIST_FROM_STR;	
+			
+			assemblers[i]->reftable = &reftables[i];
+			assemblers[i]->setFilters(&filters);
+			assemblers[i]->setID(i+1);
+	
+			rc = pthread_create(&threads[i], NULL, execute, (void * )assemblers[i]);
+			
+			if (rc){
+				cerr << "Error:unable to create thread," << rc << endl;
+				exit(-1);
+			}
+		}
+		
+		// free attribute and wait for the other threads
+		pthread_attr_destroy(&attr);
+		for( i=0; i < NUM_THREADS; ++i ){
+			rc = pthread_join(threads[i], &status);
+			if (rc){
+				cerr << "Error:unable to join," << rc << endl;
+				exit(-1);
+			}
+			cerr << "Main: completed thread id :" << (i+1) ;
+			cerr << " exiting with status :" << status << endl;
+		}
+		
+		int tot_skip = 0;
+		int tot_svn_only = 0;
+		int tot_indel_only = 0;
+		int tot_softclip_only = 0;
+		int tot_indel_or_softclip = 0;
+		int tot_snv_or_indel = 0;
+		int tot_snv_or_softclip = 0;
+		int tot_snv_or_indel_or_softclip = 0;
+		//merge variant from all threads
+		cerr << "Merge variants" << endl;
+		VariantDB_t variantDB; // variants DB
+		for( i=0; i < NUM_THREADS; ++i ) {
+			
+			tot_skip += assemblers[i]->num_skip;
+			tot_svn_only += assemblers[i]->num_snv_only_regions;
+			tot_indel_only += assemblers[i]->num_indel_only_regions;
+			tot_softclip_only += assemblers[i]->num_softclip_only_regions;
+			tot_indel_or_softclip += assemblers[i]->num_indel_or_softclip_regions;			
+			tot_snv_or_indel += assemblers[i]->num_snv_or_indel_regions;			
+			tot_snv_or_softclip += assemblers[i]->num_snv_or_softclip_regions;
+			tot_snv_or_indel_or_softclip += assemblers[i]->num_snv_or_indel_or_softclip_regions;
+						
+			map<string,Variant_t> db = (assemblers[i]->vDB).DB;
+			map<string,Variant_t>::iterator it;			
+			for (it=db.begin(); it!=db.end(); ++it) {
+				variantDB.addVar(it->second);
+			}
+		}
+		
+		//if(verbose) {
+			cerr << "Total # of skipped windows: " << tot_skip << " (" << (100*(double)tot_skip/double(num_windows)) << "\%)" << endl;
+			cerr << "- # of windows with SNVs only: " << tot_svn_only << endl;
+			cerr << "- # of windows with indels only: " << tot_indel_only << endl;
+			cerr << "- # of windows with softclips only: " << tot_softclip_only << endl;
+			cerr << "- # of windows with indels or softclips: " << tot_indel_or_softclip << endl;
+			cerr << "- # of windows with SNVs or indels: " << tot_snv_or_indel << endl;
+			cerr << "- # of windows with SNVs or softclips: " << tot_snv_or_softclip << endl;
+			cerr << "- # of windows with SNVs or indels or softclips: " << tot_snv_or_indel_or_softclip << endl;
+		//}
+		
+		/***** get current time and date *****/
+		time_t rawtime;
+		time (&rawtime);
+		char* DATE = ctime (&rawtime);
+		/***************************************/
+		
+		variantDB.printToVCF(VERSION, REFFILE, DATE, filters, assemblers[0]->sample_name_normal, assemblers[0]->sample_name_tumor);		
+	}
+	catch (int e) {
+		cerr << "An exception occurred. Exception Nr. " << e << endl;
+	}
+
+	pthread_exit(NULL);
+}
+
 // main
 //////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
@@ -303,6 +496,17 @@ int main(int argc, char** argv)
 	{
 		//cerr << HEADER.str() << USAGE;
 		printUsage();
+		
+		/*
+		string T = "/data/research/somatic_snv_filter/Project_HiSeqX_v2/Project_GRCh37_decoy/Sample_NA12892_mem_binomial_indel/analysis/NA12892_mem_binomial_indel.final.bam";
+		string N = "/data/research/somatic_snv_filter/Project_HiSeqX_v2/Project_GRCh37_decoy/Sample_NA12892_mem_normal/analysis/NA12892_mem_normal.final.bam";
+		string R = "/data/NYGC/Resources/Indexes/bwa/human_g1k_v37.fa";
+		string B = "";
+		string L = "20:14513576-14513976";
+		int P = 1;  
+		rLancet(T, N, R, L, B, P);
+		*/
+				
 		exit(0);
 	}
 

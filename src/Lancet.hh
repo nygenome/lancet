@@ -112,4 +112,6 @@ void loadBed(const string bedfile, vector< map<string, Ref_t *> > &reftable, int
 
 static void* execute(void* ptr);
 
+int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, string bed_file, int numthreads);
+
 #endif

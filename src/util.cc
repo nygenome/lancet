@@ -448,7 +448,7 @@ bool findTandems(const string & seq, const string & tag, int max_unit_len, int m
 							// start end length
 							//cerr << offset+1 << "\t" << i+j << "\t" << i+j-offset << "\t";
 							
-							int start = offset+1;
+							int start = offset;
 							int end = i+j;
 							int L = i+j-offset;
 							if ( (pos >= (start-delta)) && (pos <= (end+delta)) ) { 

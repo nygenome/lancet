@@ -241,6 +241,8 @@ int loadRefs(const string reference, const string region, vector< map<string, Re
 		if( (num_windows%num_threads) == 0) { T=0; }
 	}
 	
+	fai_destroy(fai);
+	
 	return T;
 }
 

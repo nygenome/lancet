@@ -45,6 +45,7 @@
 #include "api/SamReadGroupDictionary.h"
 #include "api/SamReadGroup.h"
 #include "htslib/faidx.h"
+#include "SeqLib/BWAWrapper.h"
 
 #include "align.hh"
 #include "util.hh"

@@ -1,31 +1,41 @@
 BAMTOOLS_DIR := ./bamtools-2.3.0/
-HTSLIB_DIR := ./htslib-1.3/
+SEQLIB_DIR := ./SeqLib-1.1.1/
 
+ABS_LANCET_DIR := $(realpath .)
 ABS_BAMTOOLS_DIR := $(realpath $(BAMTOOLS_DIR))
-ABS_HTSLIB_DIR := $(realpath $(HTSLIB_DIR))
+ABS_SEQLIB_DIR := $(realpath $(SEQLIB_DIR))
 
 CXX := g++
 CXXFLAGS := -Wno-deprecated -Wall -O3 -fexceptions -g -Wl,-rpath,$(ABS_BAMTOOLS_DIR)/lib/
 INCLUDES := -I$(ABS_BAMTOOLS_DIR)/include/ -L$(ABS_BAMTOOLS_DIR)/lib/
 
-all: bamtools htslib lancet
+all: bamtools seqlib lancet
 
 .PHONY : lancet
 lancet:
-	cd src; make; cp lancet ../; cd ../
+	cd src && make && cp lancet $(ABS_LANCET_DIR) && cd $(ABS_LANCET_DIR)
 
 .PHONY : bamtools
 bamtools:
-	mkdir $(ABS_BAMTOOLS_DIR)/build; cd $(ABS_BAMTOOLS_DIR)/build; cmake ..; make; cd ../../
+	cd $(ABS_BAMTOOLS_DIR) && mkdir -p build && cd build && cmake .. && make && cd $(ABS_LANCET_DIR)
 
 .PHONY : cleanbamtools
 cleanbamtools:
-	cd $(ABS_BAMTOOLS_DIR)/build; make clean; cd ../../
-	
-.PHONY : htslib
-htslib:
-	cd $(ABS_HTSLIB_DIR); ./configure; make; cd ../
+	cd $(ABS_BAMTOOLS_DIR) && rm -rf build include lib bin && cd $(ABS_LANCET_DIR)
 
-#.PHONY : clean
+.PHONY : seqlib
+seqlib:
+	cd $(ABS_SEQLIB_DIR)/htslib && ./configure --enable-libcurl && make
+	cd $(ABS_SEQLIB_DIR) && ./configure LDFLAGS="-lcurl -lcrypto" && make && make install && cd $(ABS_LANCET_DIR)
+
+.PHONY : cleanseqlib
+cleanseqlib:
+	cd $(ABS_SEQLIB_DIR)/htslib && make clean
+	find $(ABS_SEQLIB_DIR) -name Makefile | grep -v "bwa\|benchmark\|fermi\|htslib" | xargs rm
+	cd $(ABS_SEQLIB_DIR) && rm -rf bin && cd $(ABS_LANCET_DIR)
+
+.PHONY : clean
 clean:
-	 rm lancet src/lancet; rm -rf $(ABS_BAMTOOLS_DIR)/build; rm -rf $(ABS_BAMTOOLS_DIR)/include; rm -rf $(ABS_BAMTOOLS_DIR)/lib; rm -rf $(ABS_BAMTOOLS_DIR)/bin; cd $(ABS_HTSLIB_DIR); make clean;
+	rm -f lancet src/lancet
+	make cleanbamtools
+	make cleanseqlib

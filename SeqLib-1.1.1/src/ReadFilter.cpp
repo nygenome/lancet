@@ -514,7 +514,8 @@ std::ostream& operator<<(std::ostream &out, const ReadFilter &mr) {
 
     // check for valid NM
     if (!nm.isEvery()) {
-      int32_t nm_val = r.GetIntTag("NM");
+      int32_t nm_val = 0;
+      r.GetIntTag("NM", nm_val);
       if (!nm.isValid(nm_val))
 	return false;
       DEBUGIV(r, "NM pass")

@@ -1,5 +1,5 @@
-#ifndef SNOWUTILS_H
-#define SNOWUTILS_H
+#ifndef SEQLIB_UTILS_H
+#define SEQLIB_UTILS_H
 
 #include <string>
 #include <time.h>

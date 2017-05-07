@@ -37,14 +37,15 @@ BOOST_AUTO_TEST_CASE( read_gzbed ) {
   br.Open("test_data/small.bam");
 
   SeqLib::GRC g(GZBED, br.Header());
+
   BOOST_CHECK_EQUAL(g.size(), 3);
 
-  BOOST_CHECK_EQUAL(g[2].chr, 22);
+  BOOST_CHECK_EQUAL(g[2].chr, 21);
 
   SeqLib::GRC v(GZVCF, br.Header());
-  BOOST_CHECK_EQUAL(v.size(), 31);
+  BOOST_CHECK_EQUAL(v.size(), 57);
 
-  BOOST_CHECK_EQUAL(v[29].chr, 22);
+  BOOST_CHECK_EQUAL(v[29].chr, 0);
 }
 
 BOOST_AUTO_TEST_CASE ( bfc ) {
@@ -80,29 +81,29 @@ BOOST_AUTO_TEST_CASE ( bfc ) {
   b.Train();
   b.clear();
 
-  b.ErrorCorrectToTag(brv2, "KC");  
+  //b.ErrorCorrectToTag(brv2, "KC");  
 
-  UnalignedSequenceVector v;
-  b.GetSequences(v);
+  //UnalignedSequenceVector v;
+  //b.GetSequences(v);
 
   // write to corrected
-  for (auto& i : v) {
-    corr << ">" << i.Name << std::endl << i.Seq << std::endl;
-  }
-  orig.close();
-  corr.close();
+  //for (auto& i : v) {
+  //  corr << ">" << i.Name << std::endl << i.Seq << std::endl;
+  //}
+  //orig.close();
+  //corr.close();
   
   //
-  v.clear();
-  b.FilterUnique();
-  b.GetSequences(v);
+  //v.clear();
+  //b.FilterUnique();
+  //b.GetSequences(v);
 
   // do everything at once
-  b.TrainAndCorrect(brv2);
+  //b.TrainAndCorrect(brv2);
 
   // do everything in place
-  b.TrainCorrection(brv2);
-  b.ErrorCorrectInPlace(brv2);
+  //b.TrainCorrection(brv2);
+  //b.ErrorCorrectInPlace(brv2);
 }
 
 BOOST_AUTO_TEST_CASE( correct_and_assemble ) {
@@ -116,30 +117,26 @@ BOOST_AUTO_TEST_CASE( correct_and_assemble ) {
   BamRecordVector brv, brv2;
   size_t count = 0;
   while(br.GetNextRecord(rec) && count++ < 10000) 
-    brv.push_back(rec);
-
-  b.TrainAndCorrect(brv);
+    b.AddSequence(rec.Sequence().c_str(), rec.Qualities().c_str(), rec.Qname().c_str());
+  
+  b.Train();
+  b.ErrorCorrect();
 
   float kcov = b.GetKCov();
   int   kmer = b.GetKMer();
 
   UnalignedSequenceVector v;
-  b.GetSequences(v);
-
-  std::ofstream corr("corr.fa");
-  for (auto& i : v)
-    corr << ">" << i.Name << std::endl << i.Seq << std::endl;
-  corr.close();
 
   v.clear();
-  b.FilterUnique();
-  b.GetSequences(v);
+  std::string seq, name;
+  while (b.GetSequence(seq, name))
+    v.push_back({name, seq});
 
-  std::ofstream filt("filt.fa");
-  for (auto& i : v) {
-    filt << ">" << i.Name << std::endl << i.Seq << std::endl;
-  }
-  filt.close();
+  //std::ofstream filt("filt.fa");
+  //for (auto& i : v) {
+  //  filt << ">" << i.Name << std::endl << i.Seq << std::endl;
+  //}
+  //filt.close();
 
   FermiAssembler f;
   f.AddReads(v);
@@ -367,11 +364,10 @@ BOOST_AUTO_TEST_CASE( read_filter_1 ) {
       assert(false);
     }
     // test nm rule
-    if (!(rec.GetIntTag("NM") != 1)) {
-      std::cerr << rec.GetIntTag("NM") << std::endl;
+    int32_t nm;
+    rec.GetIntTag("NM", nm);
+    if (nm == 1) 
       assert(false);
-    }
-    
   }
 }
 
@@ -391,8 +387,6 @@ BOOST_AUTO_TEST_CASE ( fermi_add_reads ) {
   f.CorrectReads();
   f.PerformAssembly();
   std::vector<std::string> out = f.GetContigs();
-
-  
   
 }
 
@@ -433,17 +427,17 @@ BOOST_AUTO_TEST_CASE( bam_record ) {
   size_t count = 0;
   br.GetNextRecord(r);
   
-  BOOST_CHECK_EQUAL(r.AsGenomicRegion().chr, 22);
-  BOOST_CHECK_EQUAL(r.AsGenomicRegion().pos1,999901);
-  BOOST_CHECK_EQUAL(r.AsGenomicRegion().pos2,1000002);
-  BOOST_CHECK_EQUAL(r.AsGenomicRegion().strand,'+');
+  BOOST_CHECK_EQUAL(r.AsGenomicRegion().chr, 0);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegion().pos1,9995);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegion().pos2,10075);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegion().strand,'-');
 
-  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().chr, 22);
-  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().pos1,999993);
-  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().pos2,1000094);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().chr, 15);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().pos1,67300983);
+  BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().pos2,67301134);
   BOOST_CHECK_EQUAL(r.AsGenomicRegionMate().strand,'-');
 
-  BOOST_CHECK_EQUAL(std::floor(r.MeanPhred()), 34);
+  BOOST_CHECK_EQUAL(std::floor(r.MeanPhred()), 15);
 
   BOOST_CHECK_EQUAL(r.CountNBases(), 0);
 
@@ -997,7 +991,7 @@ BOOST_AUTO_TEST_CASE( set_qualities ) {
   SeqLib::BamRecord r;
   while (br.GetNextRecord(r)) {
     r.SetQualities("", 0);
-    BOOST_CHECK_EQUAL(r.Qualities(), std::string());
+    BOOST_CHECK_EQUAL(r.Qualities().at(0), '!');
     r.SetQualities(std::string(r.Length(), '#'), 33);
     BOOST_CHECK_EQUAL(r.Qualities(), std::string(r.Length(), '#'));    
     BOOST_CHECK_THROW(r.SetQualities(std::string(8, '#'), 0), std::invalid_argument);
@@ -1025,7 +1019,7 @@ BOOST_AUTO_TEST_CASE( overlapping_coverage ) {
     std::cout << " r " << r << std::endl;
     brv.push_back(r);
   }
-  BOOST_CHECK_EQUAL(brv[0].OverlappingCoverage(brv[2]), 101);
+  BOOST_CHECK_EQUAL(brv[0].OverlappingCoverage(brv[2]), 78);
 
 }
 
@@ -1115,8 +1109,12 @@ BOOST_AUTO_TEST_CASE( bam_record_more ) {
     rec.ClearSeqQualAndTags();
     assert(rec.Sequence().empty());
     assert(rec.Qualities().empty());
-    assert(rec.GetIntTag("NM") == 0);
-    assert(rec.GetZTag("XA").empty() == (rec.CountBWASecondaryAlignments()==0));
+    //int32_t nm;
+    //rec.GetIntTag("NM", nm);
+    //assert(!nm);
+    std::string xa;
+    rec.GetZTag("XA", xa);
+    BOOST_CHECK_EQUAL(xa.empty(), rec.CountBWASecondaryAlignments()==0);
     rec.CountBWAChimericAlignments();
   }
 
@@ -1174,7 +1172,7 @@ BOOST_AUTO_TEST_CASE( bam_record_manipulation ) {
   ss << cig;
 
   // cigar from string
-  SeqLib::Cigar cig2 = SeqLib::cigarFromString(ss.str());
+  SeqLib::Cigar cig2(ss.str());
 
   // check that the string from / to are consistent
   assert(cig == cig2);
@@ -1544,7 +1542,7 @@ BOOST_AUTO_TEST_CASE ( ref_genome ) {
   BOOST_CHECK(!r.IsEmpty());
 
   std::string out = r.QueryRegion("ref1", 0, 5);
-  BOOST_CHECK_EQUAL(out, "ATCTAT");
+  BOOST_CHECK_EQUAL(out, "ATCGAC");
 
   BOOST_CHECK_THROW(r.QueryRegion("ref1", 5,4), std::invalid_argument);
   BOOST_CHECK_THROW(r.QueryRegion("ref1", -1,4), std::invalid_argument);

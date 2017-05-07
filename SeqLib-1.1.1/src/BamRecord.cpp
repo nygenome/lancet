@@ -41,6 +41,14 @@ namespace SeqLib {
     b = SeqPointer<bam1_t>(a, free_delete()); 
   }
 
+  int32_t BamRecord::PositionEnd() const { 
+    return b ? (b->core.l_qseq > 0 ? bam_endpos(b.get()) : b->core.pos + GetCigar().NumQueryConsumed()) : -1;
+  }
+
+  int32_t BamRecord::PositionEndMate() const { 
+    return b ? (b->core.mpos + (b->core.l_qseq > 0 ? b->core.l_qseq : GetCigar().NumQueryConsumed())) : -1;
+  }
+
   GenomicRegion BamRecord::AsGenomicRegion() const {
     char s = '*';
     if (MappedFlag())
@@ -52,7 +60,7 @@ namespace SeqLib {
     char s = '*';
     if (MateMappedFlag())
       s = MateReverseFlag() ? '-' : '+';
-    return GenomicRegion(b->core.mtid, b->core.mpos, b->core.mpos + Length(), s);
+    return GenomicRegion(b->core.mtid, b->core.mpos, PositionEndMate(), s);
   }
 
   std::string BamRecord::Sequence() const {
@@ -182,7 +190,8 @@ namespace SeqLib {
     // get the old tag
     assert(tag.length());
     assert(val.length());
-    std::string tmp = GetZTag(tag);
+    std::string tmp;
+    GetZTag(tag, tmp);
     if (!tmp.length()) 
       {
 	AddZTag(tag, val);
@@ -329,7 +338,8 @@ namespace SeqLib {
   }
 
   std::string BamRecord::QualitySequence() const {
-    std::string seq = GetZTag("GV");
+    std::string seq;
+    GetZTag("GV", seq);
     if (!seq.length()) 
       seq = Sequence();
     return seq;
@@ -341,15 +351,12 @@ namespace SeqLib {
       out << "empty read";
       return out;
     }
-
     out << bam_get_qname(r.b) << "\t" << r.b->core.flag
 	<< "\t" << (r.b->core.tid+1) << "\t" << r.b->core.pos 
 	<< "\t" << r.b->core.qual << "\t" << r.CigarString() 
 	<< "\t" << (r.b->core.mtid+1) << "\t" << r.b->core.mpos << "\t" 
         << r.FullInsertSize() //r.b->core.isize 
-	<< "\t" << r.Sequence() << "\t*" << 
-      "\tAS:" << r.GetIntTag("AS") << 
-      "\tDD:" << r.GetIntTag("DD");/* << "\t" << r.Qualities()*/;;/* << "\t" << r.Qualities()*/;
+	<< "\t" << r.Sequence() << "\t*" << std::endl;
     return out;
       
     
@@ -360,7 +367,8 @@ namespace SeqLib {
     int xp_count = 0;
     
     // xa tag
-    std::string xar_s = GetZTag("XA");
+    std::string xar_s;
+    GetZTag("XA", xar_s);
     if (xar_s.length()) {
       xp_count += std::count(xar_s.begin(), xar_s.end(), ';');
     }
@@ -374,12 +382,14 @@ namespace SeqLib {
     int xp_count = 0;
     
     // sa tag (post bwa mem v0.7.5)
-    std::string xar_s = GetZTag("SA");
+    std::string xar_s;
+    GetZTag("SA", xar_s);
     if (xar_s.length()) 
       xp_count += std::count(xar_s.begin(), xar_s.end(), ';');
 
     // xp tag (pre bwa mem v0.7.5)
-    std::string xpr_s = GetZTag("XP");
+    std::string xpr_s;
+    GetZTag("XP", xpr_s);
     if (xpr_s.length()) 
       xp_count += std::count(xpr_s.begin(), xpr_s.end(), ';');
 
@@ -442,14 +452,35 @@ namespace SeqLib {
     bam_aux_append(b.get(), tag.data(), 'Z', val.length()+1, (uint8_t*)val.c_str());
   }
 
-  std::string BamRecord::GetZTag(const std::string& tag) const {
+  bool BamRecord::GetTag(const std::string& tag, std::string& s) const {
+    if (GetZTag(tag, s))
+      return true;
+    int32_t t;
+    if (GetIntTag(tag, t)) {
+      std::stringstream ss; 
+      ss << t;
+      s = ss.str();
+      return true;
+    } 
+    float f;
+    if (GetFloatTag(tag, f)) {
+      std::stringstream ss; 
+      ss << f;
+      s = ss.str();
+      return true;
+    }     
+    return false;
+  }
+
+  bool BamRecord::GetZTag(const std::string& tag, std::string& s) const {
     uint8_t* p = bam_aux_get(b.get(),tag.c_str());
     if (!p)
-      return std::string();
+      return false;
     char* pp = bam_aux2Z(p);
     if (!pp) 
-      return std::string();
-    return std::string(pp);
+      return false;
+    s = std::string(pp);
+    return true;
   }
 
   
@@ -457,7 +488,8 @@ namespace SeqLib {
   std::vector<std::string> BamRecord::GetSmartStringTag(const std::string& tag) const {
     
     std::vector<std::string> out;
-    std::string tmp = GetZTag(tag);
+    std::string tmp;
+    GetZTag(tag, tmp);
 
     if (tmp.empty())
       return std::vector<std::string>();
@@ -483,9 +515,7 @@ namespace SeqLib {
     std::vector<int> out;
     std::string tmp;
     
-    tmp = GetZTag(tag);
-    //r_get_Z_tag(a, tag.c_str(), tmp);
-    //assert(tmp.length());
+    GetZTag(tag, tmp);
     if (tmp.empty())
       return std::vector<int>();
     
@@ -508,7 +538,7 @@ namespace SeqLib {
     std::vector<double> out;
     std::string tmp;
     
-    tmp = GetZTag(tag);
+    GetZTag(tag, tmp);
     if (tmp.empty())
       return std::vector<double>();
     
@@ -611,9 +641,9 @@ namespace SeqLib {
   }
 
 
-  Cigar cigarFromString(const std::string& cig) {
+  Cigar::Cigar(const std::string& cig) {
 
-    Cigar tc;
+    //Cigar tc;
 
     // get the ops (MIDSHPN)
     std::vector<char> ops;
@@ -634,10 +664,10 @@ namespace SeqLib {
 
     assert(ops.size() == lens.size());
     for (size_t i = 0; i < lens.size(); ++i) {
-      tc.add(CigarField(ops[i], std::atoi(lens[i].c_str())));
+      add(CigarField(ops[i], std::atoi(lens[i].c_str())));
     }
     
-    return tc;
+    //return tc;
 
   }
 
@@ -657,7 +687,9 @@ namespace SeqLib {
     
     uint32_t* c  = bam_get_cigar(b);
     uint32_t* c2 = bam_get_cigar(r.b);
-    uint8_t * cov1 = (uint8_t*)calloc(b->core.l_qseq, sizeof(uint8_t));
+    
+    //uint8_t * cov1 = (uint8_t*)calloc(l > 0 ? l : b->core.l_qseq, sizeof(uint8_t));
+    uint8_t * cov1 = (uint8_t*)calloc(GetCigar().NumQueryConsumed(), sizeof(uint8_t));
     size_t pos = 0;
     for (int k = 0; k < b->core.n_cigar; ++k) {
       if (bam_cigar_opchr(c[k]) == 'M')  // is match, so track locale

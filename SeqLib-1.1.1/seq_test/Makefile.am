@@ -12,7 +12,7 @@ seq_test_LDADD = \
 	../htslib/libhts.a \
 	-lboost_unit_test_framework -lboost_system -lboost_timer -lboost_chrono
 
-seq_test_LDFLAGS = --coverage
+seq_test_LDFLAGS = --coverage -pthread
 
 seq_test_SOURCES = seq_test.cpp \
 	../src/BFC.cpp ../src/GenomicRegion.cpp \

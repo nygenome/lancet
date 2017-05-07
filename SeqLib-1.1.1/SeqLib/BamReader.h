@@ -42,7 +42,8 @@ namespace SeqLib {
   private:
 
     // do the read loading
-    bool load_read(BamRecord& r);
+    // the return value here is just passed along from sam_read1
+    int32_t load_read(BamRecord& r);
 
     void reset() {
       empty = true;

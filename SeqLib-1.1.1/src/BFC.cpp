@@ -37,42 +37,6 @@ SOFTWARE.
 
 namespace SeqLib {
 
-  bool BFC::AllocateMemory(size_t n) {
-
-    if (n <= 0)
-      return false;
-    
-    m_seqs_size = n;
-    m_seqs = (fseq1_t*)realloc(m_seqs, n * sizeof(fseq1_t));
-
-    if (!m_seqs)
-      return false;
-
-    return true;
-  }
-
-  bool BFC::AddSequence(const BamRecord& r) {
-
-    //char* s = strdup(r.Sequence().c_str());
-    const char* q = bam_get_qname(r.raw());
-    //uint8_t* l = bam_get_qual(r.raw());
-    //char* qual = (char*)malloc(r.Length() + 1);
-    //if (l)
-    //  for (size_t i = 0; i < r.Length(); ++i)
-    //	qual[i] = l[i] + 33;
-    //qual[r.Length()] = '\0';
-    
-    bool ret = AddSequence(r.Sequence().c_str(), r.Qualities().c_str(), q);
-
-    //if (s)
-    //  free(s);
-    //if (qual)
-    //  free(qual);
-
-    return ret;
-
-  }
-
   bool BFC::AddSequence(const char* seq, const char* qual, const char* name) {
 
     // do the intial allocation
@@ -108,7 +72,7 @@ namespace SeqLib {
     
     s->l_seq = strlen(seq);
     n_seqs++;
-    
+
     m_names.push_back(strdup(name));
 
     assert(m_names.size() == n_seqs);
@@ -127,166 +91,50 @@ namespace SeqLib {
     return true;
   }
 
-  void BFC::TrainAndCorrect(const BamRecordVector& brv) {
-
-    // if already allocated, clear the old ones
-    clear();
-
-    // send reads to string
-    allocate_sequences_from_reads(brv);
-
-    // learn how to correct
-    learn_correct();
-
-    // do the correction
-    correct_reads();
-
+  bool BFC::GetSequence(std::string& s, std::string& q) {
+    if (m_idx >= n_seqs)
+      return false;
+    assert(m_idx < n_seqs);
+    assert(m_names.size() == n_seqs);
+    s = std::string(m_seqs[m_idx].seq);
+    q = std::string(m_names[m_idx]);
+    std::transform(s.begin(), s.end(), s.begin(), ::toupper);
+    ++m_idx;
+    return true;
   }
 
-  void BFC::TrainCorrection(const std::vector<char*>& v) {
+  bool BFC::CorrectSequence(std::string& str, const std::string& q) {
 
-    // if already allocated, clear the old ones
-    clear();
+    assert(n_seqs == 0);
+    assert(m_names.size() == 0);
 
-    // set m_seqs and n_seqs
-    allocate_sequences_from_char(v);
-
-    // learn correct, set ch
-    learn_correct();
-
-
-  }
-  
-  void BFC::TrainCorrection(const BamRecordVector& brv) {
-
-    // if already allocated, clear the old ones
-    clear();
-
-    // set m_seqs and n_seqs
-    allocate_sequences_from_reads(brv);
-
-    // learn correct, set ch
-    learn_correct();
-  }
-
-  void BFC::ErrorCorrectToTag(BamRecordVector& brv, const std::string& tag) {
+    m_seqs = (fseq1_t*)malloc(1 * sizeof(fseq1_t));
+    n_seqs = 1;
     
-    if (tag.length() != 2)
-      throw std::invalid_argument("Tag length should be 2");
-
-    flt_uniq = 0;
-
-    // if already allocated, clear the old ones
-    clear();
-
-    // send reads to string
-    allocate_sequences_from_reads(brv);
-
-    // do the correction
-    correct_reads();
-
-    assert(n_seqs == brv.size());
-    for (size_t i = 0; i < n_seqs; ++i) {
-      std::string str = std::string(m_seqs[i].seq);
-      std::transform(str.begin(), str.end(),str.begin(), ::toupper);
-      brv[i].AddZTag("KC", str);
-    }
-    
-    clear();
-
-  }
-
-  void BFC::ErrorCorrect(const BamRecordVector& brv) {
-
-    flt_uniq = 0;
-
-    // if already allocated, clear the old ones
-    clear();
-
-    // send reads to string
-    allocate_sequences_from_reads(brv);
-
-    // do the correction
-    correct_reads();
-  }
-
-  void BFC::ErrorCorrectInPlace(BamRecordVector& brv) {
-
-    flt_uniq = 0;
-    clear();
-
-    allocate_sequences_from_reads(brv);
-
-    correct_reads();
-    
-    assert(n_seqs == brv.size());
-    for (size_t i = 0; i < n_seqs; ++i) {
-      std::string str = std::string(m_seqs[i].seq);
-      std::transform(str.begin(), str.end(),str.begin(), ::toupper);
-      brv[i].SetSequence(str);
-    }
-
-    clear();
-  }
-    
-  void BFC::GetSequences(UnalignedSequenceVector& v) const {
-
-    for (size_t i = 0; i < n_seqs; ++i)
-      if (m_seqs[i].seq) { // wont be here if filter unique was called
-	std::string str = std::string(m_seqs[i].seq);
-	std::transform(str.begin(), str.end(),str.begin(), ::toupper);
-	std::string name = m_names[i] ? std::string(m_names[i]) : std::string();
-	std::string qual = m_seqs[i].qual ? std::string(m_seqs[i].qual) : std::string();
-	v.push_back(UnalignedSequence(name, str, qual));
-      }
-    
-  }
-
-  void BFC::allocate_sequences_from_char(const std::vector<char*>& v) {
-
-    m_seqs_size = v.size();
-    m_seqs = (fseq1_t*)malloc(v.size() * sizeof(fseq1_t));
-    
-    uint64_t size = 0;
-    for (std::vector<char*>::const_iterator r = v.begin(); r != v.end(); ++r) {
+    //uint64_t size = 0;
+    //for (std::vector<char*>::const_iterator r = v.begin(); r != v.end(); ++r) {
     //    for (auto& r : v) {
-      fseq1_t *s;
-      
-      s = &m_seqs[n_seqs];
-      
-      s->seq   = strdup(*r);
-      s->qual  = NULL; 
-      
-      s->l_seq = strlen(*r);
-      size += m_seqs[n_seqs++].l_seq;
-    }
-    return;
+    fseq1_t *s;
+    s = &m_seqs[0];
+    s->seq   = strdup(str.c_str());
+    s->qual  = q.empty() || q.length() != str.length() ? NULL : strdup(q.c_str()); 
+    s->l_seq = str.length();
 
-  }
+    // do the error correction of this one sequence
+    correct_reads();
 
-  void BFC::allocate_sequences_from_reads(const BamRecordVector& brv) {
-      
-    // alloc the memory
-    m_seqs_size = brv.size();
-    m_seqs = (fseq1_t*)malloc(brv.size() * sizeof(fseq1_t));
-    
-    uint64_t size = 0;
-    for (BamRecordVector::const_iterator r = brv.begin(); r != brv.end(); ++r) {
-      //    for (auto& r : brv) {
-      m_names.push_back(strdup(r->Qname().c_str()));
+    // add a dummy name
+    m_names.push_back(strdup("1"));
 
-      fseq1_t *s;
-      
-      s = &m_seqs[n_seqs];
+    // send to uppercase, and return 
+    std::string cstr = std::string(m_seqs[0].seq);
+    std::transform(cstr.begin(), cstr.end(), cstr.begin(), ::toupper);
+    str = cstr;
 
-      std::string qs = r->QualitySequence();
-      s->seq   = strdup(qs.c_str());
-      s->qual  = strdup(r->Qualities().c_str());
-      
-      s->l_seq = qs.length();
-      size += m_seqs[n_seqs++].l_seq;
-    }
-    return;
+    clear();
+
+    return true;
+
   }
 
   void free_char(char*& c) {
@@ -312,6 +160,7 @@ namespace SeqLib {
 
     m_names.clear();
     m_seqs_size = 0;
+    m_idx = 0;
 
   }
 
@@ -407,14 +256,4 @@ namespace SeqLib {
 
   }
 
-    void BFC::FilterUnique() {
-      flt_uniq = 1;
-      correct_reads();
-
-      size_t count = 0;
-      for (size_t i = 0; i < n_seqs; ++i)
-	if (m_seqs[i].seq)
-	  ++count;
-    }
-  
 }

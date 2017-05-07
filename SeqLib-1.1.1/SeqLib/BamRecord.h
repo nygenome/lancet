@@ -108,6 +108,14 @@ class CigarField {
 
  public:
 
+   /** Construct an empty CIGAR */
+   Cigar() {} 
+
+   /** Construct from a CIGAR string 
+    * @param cig CIGAR string, e.g. 54M46S
+    */
+   Cigar(const std::string& cig);
+
    typedef std::vector<CigarField>::iterator iterator; ///< Iterator for move between CigarField ops
    typedef std::vector<CigarField>::const_iterator const_iterator; ///< Iterator (const) for move between CigarField ops
    iterator begin() { return m_data.begin(); } ///< Iterator (aka std::vector<CigarField>.begin()
@@ -185,10 +193,7 @@ class CigarField {
 
  };
 
- //typedef std::vector<CigarField> Cigar;
  typedef SeqHashMap<std::string, size_t> CigarMap;
-
- Cigar cigarFromString(const std::string& cig);
 
 /** Class to store and interact with a SAM alignment record
  *
@@ -345,7 +350,10 @@ class BamRecord {
   int32_t CountBWAChimericAlignments() const;
 
   /** Get the end of the alignment */
-  inline int32_t PositionEnd() const { return b ? bam_endpos(b.get()) : -1; }
+  int32_t PositionEnd() const;
+
+  /** Get the end of the aligment mate pair */
+  int32_t PositionEndMate() const;
 
   /** Get the chromosome ID of the read */
   inline int32_t ChrID() const { return b ? b->core.tid : -1; }
@@ -398,8 +406,8 @@ class BamRecord {
   inline std::string ParseReadGroup() const {
 
     // try to get from RG tag first
-    std::string RG = GetZTag("RG");
-    if (!RG.empty())
+    std::string RG;
+    if (GetZTag("RG", RG))
       return RG;
 
     // try to get the read group tag from qname second
@@ -414,7 +422,7 @@ class BamRecord {
     if (b->core.tid != b->core.mtid || !PairMappedFlag())
       return 0;
 
-    return std::abs(b->core.pos - b->core.mpos) + Length();
+    return std::abs(b->core.pos - b->core.mpos) + GetCigar().NumQueryConsumed();
 
   }
   
@@ -559,8 +567,8 @@ class BamRecord {
     uint8_t * p = bam_get_qual(b);
     if (!p)
       return std::string();
-    if (!p[0])
-      return std::string();
+    //if (!p[0])
+    //  return std::string();
     std::string out(b->core.l_qseq, ' ');
     for (int32_t i = 0; i < b->core.l_qseq; ++i) 
       out[i] = (char)(p[i] + offset);
@@ -659,9 +667,17 @@ class BamRecord {
   
   /** Get a string (Z) tag 
    * @param tag Name of the tag. eg "XP"
-   * @return The value stored in the tag. Returns empty string if it does not exist.
+   * @param s The string to be filled in with the tag information
+   * @return Returns true if the tag is present, even if empty. Return false if no tag or not a Z tag.
    */
-  std::string GetZTag(const std::string& tag) const;
+  bool GetZTag(const std::string& tag, std::string& s) const;
+  
+  /** Get a string of either Z, f or i type. Useful if tag type not known at compile time.
+   * @param tag Name of the tag. eg "XP"
+   * @param s The string to be filled in with the tag information
+   * @return Returns true if the tag is present and is either Z or i, even if empty. Return false if no tag or not Z or i.
+   */  
+  bool GetTag(const std::string& tag, std::string& s) const;
   
   /** Get a vector of type int from a Z tag delimited by "^"
    * Smart-tags allow one to store vectors of strings, ints or doubles in the alignment tags, and
@@ -691,13 +707,28 @@ class BamRecord {
 
   /** Get an int (i) tag 
    * @param tag Name of the tag. eg "XP"
-   * @return The value stored in the tag. Returns 0 if it does not exist.
+   * @param t Value to be filled in with the tag value.
+   * @return Return true if the tag exists.
    */
-  inline int32_t GetIntTag(const std::string& tag) const {
+  inline bool GetIntTag(const std::string& tag, int32_t& t) const {
     uint8_t* p = bam_aux_get(b.get(),tag.c_str());
     if (!p)
-      return 0;
-    return bam_aux2i(p);
+      return false;
+    t = bam_aux2i(p);
+    return true;
+  }
+
+  /** Get a float (f) tag 
+   * @param tag Name of the tag. eg "AS"
+   * @param t Value to be filled in with the tag value.
+   * @return Return true if the tag exists.
+   */
+  inline bool GetFloatTag(const std::string& tag, float& t) const {
+    uint8_t* p = bam_aux_get(b.get(),tag.c_str());
+    if (!p)
+      return false;
+    t = bam_aux2f(p);
+    return true;
   }
 
   /** Add a string (Z) tag
@@ -825,7 +856,10 @@ class BamRecord {
    */
   int OverlappingCoverage(const BamRecord& r) const;
   
-  private:
+  /** Return the shared pointer */
+  SeqPointer<bam1_t> shared_pointer() const { return b; }
+
+  protected:
   
   SeqPointer<bam1_t> b; // bam1_t shared pointer
 

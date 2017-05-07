@@ -1,5 +1,5 @@
-#ifndef SEQLIB_UNALIGNED_SEQ_H__
-#define SEQLIB_UNALIGNED_SEQ_H__
+#ifndef SEQLIB_UNALIGNED_SEQ_H
+#define SEQLIB_UNALIGNED_SEQ_H
 
 extern "C" {
   #include "bwa/bwa.h"
@@ -26,20 +26,20 @@ namespace SeqLib {
     /** Construct an empty sequence */
     UnalignedSequence() {}
   
-    /** Construct an unaliged sequence with name and sequence
+    /** Construct an unaligned sequence with name and sequence
      * @param n Name of the sequence 
      * @param s Sequence, stored as ACTG or N characters
      */
     UnalignedSequence(const std::string& n, const std::string& s) : Name(n), Seq(s), Qual(std::string()), Strand('*') {}
 
-    /** Construct an unaliged sequence with name, sequence and quality score
+    /** Construct an unaligned sequence with name, sequence and quality score
      * @param n Name of the sequence 
      * @param s Sequence, stored as ACTG or N characters
      * @param q Quality string
      */
     UnalignedSequence(const std::string& n, const std::string& s, const std::string& q) : Name(n), Seq(s), Qual(q), Strand('*') {}
 
-    /** Construct an unaliged sequence with name, sequence and quality score
+    /** Construct an unaligned sequence with name, sequence, quality score and strand
      * @param n Name of the sequence 
      * @param s Sequence, stored as ACTG or N characters
      * @param q Quality string

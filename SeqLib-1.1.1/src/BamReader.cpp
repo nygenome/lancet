@@ -224,13 +224,24 @@ bool BamReader::GetNextRecord(BamRecord& r) {
 
   // shortcut if we have only a single bam
   if (m_bams.size() == 1) {
+    
     if (m_bams.begin()->second.fp.get() == NULL || m_bams.begin()->second.mark_for_closure) // cant read if not opened
       return false;
-    if (m_bams.begin()->second.load_read(r)) { // try to read
+    
+    // try and get the next read
+    int32_t status = m_bams.begin()->second.load_read(r);
+    if (status >= 0)
       return true;
+    if (status == -1) {
+      // didn't find anything, clear it
+      m_bams.begin()->second.mark_for_closure = true;
+      return false;
     }
-    // didn't find anything, clear it
-    m_bams.begin()->second.mark_for_closure = true;
+    
+    // run time error
+    std::stringstream ss;
+    ss << "sam_read1 return status: " << status << " file: " << m_bams.begin()->first;
+    throw std::runtime_error(ss.str());
     return false;
   }
 
@@ -253,10 +264,17 @@ bool BamReader::GetNextRecord(BamRecord& r) {
       continue; 
     
     // load the next read
-    if (!tb->load_read(r)) { // if cant load, mark for closing
+    int32_t status = tb->load_read(r);
+    if (status == -1) {
+      // can't load, so mark for closing
       tb->empty = true;
       tb->mark_for_closure = true; // no more reads in this BAM
       continue; 
+    } else if (status < 0) { // error sent back from sam_read1
+      // run time error
+      std::stringstream ss;
+      ss << "sam_read1 return status: " << status << " file: " << bam->first;
+      throw std::runtime_error(ss.str());
     }
     
   }
@@ -302,7 +320,7 @@ std::string BamReader::PrintRegions() const {
 
 }
 
-  bool _Bam::load_read(BamRecord& r) {
+  int32_t _Bam::load_read(BamRecord& r) {
 
   // allocated the memory
   bam1_t* b = bam_init1(); 
@@ -310,6 +328,7 @@ std::string BamReader::PrintRegions() const {
 
   if (hts_itr.get() == NULL) {
     valid = sam_read1(fp.get(), m_hdr.get_(), b);    
+
     if (valid < 0) { 
       
 #ifdef DEBUG_WALKER
@@ -317,7 +336,7 @@ std::string BamReader::PrintRegions() const {
 #endif
       //goto endloop;
       bam_destroy1(b);
-      return false;
+      return valid;
     }
   } else {
     
@@ -336,7 +355,7 @@ std::string BamReader::PrintRegions() const {
       ++m_region_idx; // increment to next region
       if (m_region_idx >= m_region->size()) {
 	bam_destroy1(b);
-	return false;
+	return valid;
       }
 	//goto endloop;
       
@@ -351,7 +370,7 @@ std::string BamReader::PrintRegions() const {
   next_read.assign(b); // assign the shared_ptr for the bam1_t
   r = next_read;
 
-  return true;
+  return valid;
 }
 
 std::ostream& operator<<(std::ostream& out, const BamReader& b)

@@ -24,6 +24,7 @@ namespace SeqLib {
   public:
     /** Construct a new BFC engine */
     BFC() {
+      m_idx = 0;
       bfc_opt_init(&bfc_opt);
       ch = NULL;
       kmer = 0;
@@ -43,56 +44,30 @@ namespace SeqLib {
 	bfc_ch_destroy(ch);
     }
 
-    /** Allocate a block of memory for the reads if the amount to enter is known 
-     * @note This is not necessary, as reads will dynamically reallocate 
-     */
-    bool AllocateMemory(size_t n);
-
     /** Peform BFC error correction on the sequences stored in this object */
     bool ErrorCorrect();
 
     /** Train the error corrector using the reads stored in this object */
     bool Train();
 
-    /** Add a sequence for either training or correction */
-    bool AddSequence(const BamRecord& r);
-
-    /** Add a sequence for either training or correction */
+    /** Add a sequence for either training or correction 
+     * @param seq A sequence to be copied into this object (A, T, C, G)
+     */
     bool AddSequence(const char* seq, const char* qual, const char* name);
 
-    /** Set the k-mer size */
+    /** Set the k-mer size for training 
+     * @note zero is auto
+     */
     void SetKmer(int k) { kmer = k; }
 
-    /** Train error correction using sequences from aligned reads */
-    void TrainCorrection(const BamRecordVector& brv);
-
-    /** Train error correction from raw character strings */
-    void TrainCorrection(const std::vector<char*>& v);
-
-    /** Train and error correction on same reads */
-    void TrainAndCorrect(const BamRecordVector& brv);
-
-    /** Error correct a collection of reads */
-    void ErrorCorrect(const BamRecordVector& brv);
-
-    /** Error correct in place, modify sequence, and the clear memory from this object */
-    void ErrorCorrectInPlace(BamRecordVector& brv);
+    /** Correct a single new sequence not stored in object 
+     * @param str Sequence of string to correct (ACTG)
+     * @param q Quality score of sequence to correct 
+     * @value Returns true if corrected */
+    bool CorrectSequence(std::string& str, const std::string& q);
     
-    /** Error correct and add tag with the corrected sequence data, and the clear memory from this object 
-     * @param brv Aligned reads to error correct
-     * @param tag Tag to assign error corrected sequence to (eg KC)
-     * @exception Throws an invalid_argument if tag is not length 2
-     */
-    void ErrorCorrectToTag(BamRecordVector& brv, const std::string& tag);
-    
-    /** Return the reads (error corrected if ran ErrorCorrect) */
-    void GetSequences(UnalignedSequenceVector& v) const;
-
     /** Clear the stored reads */
     void clear();
-
-    /** Filter reads with unique k-mers. Do after error correction */
-    void FilterUnique();
 
     /** Return the calculated kcov */
     float GetKCov() const { return kcov; }
@@ -103,7 +78,20 @@ namespace SeqLib {
     /** Return the number of sequences controlled by this */
     int NumSequences() const { return n_seqs; } 
 
+    /** Return the next sequence stored in object 
+     * @param s Empty string to be filled.
+     * @param q Empty string name to be filled.
+     * @value True if string was filled with sequence. False if no more sequences.
+     */
+    bool GetSequence(std::string& s, std::string& q);
+
+    /** Reset the sequence iterator inside GetSequence 
+     */
+    void ResetGetSequence() { m_idx = 0; };
+
   private:
+
+    size_t m_idx;
 
     // the amount of memory allocated
     size_t m_seqs_size;
@@ -145,6 +133,8 @@ namespace SeqLib {
 
     // assign names, qualities and seq to m_seqs
     void allocate_sequences_from_char(const std::vector<char*>& v);
+    
+    void allocate_sequences_from_strings(const std::vector<std::string>& v);
     
     // do the actual read correction
     void correct_reads();

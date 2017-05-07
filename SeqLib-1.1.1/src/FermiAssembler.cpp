@@ -83,7 +83,6 @@ namespace SeqLib {
     // alloc the memory
     m_seqs = (fseq1_t*)realloc(m_seqs, (n_seqs + brv.size()) * sizeof(fseq1_t));
 
-    int m = 0;
     uint64_t size = 0;
     for (BamRecordVector::const_iterator r = brv.begin(); r != brv.end(); ++r) {
       m_names.push_back(r->Qname());

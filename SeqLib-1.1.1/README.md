@@ -9,6 +9,13 @@ API Documentation
 -----------------
 [API Documentation][htmldoc]
 
+Citation
+--------
+If you use SeqLib in your applications, please cite: http://bioinformatics.oxfordjournals.org/content/early/2016/12/21/bioinformatics.btw741.full.pdf+html
+
+Note that the values for the SeqAn benchmarking in Table 2 should be corrected to 7.7 Gb memory and 33.92 seconds in CPU time, when compiling SeqAn with ``-O3 -DNDEBUG``. SeqAn also does full string decompression.
+Wall times for SeqAn may be shorter than CPU time because it uses embedded multi-threading during BAM IO.
+
 Table of contents
 =================
 
@@ -51,7 +58,7 @@ C_INCLUDE_PATH=$C_INCLUDE_PATH:$SEQ:$SEQ/htslib
 And need to link the SeqLib static library and Fermi, BWA and HTSlib libraries
 ```bash
 SEQ=<path_to_seqlib>
-LDFLAGS="$LDFLAGS -L$SEQ/bin/libseqlib.a -L$SEQ/bin/libbwa.a -L$SEQ/bin/libfml.a -L$SEQ/bin/libhts.a"
+LDFLAGS="$LDFLAGS $SEQ/bin/libseqlib.a $SEQ/bin/libbwa.a $SEQ/bin/libfml.a $SEQ/bin/libhts.a"
 ```
 
 To add support for reading BAMs, etc with HTTPS, FTP, S3, Google cloud, etc, you must compile and link with libcurl.
@@ -103,11 +110,12 @@ bioinformatics problems.
 Some differences:
 * SeqLib has ~2-4x faster read/write speed over BamTools and SeqAn, and lower memory footprint.
 * SeqLib has support for CRAM file
-* SeqLib provides in memory access to BWA-MEM, BLAT, a chromosome aware interval tree and range operations, and to read correction and sequence assembly with Fermi. BamTools has more support currently for network access. 
-* SeqAn provide a substantial amount of additional capabilites not in SeqLib, including graph operations and a more expanded suite of multi-sequence alignments.
+* SeqLib provides in memory access to BWA-MEM, BLAT, chromosome aware interval tree, read correction, and sequence assembly with Fermi.
+* SeqAn provide a substantial amount of additional capabilites not in SeqLib, including graph operations and an expanded suite of multi-sequence alignments.
+* SeqAn embeds multi-threading into some functionality like BAM IO to improve wall times.
 
 For your particular application, our hope is that SeqLib will provide a comprehensive and powerful envrionment to develop 
-bioinformatics tools. Feature requests and comments are welcomed.
+bioinformatics tools, or to be used in conjuction with the capablities in SeqAn and BamTools. Feature requests and comments are welcomed.
 
 Command Line Usage
 ------------------
@@ -152,7 +160,7 @@ bwa.ConstructIndex(usv);
 std::string querySeq = "CAGCCTCACCCAGGAAAGCAGCTGGGGGTCCACTGGGCTCAGGGAAG";
 BamRecordVector results;
 // hardclip=false, secondary score cutoff=0.9, max secondary alignments=10
-bwa.AlignSequence("my_seq", querySeq, results, false, 0.9, 10); 
+bwa.AlignSequence(querySeq, "my_seq", results, false, 0.9, 10); 
 
 // print results to stdout
 for (auto& i : results)
@@ -293,21 +301,22 @@ w.Close();               // Optional. Will close on destruction
 using namespace SeqLib;
 
 // brv is some set of reads to train the error corrector
-b.TrainCorrection(brv);
+for (BamRecordVector::const_iterator r = brv.begin(); r != brv.end(); ++r)
+    b.AddSequence(r->Sequence().c_str(), r->Qualities().c_str(), r->Qname().c_str());
+b.Train();
+b.clear(); // clear the training sequences. Training parameters saved in BFC object
+
 // brv2 is some set to correct
-b.ErrorCorrect(brv2);
+for (BamRecordVector::const_iterator r = brv2.begin(); r != brv2.end(); ++r)
+    b.AddSequence(r->Sequence().c_str(), r->Qualities().c_str(), r->Qname().c_str());
+b.ErrorCorrect();
 
 // retrieve the sequences
 UnalignedSequenceVector v;
-b.GetSequences(v);
+std::string name, seq;
+while (b.GetSequences(seq, name))
+  v.push_back({name, seq});      			   
 
-// alternatively, to train and correct the same set of reads
-b.TrainAndCorrect(brv);
-b.GetSequences(v);
-
-// alternatively, train and correct, and modify the sequence in-place
-b.TrainCorrection(brv);
-b.ErrorCorrectInPlace(brv);
 ```
 
 Support

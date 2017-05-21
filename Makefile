@@ -31,7 +31,9 @@ seqlib:
 .PHONY : cleanseqlib
 cleanseqlib:
 	cd $(ABS_SEQLIB_DIR)/htslib && make clean
-	find $(ABS_SEQLIB_DIR) -name Makefile | grep -v "bwa\|benchmark\|fermi\|htslib" | xargs rm
+	cd $(ABS_SEQLIB_DIR)/bwa && make clean
+	cd $(ABS_SEQLIB_DIR)/fermi-lite && make clean
+	find $(ABS_SEQLIB_DIR) -name Makefile | grep -v "bwa\|benchmark\|fermi\|htslib" | xargs rm -f
 	cd $(ABS_SEQLIB_DIR) && rm -rf bin && cd $(ABS_LANCET_DIR)
 
 .PHONY : clean

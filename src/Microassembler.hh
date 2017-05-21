@@ -40,12 +40,14 @@
 #include <pthread.h>
 #include <time.h>       /* time_t, struct tm, time, localtime, strftime */
 
-#include "api/BamReader.h"
-#include "api/BamWriter.h"
+#include "api/SamHeader.h"
 #include "api/SamReadGroupDictionary.h"
 #include "api/SamReadGroup.h"
 #include "htslib/faidx.h"
-#include "SeqLib/BWAWrapper.h"
+#include "SeqLib/BamReader.h"
+#include "SeqLib/BamHeader.h"
+#include "SeqLib/BamRecord.h"
+#include "SeqLib/GenomicRegion.h"
 
 #include "align.hh"
 #include "util.hh"
@@ -64,7 +66,6 @@
 
 using namespace std;
 using namespace HASHMAP;
-using namespace BamTools;
 
 #define bvalue(value) ((value ? "true" : "false"))
 
@@ -90,7 +91,7 @@ public:
 	int QV_RANGE;
 	int MIN_QUAL_CALL;
 	int MIN_QUAL_TRIM;
-	int MIN_MAP_QUAL;
+	int32_t MIN_MAP_QUAL;
 
 	string TUMOR;
 	string NORMAL;
@@ -213,12 +214,12 @@ public:
 	void loadRG(const string & filename, int member);
 	void processGraph(Graph_t & g, const string & refname, int minK, int maxK);
 	int run(int argc, char** argv);
-	bool extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo, BamRegion &region, int &readcnt, int code);
-	bool isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion &region, int code);
+	bool extractReads(SeqLib::BamReader &reader, Graph_t &g, Ref_t *refinfo, SeqLib::GenomicRegion &region, int &readcnt, int code);
+	bool isActiveRegion(SeqLib::BamReader &reader, Ref_t *refinfo, SeqLib::GenomicRegion &region, int code);
 	int processReads();
 	void setFilters(Filters * fs) { filters = fs; }
 	void setID(int i) { ID = i; }
-	string retriveSampleName(SamHeader &header);
+	string retriveSampleName(const SeqLib::BamHeader bHeader);
 };
 
 #endif

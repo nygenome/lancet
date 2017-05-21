@@ -47,16 +47,17 @@ void Microassembler::loadRG(const string & filename, int member) {
 	xfclose(fp);
 }
 
-// extract sammple name from SamHeader
+// extract sammple name from BamHeader
 //////////////////////////////////////////////////////////////
-string Microassembler::retriveSampleName(SamHeader &header) {
+string Microassembler::retriveSampleName(const SeqLib::BamHeader bHeader) {
 	
 	string sample_name = "NA";
+	BamTools::SamHeader header = BamTools::SamHeader(bHeader.AsString());
 	
 	if(header.HasReadGroups()) {
-		SamReadGroupDictionary RGS = header.ReadGroups;
+		BamTools::SamReadGroupDictionary RGS = header.ReadGroups;
 		if(!(RGS.IsEmpty())) {
-			SamReadGroup RG = *(RGS.Begin());
+			BamTools::SamReadGroup RG = *(RGS.Begin());
 			if(RG.HasSample()) {
 				sample_name = RG.Sample;
 				//cerr << sample_name << endl;
@@ -248,111 +249,113 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 // isActiveRegion
 // Examines reads alignments (CIGAR and MD) to find evidence of mutations
 // returns true if there is evidence of mutation in the region
-bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion &region, int code) {
+bool Microassembler::isActiveRegion(SeqLib::BamReader &reader, Ref_t *refinfo, SeqLib::GenomicRegion &region, int code) {
 	
 	// iterate through all alignments
 	int MIN_EVIDENCE = filters->minAltCntTumor; // min evidence equal to min support for somatic variant
-	BamAlignment al;
+	SeqLib::BamRecord rec;
 	int totalreadbp = 0;
 	bool ans = false;
-	int MQ = MIN_MAP_QUAL;
+	int32_t MQ = MIN_MAP_QUAL;
 	string CIGAR = "";
 	string rg = "";
 	string md = "";
 	
-	vector< int > clipSizes;
-	vector< int > readPositions; 
-	vector< int > genomePositions;
-
-    map<int,int> mapX; // table with counts of all mismatches at a given locus	
-    map<int,int> mapI; // table with counts of all insertions at a given locus	
-    map<int,int> mapD; // table with counts of all deletion at a given locus	
-    map<int,int> mapSC; // table with counts of all softclipped sequences starting at a given locus
-    map<int,int>::iterator mit;
+  map<int,int> mapX; // table with counts of all mismatches at a given locus	
+  map<int,int> mapI; // table with counts of all insertions at a given locus	
+  map<int,int> mapD; // table with counts of all deletion at a given locus	
+  map<int,int> mapSC; // table with counts of all softclipped sequences starting at a given locus
+  map<int,int>::iterator mit;
 	
 	// more sensitive in normal (extract all reads)
 	if (code == NML) { MQ = 0; }
 	
 	/*** TUMOR ****/
-	//while ( reader.GetNextAlignment(al) ) { // get next alignment and populate the alignment's string data fields
-	while ( reader.GetNextAlignmentCore(al) ) { // get next alignment and populate the alignment's string data fields
+	// get next alignment and populate the alignment's string data fields
+	while (reader.GetNextRecord(rec)) {
 		
-		int alstart = al.Position;
-		int alend = al.GetEndPosition();
-		if( (alstart < region.LeftPosition) || (alend > region.RightPosition) ) { continue; } // skip alignments outside region
+		int32_t alstart = rec.Position();
+		int32_t alend = rec.PositionEnd();
 		
-		if ( (al.MapQuality >= MQ) && !al.IsDuplicate() ) { // only keep reads with high map quality and skip PCR duplicates
+		// skip alignments outside the region
+		if ((alstart < region.pos1) || (alend > region.pos2)) { continue; }
+		
+		// only process reads with high map quality and skip PCR duplicates
+		if ((rec.MapQuality() < MQ) || rec.DuplicateFlag()) { continue; }
+		
+		// Get read group information for the record
+		rg = rec.ParseReadGroup();
+		if (rg.empty()) { rg = "null"; }
+		
+		// skip read if rg does not match any of the "to-process" readgroups
+		if ((readgroups.find("null") == readgroups.end()) || readgroups.find(rg) == readgroups.end()) { continue; }
+
+		// parse MD string
+		// String for mismatching positions. Regex : [0-9]+(([A-Z]|\^[A-Z]+)[0-9]+)*10
+		rec.GetZTag("MD", md); // get string of mismatching positions
+		string qualities = rec.Qualities();
+		parseMD(md, mapX, int(alstart), qualities, MIN_QUAL_CALL);
+		
+		// add SNV to database
+		// Variant_t(string chr_, int pos_, string ref_, string alt_,
+		// 					int ref_cov_normal_, int ref_cov_tumor_,
+		// 					int alt_cov_normal_fwd_, int alt_cov_normal_rev_,
+		// 					int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_,
+		// 					char prev_bp_ref_, char prev_bp_alt_, Filters &fs)
+		
+		// example: 31M1I17M1D37M
+		CIGAR = "";
+		int pos = alstart; // initialize position to start of alignment
+		SeqLib::Cigar cig = rec.GetCigar();
+		for (std::vector<SeqLib::CigarField>::iterator it = cig.begin() ; it != cig.end(); ++it) {
+			char T = (*it).Type();
 			
-			al.BuildCharData(); // Populates alignment string fields (read name, bases, qualities, tag data)
+			// update position (except for insertions)
+			if(T!='I') { pos += int((*it).Length()); }
 			
-			al.GetTag("RG", rg); // get the read group information for the read
-			if(rg.empty()) { rg = "null"; }
+			if(T=='X') {
+				//cerr << "X:" << pos << "|";
+				mit = mapX.find(pos);
+				if (mit != mapX.end()) { ++((*mit).second); }
+				else { mapX.insert(std::pair<int,int>(pos,1)); }
+			}
+			if(T=='I') {
+				//cerr << "I:" << pos << "|";
+				mit = mapI.find(pos);
+				if (mit != mapI.end()) { ++((*mit).second); }
+				else { mapI.insert(std::pair<int,int>(pos,1)); }
+			}
+			if(T=='D') {
+				//cerr << "D:" << pos << "|";
+				mit = mapD.find(pos);
+				if (mit != mapD.end()) { ++((*mit).second); }
+				else { mapD.insert(std::pair<int,int>(pos,1)); }
+			}
 			
-			if ( (readgroups.find("null") != readgroups.end())  || (readgroups.find(rg) != readgroups.end()) ) { // select reads in the read group RG
-				
-				// parse MD string
-				// String for mismatching positions. Regex : [0-9]+(([A-Z]|\^[A-Z]+)[0-9]+)*10
-				al.GetTag("MD", md); // get string of mismatching positions
-				parseMD(md, mapX, alstart, al.Qualities, MIN_QUAL_CALL);
-				
-				// add SNV to database
-				//Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters &fs)
-				
-				
-				// example: 31M1I17M1D37M
-				CIGAR = "";
-				int pos = alstart; // initialize position to start of alignment
-				for (std::vector<CigarOp>::iterator it = (al.CigarData).begin() ; it != (al.CigarData).end(); ++it) {
-					char T = (*it).Type;
-					
-					// update position (except for insertions)
-					if(T!='I') { pos += (*it).Length; }
-					
-					if(T=='X') {
-						//cerr << "X:" << pos << "|";
-						mit = mapX.find(pos);
-						if (mit != mapX.end()) { ++((*mit).second); }
-						else { mapX.insert(std::pair<int,int>(pos,1)); }
-					}
-					if(T=='I') {
-						//cerr << "I:" << pos << "|";
-						mit = mapI.find(pos);
-						if (mit != mapI.end()) { ++((*mit).second); }
-						else { mapI.insert(std::pair<int,int>(pos,1)); }
-					}
-					if(T=='D') {
-						//cerr << "D:" << pos << "|";
-						mit = mapD.find(pos);
-						if (mit != mapD.end()) { ++((*mit).second); }
-						else { mapD.insert(std::pair<int,int>(pos,1)); }
-					}
-					
-					std::stringstream ss;
-					ss << (*it).Length;
-					CIGAR += ss.str();
-					CIGAR += (*it).Type;
-				}
-				//cerr << endl;
-				
-				int len = al.Length;
-				totalreadbp += len;
-				
-				clipSizes.clear();
-				readPositions.clear();
-				genomePositions.clear();
-				
-				//cerr << CIGAR << " MD:" << md << " START:" << alstart << " ";
-				if(al.GetSoftClips(clipSizes, readPositions, genomePositions)) {	
-					for (std::vector<int>::iterator it = genomePositions.begin() ; it != genomePositions.end(); ++it) {
-						//cerr << (*it) << " ";
-						mit = mapSC.find((*it));
-						if (mit != mapSC.end()) { ++((*mit).second); }
-						else { mapSC.insert(std::pair<int,int>((*it),1)); }
-					}
-				}
-				//cerr << endl;
+			std::stringstream ss;
+			ss << (*it).Length();
+			CIGAR += ss.str();
+			CIGAR += (*it).Type();
+		}
+		//cerr << endl;
+		
+		int len = rec.Length();
+		totalreadbp += len;
+		
+		//cerr << CIGAR << " MD:" << md << " START:" << alstart << " ";
+		int numSoftClip = rec.NumSoftClip();
+		if (numSoftClip > 0) {
+			// Get alignment start and end read position after removing soft clips
+			int scStart = rec.AlignmentPosition();
+			int scEnd = rec.AlignmentEndPosition();
+			
+			if (int(alstart) < scStart) {
+				mapSC.insert(std::pair<int,int>(alstart, scStart - 1));
+			} else {
+				mapSC.insert(std::pair<int,int>(scEnd, scEnd + numSoftClip - 1));
 			}
 		}
+		//cerr << endl;
 	}
 
 	// check for any locus with evidence for SNVs, indel, or soft-clipped sequences	
@@ -361,7 +364,7 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 	bool softclip_evidence = false;
 	
 	//cerr << "X: ";
-    for (mit=mapX.begin(); mit!=mapX.end(); ++mit) {
+  for (mit=mapX.begin(); mit!=mapX.end(); ++mit) {
 		if((*mit).second >= MIN_EVIDENCE) { 
 			//cerr << (*mit).first << "," << (*mit).second << "|";
 			snv_evidence = true;
@@ -372,7 +375,7 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 	//cerr << endl;
 	
 	//cerr << "I: ";
-    for (mit=mapI.begin(); mit!=mapI.end(); ++mit) {
+  for (mit=mapI.begin(); mit!=mapI.end(); ++mit) {
 		if((*mit).second >= MIN_EVIDENCE) { 
 			//cerr << (*mit).first << "," << (*mit).second << "|";
 			indel_evidence = true;
@@ -383,7 +386,7 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 	//cerr << endl;
 	
 	//cerr << "D: ";
-    for (mit=mapD.begin(); mit!=mapD.end(); ++mit) {
+  for (mit=mapD.begin(); mit!=mapD.end(); ++mit) {
 		if((*mit).second >= MIN_EVIDENCE) { 
 			//cerr << (*mit).first << "," << (*mit).second << "|";
 			indel_evidence = true;
@@ -394,7 +397,7 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 	//cerr << endl;
 	
 	//cerr << "S: ";
-    for (mit=mapSC.begin(); mit!=mapSC.end(); ++mit) {
+  for (mit=mapSC.begin(); mit!=mapSC.end(); ++mit) {
 		if((*mit).second >= MIN_EVIDENCE) { 
 			//cerr << (*mit).first << "," << (*mit).second << "|";
 			softclip_evidence = true;
@@ -421,9 +424,9 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 
 // extract the reads from BAM file
 // return false if the region could not be analyzed (e.g., too much coverage)
-bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo, BamRegion &region, int &readcnt, int code) {
+bool Microassembler::extractReads(SeqLib::BamReader &reader, Graph_t &g, Ref_t *refinfo, SeqLib::GenomicRegion &region, int &readcnt, int code) {
 	
-	if(verbose) { 
+	if(verbose) {
 		if(code == TMR) { cerr << "Extract reads from tumor" << endl; }
 		if(code == NML) { cerr << "Extract reads from normal" << endl; }
 	}
@@ -439,7 +442,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	
 	// iterate through all alignments
 	//int num_PCR_duplicates = 0;
-	BamAlignment al;
+	SeqLib::BamRecord rec;
 	string rg = "";
 	string xt = "";	
 	string xa = "";	
@@ -458,137 +461,105 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	int tot_reads_window = 0;
 	int totalreadbp = 0;
 	double avgcov = 0.0;
-	int MQ = MIN_MAP_QUAL;
+	int32_t MQ = MIN_MAP_QUAL;
 	bool skip = false;
-	
-	// softclipping variables
-	std::vector< int > clipSizes;
-	std::vector< int > readPositions; 
-	std::vector< int > genomePositions;
-	
+		
 	// more sensitive in normal (extract all reads)
 	if (code == NML) { MQ = 0; }
-		
+	
 	/*** TUMOR ****/
-	//while ( reader.GetNextAlignment(al) ) { // get next alignment and populate the alignment's string data fields
-	while ( reader.GetNextAlignmentCore(al) ) { // get next alignment and populate the alignment's string data fields
+	// get next alignment and populate the alignment's string data fields
+	while (reader.GetNextRecord(rec)) {
 		
 		avgcov = ((double) totalreadbp) / ((double)refinfo->rawseq.length());
-		if(avgcov > MAX_AVG_COV) { 
+		if (avgcov > MAX_AVG_COV) {
 			cerr << "WARNING: Skip region " << refinfo->refchr << ":" << refinfo->refstart << "-" << refinfo->refend << ". Too much coverage (>" << MAX_AVG_COV << "x)." << endl;
 			skip = true;
 			break;
 		}
 		
-		int alstart = al.Position;
-		int alend = al.GetEndPosition();
-		if( (alstart < region.LeftPosition) || (alend > region.RightPosition) ) { continue; } // skip alignments outside region
+		int32_t alstart = rec.Position();
+		int32_t alend = rec.PositionEnd();
 		
-		if ( (al.MapQuality >= MQ) && !al.IsDuplicate() ) { // only keep reads with high map quality and skip PCR duplicates
-			
-			al.BuildCharData(); // Populates alignment string fields (read name, bases, qualities, tag data)
-								
-			int mate = 0;
-			int strand = FWD;
-			if(al.IsFirstMate()) { mate = 1; }
-			if(al.IsSecondMate()) { mate = 2; }
-			if(al.IsReverseStrand()) { strand = REV; }
-			
-			/*
-			// get original base quality scores
-			string oq;
-			al.GetTag("OQ", oq); 
-			cerr << oq << endl;
-			*/
-			
-			// extract AS and XS tags (available in bwa-mem , not in bwa-aln)
-			as = -1;
-			xs = -1;
-			al.GetTag("AS", as); // get the AS tag for the read
-			al.GetTag("XS", xs); // get the XS tag for the read
-			//if(as.empty()) { as = -1; }
-			//if(xs.empty()) { xs = -1; }
-			int delta = abs(as-xs);			
-			//if( as==xs && as!=-1 && xs!=-1 ) { ++num_equal_AS_XS_read; continue; } // skip alignments with equal score for AS and XS
-			if( (delta <= MIN_DELTA) && as!=-1 && xs!=-1 ) { ++num_equal_AS_XS_read; continue; } // skip alignments where AS and XS are very close
-			
-			// XM	Number of mismatches in the alignment
-			nm = 0;
-			al.GetTag("XM", nm); // get the XM tag for the read
-			if(nm >= MIN_XM) { ++num_high_XM_read; /*continue;*/ } // skip alignments with too many mis-matches
-			
-			// XT type: Unique/Repeat/N/Mate-sw
-			//
-			// XT:A:M (one-mate recovered) means that one of the pairs is uniquely mapped and the other isn't
-			//
-			// Heng Li: If the read itself is a repeat and can be mapped without relying on its mate, you see "XT:Z:R". 
-			// Nonetheless, the mapping quality is not necessarily zero. When its mate can be mapped unambiguously, 
-			// the read can still be mapped confidently and thus assigned a high mapQ.
-			// MapQ is computed for the read pair. XT is determined from a single read.
-			xt = "";
-			al.GetTag("XT", xt); // get the XT tag for the read
-			if(xt.empty()) { xt = "null"; }
-			if(xt == "R") { ++num_XT_R_read; continue; } // skip alignments which are marked XT:R
-			if(xt == "M") { ++num_XT_M_read; /*continue;*/ } // skip alignments which are marked XT:M
-			
-			
-			// XA  Alternative hits; format: (chr,pos,CIGAR,NM;)
-			xa = "";
-			al.GetTag("XA", xa); // get the XA for the read
-			if(xa.empty()) { xa = "null"; }
-			if(xa != "null") {
-				//cerr << al.Name << "\t" << xa << endl;
-				++num_XA_read; 
-				continue; // skip alignments with alternative hits
-			}
-			
-			// reads wiht high soft-clipping
-			if(al.GetSoftClips(clipSizes, readPositions, genomePositions)) {		
-				for (vector<int>::iterator it = clipSizes.begin() ; it != clipSizes.end(); ++it) {
-					double prc_sc = (double)(*it)/(double)al.Length;
-					//cerr << (*it) << " " << al.Length << " " << prc_sc << endl;
-					if(prc_sc >= CLIP_PRC) { ++num_high_softclip_read; break; }
-				}				
-			}
-									
-			rg = "";
-			al.GetTag("RG", rg); // get the read group information for the read
-			if(rg.empty()) { rg = "null"; }
-			
-			if ( (readgroups.find("null") != readgroups.end())  || (readgroups.find(rg) != readgroups.end()) ) { // select reads in the read group RG
-				
-				if( !(al.IsMapped()) ) { // unmapped read
-					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, code, strand);
-					//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_BASTARD, code, strand);
-					++num_unmapped; 
-				}
-				else { // mapped reads
-					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, code, strand);								
-					//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_MAPPED, code, strand);								
-				}
-				//cout << al.Name << endl;
-				++readcnt; ++tot_reads_window;
-				totalreadbp += (al.QueryBases).length();
-				
-				//void addMates(ReadId_t r1, ReadId_t r2)
-				//{
-				//g.readid2info[r1].mateid_m = r2;
-				//g.readid2info[r2].mateid_m = r1;
-				//}
-			}
+		// skip alignments outside the region
+		if ((alstart < region.pos1) || (alend > region.pos2)) { continue; }
+		
+		// only process reads with high map quality and skip PCR duplicates
+		if ((rec.MapQuality() < MQ) || rec.DuplicateFlag()) { continue; }
+		
+		// 0x0040 -> First mate alignment flag
+		// 0x0080 -> Second mate alignment flag
+		int mate = ((rec.AlignmentFlag() & 0x0040) != 0) ? 1 : ((rec.AlignmentFlag() & 0x0080) != 0) ? 2 : 0;
+		int strand = rec.ReverseFlag() ? REV : FWD;
+
+		// extract AS and XS tags (available in bwa-mem , not in bwa-aln)
+		as = -1;
+		xs = -1;
+		rec.GetIntTag("AS", as);
+		rec.GetIntTag("XS", xs);
+		int delta = abs(as - xs);
+		
+		// skip alignments where AS and XS are very close
+		if ((delta <= MIN_DELTA) && as!=-1 && xs != -1) { ++num_equal_AS_XS_read; continue; }
+
+		// XM	Number of mismatches in the alignment
+		nm = 0;
+		rec.GetIntTag("XM", nm);
+		if (nm >= MIN_XM) { ++num_high_XM_read; /*continue;*/ }
+
+		// XT type: Unique/Repeat/N/Mate-sw
+		// XT:A:M (one-mate recovered) means that one of the pairs is uniquely mapped and the other isn't
+		// Heng Li: If the read itself is a repeat and can be mapped without relying on its mate, you see "XT:Z:R". 
+		// Nonetheless, the mapping quality is not necessarily zero. When its mate can be mapped unambiguously, 
+		// the read can still be mapped confidently and thus assigned a high mapQ.
+		// MapQ is computed for the read pair. XT is determined from a single read.
+		xt = "";
+		rec.GetZTag("XT", xt);
+		if(xt.empty()) { xt = "null"; }
+		if(xt == "R") { ++num_XT_R_read; continue; } // skip alignments which are marked XT:R
+		if(xt == "M") { ++num_XT_M_read; /*continue;*/ } // skip alignments which are marked XT:M
+		
+		// XA  Alternative hits; format: (chr,pos,CIGAR,NM;)
+		xa = "";
+		rec.GetZTag("XA", xa);
+		if(xa.empty()) { xa = "null"; }
+		if(xa != "null") {
+			//cerr << al.Name << "\t" << xa << endl;
+			++num_XA_read; 
+			// skip alignments with alternative hits
+			continue;
 		}
-		//else{ num_PCR_duplicates++; }
+		
+		double prc_sc = (double)(rec.NumSoftClip())/(double)(rec.Length());
+		if (prc_sc >= CLIP_PRC) { ++num_high_softclip_read; }
+		
+		rg = "";
+		rec.GetZTag("RG", rg);
+		if (rg.empty()) { rg = "null"; }
+		// skip read if rg does not match any of the "to-process" readgroups
+		// FIXME -> Shouldn't this be at the top?
+		if ((readgroups.find("null") == readgroups.end()) || readgroups.find(rg) == readgroups.end()) { continue; }
+		
+		if ( !(rec.MappedFlag()) ) {
+			g.addAlignment(sampleType, rec.Qname(), rec.Sequence(), rec.Qualities(), mate, Graph_t::CODE_BASTARD, code, strand);
+			++num_unmapped;
+		} else {
+			g.addAlignment(sampleType, rec.Qname(), rec.Sequence(), rec.Qualities(), mate, Graph_t::CODE_MAPPED, code, strand);
+		}
+		//cout << al.Name << endl;
+		++readcnt; ++tot_reads_window;
+		totalreadbp += int(rec.Length());
 	}
 	
 	// compute percentage of reads having high sofclipping rate (>CLIP_PRC)
-	double prc_high_clippied_reads = 100*((double)num_high_softclip_read/(double)tot_reads_window);
+	double prc_high_clipped_reads = 100*((double)num_high_softclip_read/(double)tot_reads_window);
 	//if(prc_high_clippied_reads > MAX_PRC_HIGH_CLIP_READS) { skip = true; }
 	
 	if(verbose) {
 		cerr << "Num reads marked as repeat (XT:A:R tag): " << num_XT_R_read << endl;
 		cerr << "Num reads marked as Mate-sw (XT:A:M tag): " << num_XT_M_read << endl;
 		cerr << "Num reads with alternative hits (XA tag): " << num_XA_read << endl;
-		cerr << "Num reads with >=" << (100*CLIP_PRC) << "\% soft-clipping: " << num_high_softclip_read << "(" << prc_high_clippied_reads << "%)" << endl;
+		cerr << "Num reads with >=" << (100*CLIP_PRC) << "\% soft-clipping: " << num_high_softclip_read << "(" << prc_high_clipped_reads << "%)" << endl;
 		cerr << "Num reads with >=" << MIN_XM << " mis-matches: " << num_high_XM_read << endl;
 		cerr << "Num reads with equal alignment score (AS==XS): " << num_equal_AS_XS_read << endl;
 	}
@@ -602,57 +573,28 @@ int Microassembler::processReads() {
 	cerr << "Process reads" << endl;
 	
 	// Process the reads
-	BamReader readerT;
-	SamHeader headerT;
-	RefVector referencesT;
+	SeqLib::BamReader readerT;
+	SeqLib::BamHeader headerT;
 
-	BamReader readerN;	
-	SamHeader headerN;
-	RefVector referencesN;
+	SeqLib::BamReader readerN;	
+	SeqLib::BamHeader headerN;
 	
-	string index_filename;
-	bool index_found = false;
-		
 	// attempt to open our BamMultiReader
 	if ( !readerT.Open(TUMOR) ) {
 		cerr << "Could not open tumor BAM files." << endl;
 		return -1;
 	}
-	// retrieve 'metadata' from BAM files, these are required by BamWriter
-	headerT = readerT.GetHeader();
-	referencesT = readerT.GetReferenceData();
-	
-	index_found = readerT.LocateIndex(); // locate and load BAM index file (.bam.bai)
-	if(!index_found) {
-		index_filename = GetBaseFilename(TUMOR.c_str())+".bai";
-		index_found = readerT.OpenIndex(index_filename); //try with different extension .bai
-		if(!index_found) {
-			cerr << "ERROR: index not found for BAM file " << TUMOR << endl;
-			exit(1);
-		}
-	}
-	
-	sample_name_tumor = retriveSampleName(headerT); // extract tumor sample name 
+	// retrieve the BAM header and sample name of tumor
+	headerT = readerT.Header();
+	sample_name_tumor = retriveSampleName(headerT); 
 
 	if ( !readerN.Open(NORMAL) ) {
 		cerr << "Could not open normal BAM files." << endl;
 		return -1;
 	}
-	// retrieve 'metadata' from BAM files, these are required by BamWriter
-	headerN = readerN.GetHeader();
-	referencesN = readerN.GetReferenceData();
-	
-	index_found = readerN.LocateIndex(); // locate and load BAM index file (.bam.bai)
-	if(!index_found) {
-		index_filename = GetBaseFilename(NORMAL.c_str())+".bai";		
-		index_found = readerN.OpenIndex(index_filename); //try with different extension .bai
-		if(!index_found) {
-			cerr << "ERROR: index not found for BAM file " << NORMAL << endl;
-			exit(1);
-		}
-	}
-	
-	sample_name_normal = retriveSampleName(headerN); // extract normal sammple name
+	// retrieve the BAM header and sample name of normal
+	headerN = readerN.Header();
+	sample_name_normal = retriveSampleName(headerN);
 
 	//load the read group information
 	if(RG_FILE.compare("") != 0) {
@@ -700,7 +642,7 @@ int Microassembler::processReads() {
 	int readcnt = 0;
 	
 	// for each reference location
-	BamRegion region;
+	SeqLib::GenomicRegion region;
 	map<string, Ref_t *>::iterator ri;
 		
 	int counter = 0;
@@ -721,22 +663,17 @@ int Microassembler::processReads() {
 			
 		// continue if the region has only Ns or prefect repeat of size maxK
 		if(isNseq(refinfo->rawseq)) { continue; } 
-		if(isRepeat(refinfo->rawseq, maxK)) { continue; } 
-
-		region.LeftRefID = readerT.GetReferenceID(refinfo->refchr); // atoi((refinfo->refchr).c_str());
-		region.RightRefID = readerT.GetReferenceID(refinfo->refchr); // atoi((refinfo->refchr).c_str());
-		region.LeftPosition = refinfo->refstart;
-		region.RightPosition = refinfo->refend;
+		if(isRepeat(refinfo->rawseq, maxK)) { continue; }
+		
+		SeqLib::GenomicRegion region(refinfo->hdr, headerT);
 		//cout << "region = " << refinfo->refchr << ":" << refinfo->refstart << "-" << refinfo->refend << endl; 
 
-		bool jumpT = readerT.SetRegion(region);
-		if(!jumpT) {
+		if(!readerT.SetRegion(region)) {
 			cerr << "Error: not able to jump successfully to the region's left boundary in tumor" << endl;
 			return -1;
 		}
 
-		bool jumpN = readerN.SetRegion(region);
-		if(!jumpN) {
+		if(!readerN.SetRegion(region)) {
 			cerr << "Error: not able to jump successfully to the region's left boundary in normal" << endl;
 			return -1;
 		}

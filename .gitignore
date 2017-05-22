@@ -1,6 +1,7 @@
 ###Lancet###
 lancet
 bamtools-2.3.0/bin/
+bamtools-2.3.0/lib/
 bamtools-2.3.0/build/
 bamtools-2.3.0/include/
 bamtools-2.3.0/src/toolkit/bamtools_version.h

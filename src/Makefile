@@ -5,7 +5,7 @@ ABS_BAMTOOLS_DIR := $(realpath $(BAMTOOLS_DIR))
 ABS_SEQLIB_DIR := $(realpath $(SEQLIB_DIR))
 
 CXX := g++
-CXXFLAGS := -std=c++11 -Wno-deprecated -Wall -O3 -fexceptions
+CXXFLAGS := -std=c++0x -Wno-deprecated -Wall -O3 -fexceptions
 INCLUDES := -I$(ABS_SEQLIB_DIR) -I$(ABS_SEQLIB_DIR)/htslib -I$(ABS_BAMTOOLS_DIR)/include
 LDFLAGS := -L$(ABS_SEQLIB_DIR)/htslib -L$(ABS_SEQLIB_DIR)/bin -L$(ABS_BAMTOOLS_DIR)/lib
 LDLIBS := -lz -ldl -lpthread -lcurl -lcrypto -lseqlib -lhts -lbamtools

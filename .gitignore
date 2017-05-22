@@ -24,6 +24,7 @@ SeqLib-1.1.1/htslib/tabix
 SeqLib-1.1.1/htslib/test
 SeqLib-1.1.1/htslib/libhts.so.1
 SeqLib-1.1.1/htslib/version.h
+SeqLib-1.1.1/htslib/config.h.in
 
 ###C++###
 

@@ -351,13 +351,13 @@ bool Microassembler::isActiveRegion(SeqLib::BamReader &reader, Ref_t *refinfo, S
 			
 			if (int(alstart) < scStart) {
 				for (int pos=alstart; pos<scStart; ++pos) {
-					mit = mapSC.find(pos)
+					mit = mapSC.find(pos);
 					if (mit != mapSC.end()) { ++((*mit).second); }
 					else { mapSC.insert(std::pair<int,int>(pos,1)); }
 				}
 			} else {
 				for (int pos=scEnd; pos<scEnd+numSoftClip-1; ++pos) {
-					mit = mapSC.find(pos)
+					mit = mapSC.find(pos);
 					if (mit != mapSC.end()) { ++((*mit).second); }
 					else { mapSC.insert(std::pair<int,int>(pos,1)); }
 				}

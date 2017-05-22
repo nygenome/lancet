@@ -350,9 +350,17 @@ bool Microassembler::isActiveRegion(SeqLib::BamReader &reader, Ref_t *refinfo, S
 			int scEnd = rec.AlignmentEndPosition();
 			
 			if (int(alstart) < scStart) {
-				mapSC.insert(std::pair<int,int>(alstart, scStart - 1));
+				for (int pos=alstart; pos<scStart; ++pos) {
+					mit = mapSC.find(pos)
+					if (mit != mapSC.end()) { ++((*mit).second); }
+					else { mapSC.insert(std::pair<int,int>(pos,1)); }
+				}
 			} else {
-				mapSC.insert(std::pair<int,int>(scEnd, scEnd + numSoftClip - 1));
+				for (int pos=scEnd; pos<scEnd+numSoftClip-1; ++pos) {
+					mit = mapSC.find(pos)
+					if (mit != mapSC.end()) { ++((*mit).second); }
+					else { mapSC.insert(std::pair<int,int>(pos,1)); }
+				}
 			}
 		}
 		//cerr << endl;

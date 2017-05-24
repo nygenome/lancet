@@ -278,7 +278,7 @@ bool Microassembler::isActiveRegion(SeqLib::BamReader &reader, Ref_t *refinfo, S
 		int32_t alend = rec.PositionEnd();
 		
 		// skip alignments outside the region
-		if ((alstart < region.pos1) || (alend > region.pos2)) { continue; }
+		if ((alstart > region.pos1) || (alend < region.pos2)) { continue; }
 		
 		// only process reads with high map quality and skip PCR duplicates
 		if ((rec.MapQuality() < MQ) || rec.DuplicateFlag()) { continue; }

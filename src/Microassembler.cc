@@ -346,17 +346,17 @@ bool Microassembler::isActiveRegion(SeqLib::BamReader &reader, Ref_t *refinfo, S
 		int numSoftClip = rec.NumSoftClip();
 		if (numSoftClip > 0) {
 			// Get alignment start and end read position after removing soft clips
-			int scStart = rec.AlignmentPosition();
-			int scEnd = rec.AlignmentEndPosition();
+			int32_t scStart = rec.AlignmentPosition() + alstart;
+			int32_t scEnd = rec.AlignmentEndPosition() + alstart;
 			
-			if (int(alstart) < scStart) {
+			if (alstart < scStart) {
 				for (int pos=alstart; pos<scStart; ++pos) {
 					mit = mapSC.find(pos);
 					if (mit != mapSC.end()) { ++((*mit).second); }
 					else { mapSC.insert(std::pair<int,int>(pos,1)); }
 				}
 			} else {
-				for (int pos=scEnd; pos<scEnd+numSoftClip-1; ++pos) {
+				for (int pos=scEnd; pos<alend; ++pos) {
 					mit = mapSC.find(pos);
 					if (mit != mapSC.end()) { ++((*mit).second); }
 					else { mapSC.insert(std::pair<int,int>(pos,1)); }

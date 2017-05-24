@@ -277,8 +277,8 @@ bool Microassembler::isActiveRegion(SeqLib::BamReader &reader, Ref_t *refinfo, S
 		int32_t alstart = rec.Position();
 		int32_t alend = rec.PositionEnd();
 		
-		// skip alignments outside the region
-		if ((alstart > region.pos1) || (alend < region.pos2)) { continue; }
+		// skip if alignment issn't completely contained in the region
+		if (region.GetOverlap(rec.AsGenomicRegion()) != 2) { continue; }
 		
 		// only process reads with high map quality and skip PCR duplicates
 		if ((rec.MapQuality() < MQ) || rec.DuplicateFlag()) { continue; }
@@ -288,7 +288,7 @@ bool Microassembler::isActiveRegion(SeqLib::BamReader &reader, Ref_t *refinfo, S
 		if (rg.empty()) { rg = "null"; }
 		
 		// skip read if rg does not match any of the "to-process" readgroups
-		if ((readgroups.find("null") == readgroups.end()) || readgroups.find(rg) == readgroups.end()) { continue; }
+		if ((readgroups.find("null") == readgroups.end()) && readgroups.find(rg) == readgroups.end()) { continue; }
 
 		// parse MD string
 		// String for mismatching positions. Regex : [0-9]+(([A-Z]|\^[A-Z]+)[0-9]+)*10
@@ -489,11 +489,16 @@ bool Microassembler::extractReads(SeqLib::BamReader &reader, Graph_t &g, Ref_t *
 		int32_t alstart = rec.Position();
 		int32_t alend = rec.PositionEnd();
 		
-		// skip alignments outside the region
-		if ((alstart < region.pos1) || (alend > region.pos2)) { continue; }
+		// skip if alignment issn't completely contained in the region
+		if (region.GetOverlap(rec.AsGenomicRegion()) != 2) { continue; }
 		
 		// only process reads with high map quality and skip PCR duplicates
 		if ((rec.MapQuality() < MQ) || rec.DuplicateFlag()) { continue; }
+		
+		rg = "";
+		rec.GetZTag("RG", rg);
+		if (rg.empty()) { rg = "null"; }
+		if ((readgroups.find("null") == readgroups.end()) && readgroups.find(rg) == readgroups.end()) { continue; }
 		
 		// 0x0040 -> First mate alignment flag
 		// 0x0080 -> Second mate alignment flag
@@ -540,13 +545,6 @@ bool Microassembler::extractReads(SeqLib::BamReader &reader, Graph_t &g, Ref_t *
 		
 		double prc_sc = (double)(rec.NumSoftClip())/(double)(rec.Length());
 		if (prc_sc >= CLIP_PRC) { ++num_high_softclip_read; }
-		
-		rg = "";
-		rec.GetZTag("RG", rg);
-		if (rg.empty()) { rg = "null"; }
-		// skip read if rg does not match any of the "to-process" readgroups
-		// FIXME -> Shouldn't this be at the top?
-		if ((readgroups.find("null") == readgroups.end()) || readgroups.find(rg) == readgroups.end()) { continue; }
 		
 		if ( !(rec.MappedFlag()) ) {
 			g.addAlignment(sampleType, rec.Qname(), rec.Sequence(), rec.Qualities(), mate, Graph_t::CODE_BASTARD, code, strand);

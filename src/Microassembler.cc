@@ -350,17 +350,14 @@ bool Microassembler::isActiveRegion(SeqLib::BamReader &reader, Ref_t *refinfo, S
 			int32_t scEnd = rec.AlignmentEndPosition() + alstart;
 			
 			if (alstart < scStart) {
-				for (int pos=alstart; pos<scStart; ++pos) {
-					mit = mapSC.find(pos);
-					if (mit != mapSC.end()) { ++((*mit).second); }
-					else { mapSC.insert(std::pair<int,int>(pos,1)); }
-				}
-			} else {
-				for (int pos=scEnd; pos<alend; ++pos) {
-					mit = mapSC.find(pos);
-					if (mit != mapSC.end()) { ++((*mit).second); }
-					else { mapSC.insert(std::pair<int,int>(pos,1)); }
-				}
+				mit = mapSC.find(scStart);
+				if (mit != mapSC.end()) { ++((*mit).second); }
+				else { mapSC.insert(std::pair<int,int>(scStart,1)); }
+			} 
+			if (alend > scEnd) {
+				mit = mapSC.find(scEnd);
+				if (mit != mapSC.end()) { ++((*mit).second); }
+				else { mapSC.insert(std::pair<int,int>(scEnd,1)); }
 			}
 		}
 		//cerr << endl;
@@ -486,9 +483,6 @@ bool Microassembler::extractReads(SeqLib::BamReader &reader, Graph_t &g, Ref_t *
 			break;
 		}
 		
-		int32_t alstart = rec.Position();
-		int32_t alend = rec.PositionEnd();
-		
 		// skip if alignment issn't completely contained in the region
 		if (region.GetOverlap(rec.AsGenomicRegion()) != 2) { continue; }
 		
@@ -580,10 +574,7 @@ int Microassembler::processReads() {
 	
 	// Process the reads
 	SeqLib::BamReader readerT;
-	SeqLib::BamHeader headerT;
-
-	SeqLib::BamReader readerN;	
-	SeqLib::BamHeader headerN;
+	SeqLib::BamReader readerN;
 	
 	// attempt to open our BamMultiReader
 	if ( !readerT.Open(TUMOR) ) {
@@ -591,15 +582,15 @@ int Microassembler::processReads() {
 		return -1;
 	}
 	// retrieve the BAM header and sample name of tumor
-	headerT = readerT.Header();
+	SeqLib::BamHeader headerT = readerT.Header();
 	sample_name_tumor = retriveSampleName(headerT); 
-
+	
 	if ( !readerN.Open(NORMAL) ) {
 		cerr << "Could not open normal BAM files." << endl;
 		return -1;
 	}
 	// retrieve the BAM header and sample name of normal
-	headerN = readerN.Header();
+	SeqLib::BamHeader headerN = readerN.Header();
 	sample_name_normal = retriveSampleName(headerN);
 
 	//load the read group information

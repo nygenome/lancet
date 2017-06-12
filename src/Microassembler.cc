@@ -293,6 +293,7 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 				// parse MD string
 				// String for mismatching positions. Regex : [0-9]+(([A-Z]|\^[A-Z]+)[0-9]+)*10
 				al.GetTag("MD", md); // get string of mismatching positions
+				//cerr << "Q: " << al.Qualities << endl;
 				parseMD(md, mapX, alstart, al.Qualities, MIN_QUAL_CALL);
 				
 				// add SNV to database
@@ -331,6 +332,7 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 					ss << (*it).Length;
 					CIGAR += ss.str();
 					CIGAR += (*it).Type;
+					//cerr << "CIGAR: " << CIGAR << endl;
 				}
 				//cerr << endl;
 				
@@ -341,8 +343,8 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 				readPositions.clear();
 				genomePositions.clear();
 				
-				//cerr << CIGAR << " MD:" << md << " START:" << alstart << " ";
-				if(al.GetSoftClips(clipSizes, readPositions, genomePositions)) {	
+				if(al.GetSoftClips(clipSizes, readPositions, genomePositions)) {
+					//cerr << CIGAR << " MD:" << md << " START:" << alstart << " ";
 					for (std::vector<int>::iterator it = genomePositions.begin() ; it != genomePositions.end(); ++it) {
 						//cerr << (*it) << " ";
 						mit = mapSC.find((*it));
@@ -542,13 +544,21 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 				continue; // skip alignments with alternative hits
 			}
 			
-			// reads wiht high soft-clipping
+			// clear arrays (otherwise they keep growing from previosu alignment that are parsed) 
+			clipSizes.clear();
+			readPositions.clear();
+			genomePositions.clear();
+			
+			// reads with high soft-clipping
 			if(al.GetSoftClips(clipSizes, readPositions, genomePositions)) {		
+				int numSoftClipBases = 0;
 				for (vector<int>::iterator it = clipSizes.begin() ; it != clipSizes.end(); ++it) {
-					double prc_sc = (double)(*it)/(double)al.Length;
 					//cerr << (*it) << " " << al.Length << " " << prc_sc << endl;
-					if(prc_sc >= CLIP_PRC) { ++num_high_softclip_read; break; }
-				}				
+					numSoftClipBases += (*it);
+				}
+				//cerr << "Nun SC bp: " << numSoftClipBases << endl;
+				double prc_sc = (double)(numSoftClipBases)/(double)al.Length;
+				if(prc_sc >= CLIP_PRC) { ++num_high_softclip_read; /*break;*/ }
 			}
 									
 			rg = "";

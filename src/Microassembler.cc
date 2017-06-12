@@ -261,11 +261,11 @@ bool Microassembler::isActiveRegion(SeqLib::BamReader &reader, Ref_t *refinfo, S
 	string rg = "";
 	string md = "";
 	
-  map<int,int> mapX; // table with counts of all mismatches at a given locus	
-  map<int,int> mapI; // table with counts of all insertions at a given locus	
-  map<int,int> mapD; // table with counts of all deletion at a given locus	
-  map<int,int> mapSC; // table with counts of all softclipped sequences starting at a given locus
-  map<int,int>::iterator mit;
+  	map<int,int> mapX; // table with counts of all mismatches at a given locus	
+  	map<int,int> mapI; // table with counts of all insertions at a given locus	
+  	map<int,int> mapD; // table with counts of all deletion at a given locus	
+  	map<int,int> mapSC; // table with counts of all softclipped sequences starting at a given locus
+  	map<int,int>::iterator mit;
 	
 	// more sensitive in normal (extract all reads)
 	if (code == NML) { MQ = 0; }
@@ -275,7 +275,7 @@ bool Microassembler::isActiveRegion(SeqLib::BamReader &reader, Ref_t *refinfo, S
 	while (reader.GetNextRecord(rec)) {
 		
 		int32_t alstart = rec.Position();
-		int32_t alend = rec.PositionEnd();
+		//int32_t alend = rec.PositionEnd();
 		
 		// skip if alignment issn't completely contained in the region
 		if (region.GetOverlap(rec.AsGenomicRegion()) != 2) { continue; }
@@ -293,8 +293,9 @@ bool Microassembler::isActiveRegion(SeqLib::BamReader &reader, Ref_t *refinfo, S
 		// parse MD string
 		// String for mismatching positions. Regex : [0-9]+(([A-Z]|\^[A-Z]+)[0-9]+)*10
 		rec.GetZTag("MD", md); // get string of mismatching positions
-		string qualities = rec.Qualities();
-		parseMD(md, mapX, int(alstart), qualities, MIN_QUAL_CALL);
+		//string qualities = rec.Qualities();
+		//cerr << "Q: " << rec.Qualities() << endl;
+		parseMD(md, mapX, int(alstart), rec.Qualities(), MIN_QUAL_CALL);
 		
 		// add SNV to database
 		// Variant_t(string chr_, int pos_, string ref_, string alt_,
@@ -336,25 +337,34 @@ bool Microassembler::isActiveRegion(SeqLib::BamReader &reader, Ref_t *refinfo, S
 			ss << (*it).Length();
 			CIGAR += ss.str();
 			CIGAR += (*it).Type();
+			//cerr << "CIGAR: " << CIGAR << endl;
 		}
 		//cerr << endl;
 		
 		int len = rec.Length();
 		totalreadbp += len;
 		
-		//cerr << CIGAR << " MD:" << md << " START:" << alstart << " ";
 		int numSoftClip = rec.NumSoftClip();
+		//int numSoftClip = rec.NumClip();
 		if (numSoftClip > 0) {
-			// Get alignment start and end read position after removing soft clips
-			int32_t scStart = rec.AlignmentPosition() + alstart;
-			int32_t scEnd = rec.AlignmentEndPosition() + alstart;
+			//cerr << CIGAR << " MD:" << md << " START:" << alstart << " ";
 			
-			if (alstart < scStart) {
+			int read_al_start = rec.AlignmentPosition();
+			int read_al_end   = rec.AlignmentEndPosition();
+			//cerr << "Start of the alignment on the read" << read_al_start << endl;
+			//cerr << "End of the alignment on the read" << read_al_end << endl;		
+				
+			if(read_al_start > 0) {
+				int32_t scStart = alstart + read_al_start;
+				//cerr << scStart << " ";=
 				mit = mapSC.find(scStart);
 				if (mit != mapSC.end()) { ++((*mit).second); }
 				else { mapSC.insert(std::pair<int,int>(scStart,1)); }
 			} 
-			if (alend > scEnd) {
+			//if (alend > scEnd) {
+			if(read_al_end < (rec.Length()-1)) {
+				int32_t scEnd = alstart + read_al_end;
+				//cerr << scEnd << " ";				
 				mit = mapSC.find(scEnd);
 				if (mit != mapSC.end()) { ++((*mit).second); }
 				else { mapSC.insert(std::pair<int,int>(scEnd,1)); }
@@ -537,8 +547,12 @@ bool Microassembler::extractReads(SeqLib::BamReader &reader, Graph_t &g, Ref_t *
 			continue;
 		}
 		
-		double prc_sc = (double)(rec.NumSoftClip())/(double)(rec.Length());
-		if (prc_sc >= CLIP_PRC) { ++num_high_softclip_read; }
+		if (rec.NumSoftClip() > 0) {
+			//cerr << "Nun SC bp: " << rec.NumSoftClip() << endl;
+			double prc_sc = (double)(rec.NumSoftClip())/(double)(rec.Length());
+			//double prc_sc = (double)(rec.NumClip())/(double)(rec.Length());
+			if (prc_sc >= CLIP_PRC) { ++num_high_softclip_read; }
+		}
 		
 		if ( !(rec.MappedFlag()) ) {
 			g.addAlignment(sampleType, rec.Qname(), rec.Sequence(), rec.Qualities(), mate, Graph_t::CODE_BASTARD, code, strand);

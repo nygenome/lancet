@@ -142,6 +142,12 @@ void printConfiguration(ostream & out, Filters & filters)
 	//out << "SCAFFOLD_CONTIGS: " << bvalue(SCAFFOLD_CONTIGS) << endl;
 	//out << "INSERT_SIZE: "      << INSERT_SIZE << " +/- " << INSERT_STDEV << endl;
 	
+	// str parameters
+	out << "max-unit-length: "   << MAX_UNIT_LEN << endl;
+	out << "min-report-unit: "   << MIN_REPORT_UNITS << endl;
+	out << "min-report-len: "    << MIN_REPORT_LEN << endl;
+	out << "dist-from-str: "     << DIST_FROM_STR << endl;	
+	
 	//filters
 	out << "min-phred-fisher: "     << filters.minPhredFisher << endl;
 	out << "min-strand-bias: "      << filters.minStrandBias << endl;
@@ -626,6 +632,11 @@ int main(int argc, char** argv)
 			case 'X': NUM_THREADS      = atoi(optarg); break;
 			case 'T': MAX_INDEL_LEN    = atoi(optarg); break;
 			case 'M': MAX_MISMATCH     = atoi(optarg); break;
+			
+			case 'U': MAX_UNIT_LEN     = atoi(optarg); break;
+			case 'N': MIN_REPORT_UNITS = atoi(optarg); break;
+			case 'Y': MIN_REPORT_LEN   = atoi(optarg); break;
+			case 'D': DIST_FROM_STR    = atoi(optarg); break;
 			
 			case 's': filters.minPhredFisher = atoi(optarg); break;
 			case 'f': filters.minStrandBias = atoi(optarg); break;

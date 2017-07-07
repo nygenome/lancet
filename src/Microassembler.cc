@@ -510,7 +510,9 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			al.GetTag("XS", xs); // get the XS tag for the read
 			//if(as.empty()) { as = -1; }
 			//if(xs.empty()) { xs = -1; }
-			int delta = abs(as-xs);			
+			int delta = abs(as-xs);	
+			//cerr << al.Name << " " <<  as << " " << xs << endl;
+			
 			//if( as==xs && as!=-1 && xs!=-1 ) { ++num_equal_AS_XS_read; continue; } // skip alignments with equal score for AS and XS
 			if( (delta <= MIN_DELTA) && as!=-1 && xs!=-1 ) { ++num_equal_AS_XS_read; continue; } // skip alignments where AS and XS are very close
 			

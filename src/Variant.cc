@@ -52,6 +52,8 @@ void Variant_t::printVCF() {
 		
 	INFO += ";LEN=" + itos(len) + ";KMERSIZE=" + itos(kmer) + ";SB=" + dtos(fet_score_strand_bias);
 	
+	if(!str.empty()) { INFO += ";MS=" + str; } // add STR info
+	
 	double QUAL = fet_score;
 	string FORMAT = "GT:AD:SR:SA:DP";
 	
@@ -121,8 +123,8 @@ void Variant_t::printVCF() {
 	//}
 	
 	if(!str.empty()) { 
-		if (FILTER.compare("") == 0) { FILTER = "MS="; FILTER += str; }
-		else { FILTER += ";MS="; FILTER += str; }
+		if (FILTER.compare("") == 0) { FILTER = "STR"; }
+		else { FILTER += ";STR"; }
 	}
 		
 	if(FILTER.compare("") == 0) { FILTER = "PASS"; }

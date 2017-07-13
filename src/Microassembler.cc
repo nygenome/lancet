@@ -469,7 +469,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	std::vector< int > genomePositions;
 	
 	// more sensitive in normal (extract all reads)
-	if (code == NML) { MQ = 0; }
+	if (code == NML) { MQ = 0; MIN_DELTA = -1; }
 		
 	/*** TUMOR ****/
 	//while ( reader.GetNextAlignment(al) ) { // get next alignment and populate the alignment's string data fields

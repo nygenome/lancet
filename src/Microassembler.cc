@@ -480,7 +480,7 @@ bool Microassembler::extractReads(SeqLib::BamReader &reader, Graph_t &g, Ref_t *
 	bool skip = false;
 		
 	// more sensitive in normal (extract all reads)
-	if (code == NML) { MQ = 0; }
+	if (code == NML) { MQ = 0; MIN_DELTA = -1; }
 	
 	/*** TUMOR ****/
 	// get next alignment and populate the alignment's string data fields
@@ -512,12 +512,13 @@ bool Microassembler::extractReads(SeqLib::BamReader &reader, Graph_t &g, Ref_t *
 		// extract AS and XS tags (available in bwa-mem , not in bwa-aln)
 		as = -1;
 		xs = -1;
-		rec.GetIntTag("AS", as);
-		rec.GetIntTag("XS", xs);
+		int as_ret_val = rec.GetIntTag("AS", as);
+		int xs_ret_val = rec.GetIntTag("XS", xs);
 		int delta = abs(as - xs);
+		//cerr << rec.Qname() << " " <<  as << " " << xs << endl;
 		
 		// skip alignments where AS and XS are very close
-		if ((delta <= MIN_DELTA) && as!=-1 && xs != -1) { ++num_equal_AS_XS_read; continue; }
+		if ((delta <= MIN_DELTA) && (as_ret_val != 0) && (xs_ret_val != 0)) { ++num_equal_AS_XS_read; continue; }
 
 		// XM	Number of mismatches in the alignment
 		nm = 0;

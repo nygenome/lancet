@@ -261,7 +261,7 @@ class BamReader {
   /** Return a concatenation of all the headers */
   std::string HeaderConcat() const;
 
- protected:
+  protected:
 
   GRC m_region; ///< Regions to access
 

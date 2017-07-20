@@ -87,6 +87,7 @@ void printHelpText(Filters & filters) {
 		"   --min-coverage-normal, -z  <int>        : minimum coverage in the normal [default: " << filters.minCovNormal << "]\n"
 		"   --max-coverage-normal, -j  <int>        : maximum coverage in the normal [default: " << filters.maxCovNormal << "]\n"
 		"   --min-phred-fisher, -s     <float>      : minimum fisher exact test score [default: " << filters.minPhredFisher << "]\n"
+		"   --min-phred-fisher-str, -E <float>      : minimum fisher exact test score for STR mutations [default: " << filters.minPhredFisherSTR << "]\n"
 		"   --min-strand-bias, -f      <float>      : minimum strand bias threshold [default: " << filters.minStrandBias << "]\n"
 			
 		"\nShort Tandem Repeat parameters\n"
@@ -150,6 +151,7 @@ void printConfiguration(ostream & out, Filters & filters)
 	
 	//filters
 	out << "min-phred-fisher: "     << filters.minPhredFisher << endl;
+	out << "min-phred-fisher-str: " << filters.minPhredFisherSTR << endl;
 	out << "min-strand-bias: "      << filters.minStrandBias << endl;
 	out << "min-alt-count-tumor: "  << filters.minAltCntTumor << endl;
 	out << "max-alt-count-normal: " << filters.maxAltCntNormal << endl;
@@ -319,6 +321,7 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 	
 	// initilize filter thresholds
 	Filters filters;
+	filters.minPhredFisherSTR = 20;
 	filters.minPhredFisher = 5;
 	filters.minCovNormal = 10;
 	filters.maxCovNormal = 1000000;
@@ -523,6 +526,7 @@ int main(int argc, char** argv)
 	
 	// initilize filter thresholds
 	Filters filters;
+	filters.minPhredFisherSTR = 20;
 	filters.minPhredFisher = 5;
 	filters.minCovNormal = 10;
 	filters.maxCovNormal = 1000000;
@@ -577,6 +581,7 @@ int main(int argc, char** argv)
 		{"dist-from-str",  required_argument, 0, 'D'},
 		
 		//filters
+		{"min-phred-fisher-str",  required_argument, 0, 'E'},
 		{"min-phred-fisher",  required_argument, 0, 's'},
 		{"min-strand-bias",  required_argument, 0, 'f'},
 		{"min-alt-count-tumor",  required_argument, 0, 'a'},
@@ -601,7 +606,7 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSWL:T:M:vVF:q:b:B:Q:p:s:a:m:e:i:o:y:z:w:j:X:U:N:Y:D:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSWL:T:M:vVF:q:b:B:Q:p:s:E:a:m:e:i:o:y:z:w:j:X:U:N:Y:D:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -637,7 +642,8 @@ int main(int argc, char** argv)
 			case 'N': MIN_REPORT_UNITS = atoi(optarg); break;
 			case 'Y': MIN_REPORT_LEN   = atoi(optarg); break;
 			case 'D': DIST_FROM_STR    = atoi(optarg); break;
-			
+
+			case 'E': filters.minPhredFisherSTR = atoi(optarg); break;			
 			case 's': filters.minPhredFisher = atoi(optarg); break;
 			case 'f': filters.minStrandBias = atoi(optarg); break;
 			case 'a': filters.minAltCntTumor = atoi(optarg); break;

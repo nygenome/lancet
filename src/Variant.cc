@@ -66,7 +66,20 @@ void Variant_t::printVCF() {
 	double normal_vaf = (normal_cov == 0) ? 0 : ((double)tot_alt_cov_normal/(double)normal_cov);
 	
 	if (filters == NULL) { cerr << "Error: filters not assigned" << endl; }
+		
+	if(!str.empty()) { // STR variant
+		if(fet_score < filters->minPhredFisherSTR) {
+			if (FILTER.compare("") == 0) { FILTER = "LowFisherSTR"; }
+			else { FILTER += ";LowFisherSTR"; }
+		}
+	}
+	// non-STR variant
+	else if(fet_score < filters->minPhredFisher) { 
+		if (FILTER.compare("") == 0) { FILTER = "LowFisherScore"; }
+		else { FILTER += ";LowFisherScore"; }
+	}
 	
+	// the following filters are applied to all variants
 	if(fet_score < filters->minPhredFisher) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowFisherScore"; }
 		else { FILTER += ";LowFisherScore"; }
@@ -122,16 +135,18 @@ void Variant_t::printVCF() {
 		}
 	//}
 	
+	/*
 	if(!str.empty()) { 
 		if (FILTER.compare("") == 0) { FILTER = "STR"; }
 		else { FILTER += ";STR"; }
-	}
+	}	
+	*/
 		
 	if(FILTER.compare("") == 0) { FILTER = "PASS"; }
 		
 	//compute genotype
-	string GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
-	string GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
+	//GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
+	//GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
 	
 	string NORMAL = GT_normal + ":" + itos(tot_ref_cov_normal) + "," + itos(tot_alt_cov_normal) + ":" + itos(ref_cov_normal_fwd) + "," + itos(ref_cov_normal_rev) +":" + itos(alt_cov_normal_fwd) + "," + itos(alt_cov_normal_rev) + ":" + itos(tot_ref_cov_normal+tot_alt_cov_normal);
 	string TUMOR = GT_tumor + ":" + itos(tot_ref_cov_tumor) + "," + itos(tot_alt_cov_tumor) + ":" + itos(ref_cov_tumor_fwd) + "," + itos(ref_cov_tumor_rev) + ":" + itos(alt_cov_tumor_fwd) + "," + itos(alt_cov_tumor_rev) + ":" + itos(tot_ref_cov_tumor+tot_alt_cov_tumor);
@@ -233,6 +248,13 @@ char Variant_t::bestState(int Rn, int An, int Rt, int At) {
 string Variant_t::getSignature() {
 		
 	string ans = chr+":"+itos(pos)+":"+type+":"+itos(len)+":"+ref+":"+alt;
+	//cerr << ans << endl;
+	return ans;
+}
+
+string Variant_t::getPosition() {
+		
+	string ans = chr+":"+itos(pos);
 	//cerr << ans << endl;
 	return ans;
 }

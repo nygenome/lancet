@@ -35,7 +35,8 @@ using namespace std;
 
 struct Filters
 {
-	// filter thresholds
+	// filter thresholds]
+	double minPhredFisherSTR;
 	double minPhredFisher;
 	double maxVafNormal;
 	double minVafTumor;
@@ -72,6 +73,9 @@ public:
 	char prev_bp_ref; // base-pair preceding the mutation in reference
 	char prev_bp_alt; // base-pair preceding the mutation in alternative
 	
+	string GT_normal; // normal gentype
+	string GT_tumor; // tumor genotype
+	
 	Filters * filters; // filter thresholds
 
 	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_fwd_, int ref_cov_normal_rev_, int ref_cov_tumor_fwd_, int ref_cov_tumor_rev_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters * fs, int k, string str_)
@@ -101,12 +105,19 @@ public:
 		alt_cov_tumor_rev = alt_cov_tumor_rev_;
 		prev_bp_ref = prev_bp_ref_;
 		prev_bp_alt = prev_bp_alt_;
+		
+		//compute genotype
+		GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
+		GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
 	}
 	
 	void printVCF();
 	string genotype(int R, int A);
+	string getGenotypeNormal() { return GT_normal; }
+	string getGenotypeTumor() { return GT_tumor; }
 	char bestState(int Rn, int An, int Rt, int At);
 	string getSignature();
+	string getPosition();
 	double compute_FET_score();
 	double compute_SB_score();
 };

@@ -451,8 +451,10 @@ bool findTandems(const string & seq, const string & tag, int max_unit_len, int m
 							int start = offset;
 							int end = i+j;
 							int L = i+j-offset;
+							
 							if ( (pos >= (start-delta)) && (pos <= (end+delta)) ) { 
 								ans = true; 
+								// store STR motif and size
 								len = L; 
 								for (unsigned int z = 0; z < merlen; ++z) { 
 									motif += seq[offset+z];

@@ -909,7 +909,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		{
 			// if the alignment left-shifts the indel, coverage and alignment can be out of sinc. 
 			// Fix: add coverage for K-1 bp after variant end position
-			for (int j=0; j<K; ++j) {						
+			for (int j=0; j<=K; ++j) {						
 				unsigned int idx1 = transcript[ti].end_pos + j; 
 				// add coverage
 				if (idx1 < coverageN.size()) { // check for out of range
@@ -2671,8 +2671,19 @@ void Graph_t::removeShortLinks(int compid)
 			//if ((deg >= 2) && (len < MAX_LINK_LEN) )
 			if ((deg >= 2) && (len < MAX_LINK_LEN) && (cur->getMinCov() <= floor(sqrt(avgcov))) )
 			{
-				removeNode(cur);
-				++links;
+				int LEN=0;
+				string MOTIF = "";
+				//stringstream STR;
+				
+				// do not remove short-links within STRs: small bubbles are normal in STRs due to the DeBruijn graph represenation.   
+				findTandems(cur->str_m, "shortlink", MAX_UNIT_LEN, MIN_REPORT_UNITS, MIN_REPORT_LEN, DIST_FROM_STR, K-1, LEN, MOTIF);
+				//STR << LEN << MOTIF;
+				//cout << cur->str_m << endl;
+				//cout << "MS:" << STR.str() << endl;				
+				if(LEN==0) {
+					removeNode(cur);
+					++links;
+				}
 			}
 		}
 	}

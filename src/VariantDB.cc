@@ -24,26 +24,42 @@
 **
 *************************** /COPYRIGHT **************************************/
 
-// add variant to DB
+// add variant to DB and update counts per position
 void VariantDB_t::addVar(Variant_t v) {
 	
-	string key = sha256(v.getSignature());
-    map<string,Variant_t>::iterator it = DB.find(key);
+	string key = sha256(v.getSignature());	
+    map<string,Variant_t>::iterator it_v = DB.find(key);
 	
-	if (it != DB.end()) {		
+	if (it_v != DB.end()) {		
 		// keep highest supporting coverage found
-		if (it->second.ref_cov_normal_fwd < v.ref_cov_normal_fwd) { it->second.ref_cov_normal_fwd = v.ref_cov_normal_fwd; }
-		if (it->second.ref_cov_normal_rev < v.ref_cov_normal_rev) { it->second.ref_cov_normal_rev = v.ref_cov_normal_rev; }
-		if (it->second.ref_cov_tumor_fwd  < v.ref_cov_tumor_fwd ) { it->second.ref_cov_tumor_fwd  = v.ref_cov_tumor_fwd;  }
-		if (it->second.ref_cov_tumor_rev  < v.ref_cov_tumor_rev ) { it->second.ref_cov_tumor_rev  = v.ref_cov_tumor_rev;  }
-		if (it->second.alt_cov_normal_fwd < v.alt_cov_normal_fwd) { it->second.alt_cov_normal_fwd = v.alt_cov_normal_fwd; }
-		if (it->second.alt_cov_normal_rev < v.alt_cov_normal_rev) { it->second.alt_cov_normal_rev = v.alt_cov_normal_rev; }		
-		if (it->second.alt_cov_tumor_fwd  < v.alt_cov_tumor_fwd ) { it->second.alt_cov_tumor_fwd  = v.alt_cov_tumor_fwd;  }
-		if (it->second.alt_cov_tumor_rev  < v.alt_cov_tumor_rev ) { it->second.alt_cov_tumor_rev  = v.alt_cov_tumor_rev;  }
+		if (it_v->second.ref_cov_normal_fwd < v.ref_cov_normal_fwd) { it_v->second.ref_cov_normal_fwd = v.ref_cov_normal_fwd; }
+		if (it_v->second.ref_cov_normal_rev < v.ref_cov_normal_rev) { it_v->second.ref_cov_normal_rev = v.ref_cov_normal_rev; }
+		if (it_v->second.ref_cov_tumor_fwd  < v.ref_cov_tumor_fwd ) { it_v->second.ref_cov_tumor_fwd  = v.ref_cov_tumor_fwd;  }
+		if (it_v->second.ref_cov_tumor_rev  < v.ref_cov_tumor_rev ) { it_v->second.ref_cov_tumor_rev  = v.ref_cov_tumor_rev;  }
+		if (it_v->second.alt_cov_normal_fwd < v.alt_cov_normal_fwd) { it_v->second.alt_cov_normal_fwd = v.alt_cov_normal_fwd; }
+		if (it_v->second.alt_cov_normal_rev < v.alt_cov_normal_rev) { it_v->second.alt_cov_normal_rev = v.alt_cov_normal_rev; }		
+		if (it_v->second.alt_cov_tumor_fwd  < v.alt_cov_tumor_fwd ) { it_v->second.alt_cov_tumor_fwd  = v.alt_cov_tumor_fwd;  }
+		if (it_v->second.alt_cov_tumor_rev  < v.alt_cov_tumor_rev ) { it_v->second.alt_cov_tumor_rev  = v.alt_cov_tumor_rev;  }
 	}
 	else { 
 		DB.insert(pair<string,Variant_t>(key,v));
 	}
+
+	// updated counts of variants per position in the normal
+	/*
+    if( ((v.getGenotypeNormal()).compare("0/0")!=0) && ((v.ref_cov_normal_fwd + v.ref_cov_normal_rev)>0) ) {
+		
+		string pos = v.getPosition();
+	    unordered_map<string,int>::iterator it_p = nCNT.find(pos);	
+		
+		if (it_p != nCNT.end()) { 
+			it_p->second += 1; 
+		}
+		else { 
+			nCNT.insert(pair<string,int>(pos,1)); 
+		}
+    }
+	*/
 }
 
 void VariantDB_t::printHeader(const string version, const string reference, char * date, Filters &fs, string &sample_name_N, string &sample_name_T) {
@@ -69,6 +85,7 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##FILTER=<ID=LowAltCntTumor,Description=\"low alternative allele count in the tumor (<" << fs.minAltCntTumor << ")\">\n"
 			"##FILTER=<ID=HighAltCntNormal,Description=\"high alternative allele count in the normal (>" << fs.maxAltCntNormal << ")\">\n"
 			"##FILTER=<ID=LowFisherScore,Description=\"low Fisher's exact test score for tumor-normal allele counts (<" << fs.minPhredFisher << ")\">\n"
+			"##FILTER=<ID=LowFisherSTR,Description=\"low Fisher's exact test score for tumor-normal STR allele counts (<" << fs.minPhredFisherSTR << ")\">\n"
 			"##FILTER=<ID=StrandBias,Description=\"strand bias: # of non-reference reads in either forward or reverse strand below threshold (<" << fs.minStrandBias << ")\">\n"
 			"##FILTER=<ID=STR,Description=\"Microsatellite mutation\">\n"
 			"##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
@@ -94,6 +111,11 @@ void VariantDB_t::printToVCF(const string version, const string reference, char 
 	vector< pair<string,Variant_t> >::iterator it;
 	for (it=myVec.begin(); it!=myVec.end(); ++it) {
 		//cerr << it->first << "\t";
-		it->second.printVCF();
+		
+		//string pos = (it->second).getPosition();
+	    //unordered_map<string,int>::iterator itp = nCNT.find(pos);
+		//if (itp == nCNT.end()) { // print variant if no muations in the normal at locus
+			it->second.printVCF();
+		//}
 	}	
 }

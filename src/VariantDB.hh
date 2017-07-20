@@ -24,6 +24,7 @@
 *************************** /COPYRIGHT **************************************/
 
 #include <map>
+#include <unordered_map>
 #include <string>
 #include <iostream>
 #include "util.hh"
@@ -55,7 +56,8 @@ class VariantDB_t
 {
 public:
 
-	map<string,Variant_t> DB;
+	map<string,Variant_t> DB; // databbase of variants
+	unordered_map<string,int> nCNT; // counts of variants per postion in the normal
 
 	VariantDB_t() {}
 	

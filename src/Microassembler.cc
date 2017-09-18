@@ -103,7 +103,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 		bool cycleInGraph = false;
 
 		// dinamic kmer mode
-		for (int k=minkmer; k<=maxkmer; ++k) {
+		for (int k=minkmer; k<=maxkmer; k+=2) {
 			g.setK(k);
 			refinfo->setK(k);
 			

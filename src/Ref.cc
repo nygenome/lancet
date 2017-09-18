@@ -47,8 +47,10 @@ void Ref_t::indexMers()
 		
 		CanonicalMer_t cmer;
 
-		for (unsigned int i = 0; i < seq.length() - K + 1; ++i)
+		//for (unsigned int i = 0; i < (seq.length() - K + 1); ++i)
+		for (unsigned int i = 0; (i + K) < seq.length(); ++i)
 		{
+			//assert(i<seq.length()); // check for out of range index
 			cmer.set(seq.substr(i, K));
 			
 			cov_t c;
@@ -101,8 +103,7 @@ void Ref_t::computeCoverage(char sample) {
 	assert(mertable != NULL);
 	assert(coverage != NULL);
 
-	unsigned int end = seq.length() - K + 1;
-	for (unsigned i = 0; i < end; ++i) 
+	for (unsigned i = 0; (i + K) < seq.length(); ++i) 	
 	{	
 		cmer.set(seq.substr(i, K));			
 		std::unordered_map<string,cov_t>::iterator it = mertable->find(cmer.mer_m);

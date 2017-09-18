@@ -5,7 +5,7 @@ ABS_BAMTOOLS_DIR := $(realpath $(BAMTOOLS_DIR))
 ABS_HTSLIB_DIR := $(realpath $(HTSLIB_DIR))
 
 CXX := g++
-CXXFLAGS := -std=c++0x -Wno-deprecated -Wall -O3 -fexceptions -Wl,-rpath,$(ABS_BAMTOOLS_DIR)/lib/
+CXXFLAGS := -std=c++0x -Wno-deprecated -Wall -O3 -fexceptions -g -Wl,-rpath,$(ABS_BAMTOOLS_DIR)/lib/
 #CXXFLAGS := -std=c++0x -Wno-deprecated -Wall -O3 -fexceptions -pg -Wl,-rpath,$(ABS_BAMTOOLS_DIR)/lib/ # compile for gprof
 INCLUDES := -I$(ABS_BAMTOOLS_DIR)/include/ -I$(ABS_HTSLIB_DIR)/ -L$(ABS_BAMTOOLS_DIR)/lib/ -L$(ABS_HTSLIB_DIR)/
 

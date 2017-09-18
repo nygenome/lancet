@@ -76,6 +76,8 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##INFO=<ID=KMERSIZE,Number=1,Type=Integer,Description=\"K-mer size used to assemble the locus\">\n"
 			"##INFO=<ID=SB,Number=1,Type=Integer,Description=\"Phred-scaled strand bias of the Fisher's exact test (two-sided)\">\n"
 			"##INFO=<ID=MS,Number=1,Type=String,Description=\"Microsatellite mutation (format: #LEN#MOTIF)\">\n"
+			"##INFO=<ID=LEN,Number=1,Type=Integer,Description=\"Variant size in base pairs\">\n"
+			"##INFO=<ID=TYPE,Number=1,Type=String,Description=\"Variant type (snv, del, ins)\">\n"
 			"##FILTER=<ID=LowCovNormal,Description=\"low coverage in the normal (<" << fs.minCovNormal << ")\">\n"
 			"##FILTER=<ID=HighCovNormal,Description=\"high coverage in the normal (>" << fs.maxCovNormal << ")\">\n"
 			"##FILTER=<ID=LowCovTumor,Description=\"low coverage in the tumor (<" << fs.minCovTumor << ")\">\n"

@@ -167,7 +167,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 					if(readid2info[readid].label_m == TMR) {	
 						ui->second->incTmrCov(strand);
 						ui->second->updateCovDistr((int)(ui->second->getTmrCov(strand)),uc_qv,strand,'T');
-						ref_m->updateCoverage(uc.mer_m, strand, 'T'); // update referecne k-mer coverage for tumor
+						ref_m->updateCoverage(uc.mer_m, strand, 'T'); // update reference k-mer coverage for tumor
 					}
 					else if(readid2info[readid].label_m == NML) {
 						ui->second->incNmlCov(strand);

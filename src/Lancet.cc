@@ -212,8 +212,9 @@ int loadRefs(const string reference, const string region, vector< map<string, Re
 		
 		// adjust end if 
 		int LEN = WINDOW_SIZE;
-		if( (offset + WINDOW_SIZE) > (int)s.length() ) { 
-			LEN = s.length() - offset;
+		if( (offset + WINDOW_SIZE) >= (int)s.length() ) { 
+			LEN = s.length() - offset - 1;
+			//offset = s.length() - WINDOW_SIZE - 1;
 			end = offset;
 		}
 		
@@ -224,7 +225,7 @@ int loadRefs(const string reference, const string region, vector< map<string, Re
 	
 		ref->refchr   = CHR;
 		ref->refstart = atoi(START.c_str()) + offset;
-		ref->refend   = ref->refstart + LEN - 1;
+		ref->refend   = ref->refstart + LEN;
 		//ref->refend   = atoi(end.c_str());
 		
 		hdr = ref->refchr;
@@ -321,7 +322,7 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 	
 	// initilize filter thresholds
 	Filters filters;
-	filters.minPhredFisherSTR = 20;
+	filters.minPhredFisherSTR = 25;
 	filters.minPhredFisher = 5;
 	filters.minCovNormal = 10;
 	filters.maxCovNormal = 1000000;
@@ -526,7 +527,7 @@ int main(int argc, char** argv)
 	
 	// initilize filter thresholds
 	Filters filters;
-	filters.minPhredFisherSTR = 20;
+	filters.minPhredFisherSTR = 25;
 	filters.minPhredFisher = 5;
 	filters.minCovNormal = 10;
 	filters.maxCovNormal = 1000000;

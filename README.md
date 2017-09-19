@@ -60,8 +60,9 @@ Below is the current list of filters:
 7. **LowAltCntTumor**: low alternative allele count in the tumor
 8. **HighAltCntNormal**: high alternative allele count in the normal
 9. **LowFisherScore**: low Fisher's exact test score for tumor-normal allele counts
-10. **StrandBias**: rejects variants where the vast majority of alternate alleles are seen in a single direction
-11. **MS**: microsatellite mutation (format: #LEN#MOTIF)
+10. **LowFisherSTR**: low Fisher's exact test score for tumor-normal STR allele counts
+11. **StrandBias**: rejects variants where the vast majority of alternate alleles are seen in a single direction
+12. **STR**: microsatellite mutation
 
 ### Visual inspection of the DeBruijn graph
 
@@ -91,7 +92,7 @@ These files can be rendered using the utilities available in the [Graphviz](http
 sfdp -Tpdf file.dot -O
 ```
 
-Finally we recommend opening the pdf file using the "Preview" image viewer software available in MacOS.
+For large graphs, Adobe Acrobat Reader may have troubles rendering the graph, in that case we recommend opening the pdf file using the "Preview" image viewer software available in MacOS.
 
 An exemplary graph (before removal of low coverage nodes and tips) for a short region containing a somatic variant would look like this one:
 
@@ -151,13 +152,14 @@ Optional
 Filters
    --min-alt-count-tumor, -a  <int>        : minimum alternative count in the tumor [default: 3]
    --max-alt-count-normal, -m <int>        : maximum alternative count in the normal [default: 0]
-   --min-vaf-tumor, -e        <float>      : minimum variant allele frequency (AlleleCov/TotCov) in the tumor [default: 0.05]
+   --min-vaf-tumor, -e        <float>      : minimum variant allele frequency (AlleleCov/TotCov) in the tumor [default: 0.04]
    --max-vaf-normal, -i       <float>      : maximum variant allele frequency (AlleleCov/TotCov) in the normal [default: 0]
    --min-coverage-tumor, -o   <int>        : minimum coverage in the tumor [default: 4]
    --max-coverage-tumor, -y   <int>        : maximum coverage in the tumor [default: 1000000]
    --min-coverage-normal, -z  <int>        : minimum coverage in the normal [default: 10]
    --max-coverage-normal, -j  <int>        : maximum coverage in the normal [default: 1000000]
    --min-phred-fisher, -s     <float>      : minimum fisher exact test score [default: 5]
+   --min-phred-fisher-str, -E <float>      : minimum fisher exact test score for STR mutations [default: 25]
    --min-strand-bias, -f      <float>      : minimum strand bias threshold [default: 1]
 
 Short Tandem Repeat parameters

@@ -96,7 +96,7 @@ For large graphs, Adobe Acrobat Reader may have troubles rendering the graph, in
 
 An exemplary graph (before removal of low coverage nodes and tips) for a short region containing a somatic variant would look like this one:
 
-![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/initial_graph.png)
+![initial graph](https://github.com/nygenome/lancet/blob/master/doc/img/graph.insertion.png)
 
 where the blue nodes are k-mers shared by both tumor and normal; the white nodes are k-mer with low support (e.g., sequencing errors); the red nodes are k-mers only present in the tumor node.
 

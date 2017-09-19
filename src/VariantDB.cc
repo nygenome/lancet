@@ -40,6 +40,8 @@ void VariantDB_t::addVar(Variant_t v) {
 		if (it_v->second.alt_cov_normal_rev < v.alt_cov_normal_rev) { it_v->second.alt_cov_normal_rev = v.alt_cov_normal_rev; }		
 		if (it_v->second.alt_cov_tumor_fwd  < v.alt_cov_tumor_fwd ) { it_v->second.alt_cov_tumor_fwd  = v.alt_cov_tumor_fwd;  }
 		if (it_v->second.alt_cov_tumor_rev  < v.alt_cov_tumor_rev ) { it_v->second.alt_cov_tumor_rev  = v.alt_cov_tumor_rev;  }
+		
+		it_v->second.reGenotype(); // recompute genotype
 	}
 	else { 
 		DB.insert(pair<string,Variant_t>(key,v));
@@ -92,7 +94,7 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##FILTER=<ID=STR,Description=\"Microsatellite mutation\">\n"
 			"##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
 			"##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Depth\">\n"
-			"##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"allele depth: # of supporting reference,mutation reads at the site\">\n"
+			"##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"allele depth: # of supporting ref,alt reads at the site\">\n"
 			"##FORMAT=<ID=SR,Number=.,Type=Integer,Description=\"strand counts for ref: # of supporting forward,reverse reads for reference allele\">\n"
 			"##FORMAT=<ID=SA,Number=.,Type=Integer,Description=\"strand counts for alt: # of supporting forward,reverse reads for alterantive allele\">\n"
 			"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << sample_name_N << "\t" << sample_name_T << "\n";

@@ -163,7 +163,7 @@ string Variant_t::genotype(int R, int A) {
 	//1/1 - the sample is homozygous alternate
 	//1/2 - the sample is heterozygous, carrying 1 copy of the REF and 2 ALT alleles
 	
-	string GT = ""; // GT field in VCF format
+	string GT = "."; // GT field in VCF format
 	
 	if(R>0 && A>0) { GT = "0/1"; }
 	else if(R>0 && A==0) { GT = "0/0"; }
@@ -172,6 +172,16 @@ string Variant_t::genotype(int R, int A) {
 	
 	return GT;
 }
+
+// compute genotype info in VCF format for this variant
+//////////////////////////////////////////////////////////////
+void Variant_t::reGenotype() {
+	
+	//compute genotype
+	GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
+	GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
+}
+
 
 // 	compute fisher exaxt test score for tumor/normal coverages
 //////////////////////////////////////////////////////////////

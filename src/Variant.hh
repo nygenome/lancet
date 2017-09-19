@@ -107,14 +107,14 @@ public:
 		prev_bp_alt = prev_bp_alt_;
 		
 		//compute genotype
-		GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
-		GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
+		reGenotype();
 	}
 	
 	void printVCF();
 	string genotype(int R, int A);
 	string getGenotypeNormal() { return GT_normal; }
 	string getGenotypeTumor() { return GT_tumor; }
+	void reGenotype();
 	char bestState(int Rn, int An, int Rt, int At);
 	string getSignature();
 	string getPosition();

@@ -532,10 +532,19 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			xt = "";
 			al.GetTag("XT", xt); // get the XT tag for the read
 			if(xt.empty()) { xt = "null"; }
-			if(xt == "R") { ++num_XT_R_read; continue; } // skip alignments which are marked XT:R
-			if(xt == "M") { ++num_XT_M_read; /*continue;*/ } // skip alignments which are marked XT:M
-			
-			
+			if(xt == "R") { 
+				++num_XT_R_read; 
+				if (code != NML) { // keep all reads in the normal, apply repeat filter only to tumor
+					continue; // skip alignments which are marked XT:R
+				}
+			}
+			if(xt == "M") { 
+				++num_XT_M_read; 
+				//if (code != NML) { // keep all reads in the normal, apply repeat filter only to tumor
+					/*continue;*/  // skip alignments which are marked XT:M
+				//}
+			}
+		
 			// XA  Alternative hits; format: (chr,pos,CIGAR,NM;)
 			xa = "";
 			al.GetTag("XA", xa); // get the XA for the read
@@ -543,7 +552,9 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			if(xa != "null") {
 				//cerr << al.Name << "\t" << xa << endl;
 				++num_XA_read; 
-				continue; // skip alignments with alternative hits
+				if (code != NML) { // keep all reads in the normal, apply repeat filter only to tumor
+					continue; // skip alignments with alternative hits
+				}
 			}
 			
 			// clear arrays (otherwise they keep growing from previosu alignment that are parsed) 

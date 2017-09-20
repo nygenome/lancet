@@ -166,7 +166,7 @@ int Ref_t::getCovAt(unsigned pos, unsigned int strand, char sample) {
 		if(strand == FWD) { c = coverage->at(pos).fwd; }
 		else if(strand == REV) { c = coverage->at(pos).rev; }
 	}
-	else { c = -1; }
+	else { c = 0; }
 	
 	return c;
 }

@@ -176,8 +176,8 @@ public:
 
 		READSET = "qry";
 
-		minK = 10;
-		maxK = 100;
+		minK = 11;
+		maxK = 101;
 		MAX_TIP_LEN = minK;
 		MIN_THREAD_READS = 3;
 		COV_THRESHOLD = 5;

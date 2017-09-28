@@ -53,7 +53,7 @@ string BEDFILE;
 string REGION;
 
 int minK = 11;
-int maxK = 100;
+int maxK = 101;
 int MAX_TIP_LEN = minK;
 unsigned int MIN_THREAD_READS = 1;
 int COV_THRESHOLD = 5;

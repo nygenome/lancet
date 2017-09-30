@@ -4,7 +4,10 @@ lancet
 Lancet is a somatic variant caller (SNVs and indels) for short read data. Lancet uses a localized micro-assembly strategy to detect somatic mutation with high sensitivity and accuracy on a tumor/normal pair.
 Lancet is based on the colored de Bruijn graph assembly paradigm where tumor and normal reads are jointly analyzed within the same graph. On-the-fly repeat composition analysis and self-tuning k-mer strategy are used together to increase specificity in regions characterized by low complexity sequences. Lancet requires the raw reads to be aligned with BWA (See [BWA](http://bio-bwa.sourceforge.net/bwa.shtml) description for more info). Lancet is implemented in C++.
 
-* Version: 1.0.0
+
+Narzisi G, Corvelo A, Arora K, Bergmann E, Shah M, Musunuri R, Emde AK, Robine N, Vacic V, Zody MC. *Lancet: genome-wide somatic variant calling using localized colored DeBruijn graphs.* (2017) bioRxiv 196311; doi: [https://doi.org/10.1101/196311](https://doi.org/10.1101/196311)
+
+* Version: 1.0.1
 * Author: Giuseppe Narzisi, [New York Genome Center](https://www.nygenome.org)
 
 Lancet is freely available for academic and non-commercial research purposes ([`LICENSE.txt`](https://github.com/nygenome/lancet/blob/master/LICENSE.txt)).  

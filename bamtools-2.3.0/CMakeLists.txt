@@ -10,6 +10,7 @@ project( BamTools )
 
 # Cmake requirements
 cmake_minimum_required( VERSION 2.6.4 )
+cmake_policy(SET CMP0042 OLD)
 
 # Force the build directory to be different from source directory
 macro( ENSURE_OUT_OF_SOURCE_BUILD MSG )

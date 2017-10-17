@@ -105,10 +105,10 @@ void printHelpText(Filters & filters);
 void printConfiguration(ostream & out, Filters & filters);
 
 // load referecne for fasta file
-int loadRefs(const string reference, const string region, vector< map<string, Ref_t *> > &reftable, int num_threads, int thread);
+int loadRefs(const string reference, const string region, vector< map<string, Ref_t *> > &reftable, RefVector &bamrefs, int num_threads, int thread);
 
 // loadbed : load regions from BED file
-void loadBed(const string bedfile, vector< map<string, Ref_t *> > &reftable, int num_threads);
+void loadBed(const string bedfile, vector< map<string, Ref_t *> > &reftable, RefVector &bamrefs, int num_threads);
 
 static void* execute(void* ptr);
 

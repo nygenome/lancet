@@ -80,10 +80,10 @@ void Variant_t::printVCF() {
 	}
 	
 	// the following filters are applied to all variants
-	if(fet_score < filters->minPhredFisher) { 
-		if (FILTER.compare("") == 0) { FILTER = "LowFisherScore"; }
-		else { FILTER += ";LowFisherScore"; }
-	}
+	//if(fet_score < filters->minPhredFisher) { 
+	//	if (FILTER.compare("") == 0) { FILTER = "LowFisherScore"; }
+	//	else { FILTER += ";LowFisherScore"; }
+	//}
 	if(normal_cov < filters->minCovNormal) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowCovNormal"; }
 		else { FILTER += ";LowCovNormal"; }	

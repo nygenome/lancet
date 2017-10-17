@@ -627,11 +627,9 @@ int Microassembler::processReads() {
 	// Process the reads
 	BamReader readerT;
 	SamHeader headerT;
-	RefVector referencesT;
 
 	BamReader readerN;	
 	SamHeader headerN;
-	RefVector referencesN;
 	
 	string index_filename;
 	bool index_found = false;
@@ -643,7 +641,6 @@ int Microassembler::processReads() {
 	}
 	// retrieve 'metadata' from BAM files, these are required by BamWriter
 	headerT = readerT.GetHeader();
-	referencesT = readerT.GetReferenceData();
 	
 	index_found = readerT.LocateIndex(); // locate and load BAM index file (.bam.bai)
 	if(!index_found) {
@@ -663,7 +660,6 @@ int Microassembler::processReads() {
 	}
 	// retrieve 'metadata' from BAM files, these are required by BamWriter
 	headerN = readerN.GetHeader();
-	referencesN = readerN.GetReferenceData();
 	
 	index_found = readerN.LocateIndex(); // locate and load BAM index file (.bam.bai)
 	if(!index_found) {

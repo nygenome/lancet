@@ -174,31 +174,52 @@ void printConfiguration(ostream & out, Filters & filters)
 
 // loadRef
 //////////////////////////////////////////////////////////////
-int loadRefs(const string reference, const string region, vector< map<string, Ref_t *> > &reftable, int num_threads, int thread)	
+int loadRefs(const string reference, const string region, vector< map<string, Ref_t *> > &reftable, RefVector &bamrefs, int num_threads, int thread)	
 {
 	//if(verbose) { cerr << "LoadRef " << reference << endl; }
 
+	string ss;
+	string hdr = region;
+	string CHR;
+	string START;
+	string END;
+	
+	// extrat coordinates for header
+	size_t x     = hdr.find_first_of(':');
+	
+	if ( (x == string::npos) && (hdr.length()>0) ) { // no ":" symbol found -> assume single chromosome name format	
+		CHR   = hdr.substr(0,x);
+		START = "1";		
+	    for (std::vector<RefData>::iterator it = bamrefs.begin() ; it != bamrefs.end(); ++it) {
+			//cerr << it->RefName << endl;
+			if (it->RefName == CHR) { 
+			    std::ostringstream oss;
+			    oss << it->RefLength;
+				END = oss.str(); 
+				break; 
+			}
+	    }
+	}
+	else {
+		size_t y = hdr.find_first_of('-', x);
+		CHR  	 = hdr.substr(0,x);
+		START	 = hdr.substr(x+1, y-x-1);
+		END   	 = hdr.substr(y+1, string::npos);
+	}
+	//cerr << CHR << ":" << START << "-" << END << endl; 
+	string REG = CHR+":"+START+"-"+END;
+	
 	// open fasta index
     faidx_t *fai = fai_load(reference.c_str());
     if ( !fai ) { cerr << "Could not load fai index of " << reference << endl; }
 
 	// extrat sequence
     int seq_len;
-    char *seq = fai_fetch(fai, region.c_str(), &seq_len);
-    if ( seq_len < 0 ) { cerr << "Failed to fetch sequence in " << region << endl; }
+    char *seq = fai_fetch(fai, REG.c_str(), &seq_len);
+    if ( seq_len < 0 ) { cerr << "Failed to fetch sequence in " << REG << endl; }
 		
 	// convert char* to string
 	string s(seq, seq + seq_len);
-	
-	string ss;
-	string hdr = region;
-
-	// extrat coordinates for header
-	size_t x     = hdr.find_first_of(':');
-	size_t y     = hdr.find_first_of('-', x);
-	string CHR   = hdr.substr(0,x);
-	string START = hdr.substr(x+1, y-x-1);
-	string END   = hdr.substr(y+1, string::npos);
 	
 	for (unsigned int i = 0; i < s.length(); ++i) { s[i] = toupper(s[i]); }
 
@@ -257,7 +278,7 @@ int loadRefs(const string reference, const string region, vector< map<string, Re
 
 // loadbed : load regions from BED file
 //////////////////////////////////////////////////////////////
-void loadBed(const string bedfile, vector< map<string, Ref_t *> > &reftable, int num_threads) { 
+void loadBed(const string bedfile, vector< map<string, Ref_t *> > &reftable, RefVector &bamrefs, int num_threads) { 
 	
 	int num_regions = 0;
 	string line;
@@ -283,7 +304,7 @@ void loadBed(const string bedfile, vector< map<string, Ref_t *> > &reftable, int
 			}
 
 			region = tokens[0] + ":" + tokens[1] + "-" + tokens[2];			
-			t = loadRefs(REFFILE,region,reftable,num_threads, t);
+			t = loadRefs(REFFILE,region,reftable,bamrefs,num_threads, t);
 		}
 		bfile.close();
 		
@@ -354,6 +375,14 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 
 	if(verbose) { printConfiguration(cerr, filters); }
 	
+	BamReader reader;
+	// attempt to open the BamReader
+	if ( !reader.Open(TUMOR) ) {
+		cerr << "Could not open BAM file." << endl;
+		return -1;
+	}
+	RefVector references = reader.GetReferenceData(); // Extract all reference sequence entries.
+	
 	// run the assembler on each region
 	try {
 		
@@ -370,10 +399,10 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 		vector< map<string, Ref_t *> > reftables(NUM_THREADS, map<string, Ref_t *>()); // table of references to analyze
 		
 		if (BEDFILE != "") {
-			loadBed(BEDFILE,reftables,NUM_THREADS);
+			loadBed(BEDFILE,reftables,references,NUM_THREADS);
 		}
 		if (REGION != "") {
-			loadRefs(REFFILE,REGION,reftables,NUM_THREADS, 0);
+			loadRefs(REFFILE,REGION,reftables,references,NUM_THREADS, 0);
 		}
 		
 		cerr << num_windows << " total windows to process" << endl << endl;
@@ -510,9 +539,9 @@ int main(int argc, char** argv)
 		printUsage();
 		
 		/*
-		string T = "/data/research/somatic_snv_filter/Project_HiSeqX_v2/Project_GRCh37_decoy/Sample_NA12892_mem_binomial_indel/analysis/NA12892_mem_binomial_indel.final.bam";
-		string N = "/data/research/somatic_snv_filter/Project_HiSeqX_v2/Project_GRCh37_decoy/Sample_NA12892_mem_normal/analysis/NA12892_mem_normal.final.bam";
-		string R = "/data/NYGC/Resources/Indexes/bwa/human_g1k_v37.fa";
+		string T = "tumor.bam";
+		string N = "normal.bam";
+		string R = "human_g1k_v37.fa";
 		string B = "";
 		string L = "20:14513576-14513976";
 		int P = 1;  
@@ -697,6 +726,14 @@ int main(int argc, char** argv)
 
 	if(verbose) { printConfiguration(cerr, filters); }
 	
+	BamReader reader;
+	// attempt to open the BamReader
+	if ( !reader.Open(TUMOR) ) {
+		cerr << "Could not open BAM file." << endl;
+		return -1;
+	}
+	RefVector references = reader.GetReferenceData(); // Extract all reference sequence entries.
+	
 	// run the assembler on each region
 	try {
 		
@@ -713,10 +750,10 @@ int main(int argc, char** argv)
 		vector< map<string, Ref_t *> > reftables(NUM_THREADS, map<string, Ref_t *>()); // table of references to analyze
 		
 		if (BEDFILE != "") {
-			loadBed(BEDFILE,reftables,NUM_THREADS);
+			loadBed(BEDFILE,reftables,references,NUM_THREADS);
 		}
 		if (REGION != "") {
-			loadRefs(REFFILE,REGION,reftables,NUM_THREADS, 0);
+			loadRefs(REFFILE,REGION,reftables,references,NUM_THREADS, 0);
 		}
 		
 		cerr << num_windows << " total windows to process" << endl << endl;

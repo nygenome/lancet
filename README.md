@@ -22,7 +22,7 @@ Building and running lancet from source requires a GNU-like environment with
 
 It should be possible to build lancet on most Linux installations 
 or on a Mac installation with [Xcode and Xcode command line tools] installed.
-Lancet is available through github and can be obtained and compiled with following command:
+Lancet is available through github and can be obtained and compiled with the following command:
 
 ```sh
 git clone git://github.com/nygenome/lancet.git
@@ -37,20 +37,42 @@ A simple lancet command should look something like this:
 lancet --tumor T.bam --normal N.bam --ref ref.fa --reg 22:1-51304566 --num-threads 8 > out.vcf
 ```
 
-The command above detects somatic variants in the tumor/normal pair of bam files (*T.bam* and *N.bam*) for chromosome 22 using 8 threads and saves the variant calls in the out VCF file *out.vcf*.
+The command above detects somatic variants in a tumor/normal pair of bam files (*T.bam* and *N.bam*) for chromosome 22 using 8 threads and saves the variant calls in the output VCF file *out.vcf*. 
+
+**NOTE**: a genomic region must be always specified via the --reg option with format *"chr:start-end"*. Single chromosome names are also supported (e.g., --reg 22).
+
+### Genome-wide scan
+
+Due to its pure local-assembly strategy, Lancet currently has longer runtimes compared to standard alignment-based variant callers. For whole-genome sequencing studies it is highly recommended to split the analysis by chromsome and then merge the results. Splitting the work by chromosome will also reduce the overall memory requirements to analyze the whole genome.
+
+```
+$NUMBER_OF_AUTOSOMES=22
+for chrom in `seq 1 $NUMBER_OF_AUTOSOMES` X Y; do
+	qsub 
+	-N lancet_chr${chrom} \
+    -cwd \
+    -pe smp 8 \
+    -q dev.q \
+    -j y \
+    -b y \
+	"lancet --tumor T.bam --normal N.bam --ref ref.fa --reg $chrom --num-threads 8 > ${chrom}.vcf"
+
+// merge VCF files
+```
+The previous command shows an exemplary submission of multiple parallel lancet jobs, one for each human chromosome, to the Sun Grid Engine queuing system.
 
 ### Output
 
-Lancet generates in output the list of variants in VCF format (v4.1). All variants (SNVs and indels either shared, specific to the tumor, or specific to the normal) are exported in output. Following VCF conventions, high quality variants are flagged as **PASS** in the FILTER column. For non-PASS variants the FILTER info reports the list of filters that were not satisfied by the variant.
+Lancet generates in output the list of variants in VCF format (v4.1). All variants (SNVs and indels either shared, specific to the tumor, or specific to the normal) are exported in output. Following VCF conventions, high quality variants are flagged as **PASS** in the FILTER column. For non-PASS variants the FILTER info reports the list of filters that are not satisfied by each variant.
 
 ### Filters
 
-The list of filters applied and the thresholds used for filtering are included in the header section. For example:
+The list of filters applied and the thresholds used for filtering are included in the VCF header section. For example:
 
 ```
-##FILTER=<ID=LowFisherScore,Description="low Fisher's exact test score for tumor-normal allele counts (<10)">
+##FILTER=<ID=LowFisherScore,Description="low Fisher's exact test score for tumor-normal allele counts (<5)">
 ```
-The previous filter means that a variant flagged as **LowFisherScore** has not met the minimum Fisher's exact test score threshold for tumor-normal allele counts (default 10).
+The previous filter means that a variant flagged as **LowFisherScore** has not met the minimum Fisher's exact test score threshold for tumor-normal allele counts (default 5).
 
 Below is the current list of filters:
 
@@ -71,7 +93,7 @@ Below is the current list of filters:
 
 The DeBruijn graph representation of a genomic region can be exported to file in [DOT](http://www.graphviz.org/doc/info/lang.html) format using the -A flag. 
 
-**NOTE:** *The following procedure does not scale to larger graphs. Please render a graph only to inspect a small genomic region of a few hundred basepairs. The -A flag must not be used during regular variant calling over the whole genome.*
+**NOTE:** *The following procedure does not scale to large graphs. Please render a graph only to inspect a small genomic region of a few hundred base pairs. The -A flag must not be used during regular variant calling over large genomic regions.*
 
 For example the following command:
 
@@ -95,7 +117,7 @@ These files can be rendered using the utilities available in the [Graphviz](http
 sfdp -Tpdf file.dot -O
 ```
 
-For large graphs, Adobe Acrobat Reader may have troubles rendering the graph, in that case we recommend opening the pdf file using the "Preview" image viewer software available in MacOS.
+For large graphs, Adobe Acrobat Reader may have troubles rendering the graph, in that case we recommend opening the PDF file using the "Preview" image viewer software available in MacOS.
 
 An exemplary graph (before removal of low coverage nodes and tips) for a short region containing a somatic variant would look like this one:
 

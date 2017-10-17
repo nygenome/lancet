@@ -48,13 +48,13 @@ Due to its pure local-assembly strategy, Lancet currently has longer runtimes co
 ```
 $NUMBER_OF_AUTOSOMES=22
 for chrom in `seq 1 $NUMBER_OF_AUTOSOMES` X Y; do
-	qsub 
+	qsub \
 	-N lancet_chr${chrom} \
-    -cwd \
-    -pe smp 8 \
-    -q dev.q \
-    -j y \
-    -b y \
+	-cwd \
+	-pe smp 8 \
+	-q dev.q \
+	-j y \
+	-b y \
 	"lancet --tumor T.bam --normal N.bam --ref ref.fa --reg $chrom --num-threads 8 > ${chrom}.vcf"
 
 // merge VCF files
@@ -142,7 +142,7 @@ The final graph (after compression) containing one single variant is depicted be
  _____|\__,_|_|  _|\___|\___|\__|
 
 Program: lancet (micro-assembly somatic variant caller)
-Version: 1.0.0 (beta), September 18 2016
+Version: 1.0.2 (beta), Ocotber 17 2017
 Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>
 
 Usage: lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>
@@ -157,7 +157,7 @@ Required
 
 Optional
    --min-k, k                <int>         : min kmersize [default: 11]
-   --max-k, -K               <int>         : max kmersize [default: 100]
+   --max-k, -K               <int>         : max kmersize [default: 101]
    --trim-lowqual, -q        <int>         : trim bases below qv at 5' and 3' [default: 10]
    --min-base-qual, -C       <int>         : minimum base quality required to consider a base for SNV calling [default: 17]
    --quality-range, -Q       <char>        : quality value range [default: !]

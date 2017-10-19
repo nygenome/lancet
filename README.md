@@ -43,7 +43,7 @@ The command above detects somatic variants in a tumor/normal pair of bam files (
 
 ### Genome-wide scan
 
-Due to its pure local-assembly strategy, Lancet currently has longer runtimes compared to standard alignment-based variant callers. For whole-genome sequencing studies it is highly recommended to split the analysis by chromsome and then merge the results. Splitting the work by chromosome will also reduce the overall memory requirements to analyze the whole genome.
+Due to its pure local-assembly strategy, Lancet currently has longer runtimes compared to standard alignment-based variant callers. For whole-genome sequencing studies it is highly recommended to split the analysis by chromosome and then merge the results. Splitting the work by chromosome will also reduce the overall memory requirements to analyze the whole-genome data.
 
 ```
 $NUMBER_OF_AUTOSOMES=22
@@ -56,6 +56,7 @@ for chrom in `seq 1 $NUMBER_OF_AUTOSOMES` X Y; do
 	-j y \
 	-b y \
 	"lancet --tumor T.bam --normal N.bam --ref ref.fa --reg $chrom --num-threads 8 > ${chrom}.vcf"
+done
 
 // merge VCF files
 ```

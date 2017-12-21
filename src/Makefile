@@ -1,13 +1,15 @@
 BAMTOOLS_DIR := ../bamtools-2.3.0/
 HTSLIB_DIR := ../htslib-1.3/
+SPARSEPP_DIR := ../sparsepp/
 
 ABS_BAMTOOLS_DIR := $(realpath $(BAMTOOLS_DIR))
 ABS_HTSLIB_DIR := $(realpath $(HTSLIB_DIR))
+ABS_SPARSEPP_DIR := $(realpath $(SPARSEPP_DIR))
 
 CXX := g++
 CXXFLAGS := -std=c++0x -Wno-deprecated -Wall -O3 -fexceptions -g -Wl,-rpath,$(ABS_BAMTOOLS_DIR)/lib/
 #CXXFLAGS := -std=c++0x -Wno-deprecated -Wall -O3 -fexceptions -pg -Wl,-rpath,$(ABS_BAMTOOLS_DIR)/lib/ # compile for gprof
-INCLUDES := -I$(ABS_BAMTOOLS_DIR)/include/ -I$(ABS_HTSLIB_DIR)/ -L$(ABS_BAMTOOLS_DIR)/lib/ -L$(ABS_HTSLIB_DIR)/
+INCLUDES := -I$(ABS_BAMTOOLS_DIR)/include/ -I$(ABS_HTSLIB_DIR)/ -I$(ABS_SPARSEPP_DIR) -L$(ABS_BAMTOOLS_DIR)/lib/ -L$(ABS_HTSLIB_DIR)/ -L$(ABS_SPARSEPP_DIR)
 
 all: lancet
 

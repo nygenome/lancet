@@ -71,6 +71,7 @@ std::string rc_str(const std::string & str);
 void reverse(std::string & str);
 bool Fasta_Read(FILE * fp, std::string & s, std::string & hdr);
 bool isNseq(const std::string & seq);
+int HammingDistance(const std::string & s1, const std::string & s2);
 bool isRepeat(const std::string & seq, int K);
 bool isAlmostRepeat(const std::string & seq, int K, int max);
 bool kMismatch(size_t s, size_t e, const std::string & t, size_t start, int max);

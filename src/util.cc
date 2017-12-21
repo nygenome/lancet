@@ -176,6 +176,22 @@ bool isNseq(const string & seq)
 	return result;	
 }
 
+// HammingDistance
+// returns the hamming distance between two strings or -1 if strings have different length
+//////////////////////////////////////////////////////////////////////////
+int HammingDistance(const string & s1, const string & s2)
+{
+	int dist = 0;
+
+	if (s1.length() != s2.length() ) { return -1; }
+	
+	for (unsigned int i = 0; i < s1.length(); ++i) {
+		if(s1[i] != s2[i]) { dist++; }
+	}
+	
+	return dist;
+}
+
 // isRepeat
 // returns true if the input sequence contains any repeat of size K
 // (multiple occurence of the same K-mer)

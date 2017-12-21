@@ -44,6 +44,7 @@ bool Node_t::isTandem()
 
 void Node_t::addEdge(Mer_t nodeid, Edgedir_t dir, ReadId_t readid)
 {
+		
 	if (readid != -1)
 	{
 		reads_m.insert(readid);
@@ -65,7 +66,7 @@ void Node_t::addEdge(Mer_t nodeid, Edgedir_t dir, ReadId_t readid)
 			break;
 		}
 	}
-
+	
 	if (edgeid == -1)
 	{
 		Edge_t ne(nodeid, dir);
@@ -75,7 +76,7 @@ void Node_t::addEdge(Mer_t nodeid, Edgedir_t dir, ReadId_t readid)
 			ne.readids_m.push_back(readid);
 		}
 		edges_m.push_back(ne);
-	}
+	}	
 }
 
 
@@ -306,8 +307,7 @@ int Node_t::cntReadCode(char code)
 {
 	int retval = 0;
 
-	unordered_set<ReadId_t>::iterator si;
-	for (si = reads_m.begin();
+	for (auto si = reads_m.begin();
 	si != reads_m.end();
 	++si)
 	{
@@ -498,7 +498,6 @@ void Node_t::computeMinCov()
 int Node_t::readOverlaps(const Node_t & other)
 {
 	int retval = 0;
-	unordered_set<ReadId_t>::const_iterator it;
 	
 	for (auto it = other.reads_m.begin(); it != other.reads_m.end(); ++it) {
 
@@ -519,11 +518,21 @@ bool Node_t::hasOverlappingMate(string & read_name, int id)
 	bool ans = false;
 	
 	if(id == 1) {
-		if (mate2_name.find(read_name) != mate2_name.end()) { ans = true; }
+		//if (mate2_name.find(read_name) != mate2_name.end()) { ans = true; }
+	    if (binary_search (mate2_name.begin(), mate2_name.end(), read_name)) { ans = true; }		
+
+		//for (vector<string>::iterator it2 = mate2_name.begin() ; it2 != mate2_name.end(); ++it2) {
+		//	if ((*it2) == read_name) { ans = true; }
+		//}
 	}
 	
 	if(id == 2) {
-		if (mate1_name.find(read_name) != mate1_name.end()) { ans = true; }
+		//if (mate1_name.find(read_name) != mate1_name.end()) { ans = true; }
+	    if (binary_search (mate1_name.begin(), mate1_name.end(), read_name)) { ans = true; }		
+			
+	    //for (vector<string>::iterator it1 = mate1_name.begin() ; it1 != mate1_name.end(); ++it1) {
+		//	if ((*it1) == read_name) { ans = true; }
+		//}
 	}
 	
 	return ans;
@@ -532,8 +541,10 @@ bool Node_t::hasOverlappingMate(string & read_name, int id)
 // add mate name to the set of mates containing this kmer
 void Node_t::addMateName(string & read_name, int id) 
 {	
-	if(id == 1) { mate1_name.insert(read_name); }
-	if(id == 2) { mate2_name.insert(read_name); }
+	//if(id == 1) { mate1_name.insert(read_name); }
+	//if(id == 2) { mate2_name.insert(read_name); }
+	if(id == 1) { mate1_name.push_back(read_name); }
+	if(id == 2) { mate2_name.push_back(read_name); }
 }
 
 // return tumor coverage on the input strand

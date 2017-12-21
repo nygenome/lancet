@@ -127,7 +127,7 @@ void Microassembler::processGraph(Graph_t & g, const string & refname, int minkm
 				continue;
 			}
 			
-			//if no repeats in the reference build graph			
+			//if no repeats in the reference build graph	
 			g.buildgraph(refinfo);
 			
 			// error correct reads (just singletons)

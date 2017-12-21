@@ -16,9 +16,9 @@ Lancet is freely available for academic and non-commercial research purposes ([`
 
 Building and running lancet from source requires a GNU-like environment with 
 
-1. GCC (>= 4.8.x)
+1. GCC (version >= 4.8.x)
 2. GNU Make
-3. GNU CMake
+3. GNU CMake (version >= 3.0)
 
 It should be possible to build lancet on most Linux installations 
 or on a Mac installation with [Xcode and Xcode command line tools] installed.

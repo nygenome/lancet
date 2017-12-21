@@ -40,9 +40,10 @@ void Graph_t::clear(bool flag)
 	{
 		delete mi->second;
 	}
-	
-	//nodes_m.clear();
+	nodes_m.clear();
 	unordered_map<Mer_t, Node_t *>().swap(nodes_m);	
+	//sparse_hash_map<Mer_t, Node_t *>().swap(nodes_m);
+	//hopscotch_map<Mer_t, Node_t *, hash<Mer_t>, equal_to<Mer_t>, allocator<pair<Mer_t,Node_t *>>, 30, true>().swap(nodes_m);
 
 	source_m = NULL;
 	sink_m = NULL;
@@ -64,12 +65,15 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 	{
 		totalreadbp_m += seq.length();
 	}
-
+		
 	CanonicalMer_t uc;
 	CanonicalMer_t vc;
 	string uc_qv;
 	string vc_qv;
 	
+	Node_t * unode = NULL;
+	Node_t * vnode = NULL;
+		
 	MerTable_t::iterator ui;
 	MerTable_t::iterator vi;
 
@@ -78,7 +82,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 	int end = seq.length() - K;
 	int offset = 0;
 	for (; offset < end; ++offset)
-	{
+	{			
 		if (offset == 0) {
 			uc.set(seq.substr(offset,   K));
 			vc.set(seq.substr(offset+1, K));	
@@ -96,7 +100,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 		}
 
 		//cerr << readid << "\t" << offset << "\t" << uc << "\t" << vc << endl;
-
+		
 		if (offset == 0) {
 			ui = nodes_m.find(uc.mer_m);
 			vi = nodes_m.find(vc.mer_m);
@@ -105,40 +109,52 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			ui = vi;
 			vi = nodes_m.find(vc.mer_m);
 		}
-			
-		if (ui == nodes_m.end())
+		
+		bool ui_found = false;
+		bool vi_found = false;
+		
+		if (ui != nodes_m.end()) { ui_found = true; unode = ui->second; }
+		if (vi != nodes_m.end()) { vi_found = true; vnode = vi->second; }
+
+		//if (ui == nodes_m.end())
+		if(!ui_found)
 		{
-			ui = nodes_m.insert(make_pair(uc.mer_m, new Node_t(uc.mer_m))).first; 
-			ui->second->setMinQV(MIN_QUAL_CALL);
-			ui->second->setK(K);
+			ui = nodes_m.insert(make_pair(uc.mer_m, new Node_t(uc.mer_m))).first;
+			unode = ui->second;
+			unode->setMinQV(MIN_QUAL_CALL);
+			unode->setK(K);			
 			//ui->second->setRead2InfoList(&readid2info);
 		}
-
-		if (vi == nodes_m.end())
+		//else { unode = ui->second; }
+				
+		//if (vi == nodes_m.end())
+		if(!vi_found)
 		{
-			vi = nodes_m.insert(make_pair(vc.mer_m, new Node_t(vc.mer_m))).first; 
-			vi->second->setMinQV(MIN_QUAL_CALL);
-			vi->second->setK(K);
+			vi = nodes_m.insert(make_pair(vc.mer_m, new Node_t(vc.mer_m))).first;
+			vnode = vi->second;
+			vnode->setMinQV(MIN_QUAL_CALL);
+			vnode->setK(K);
 			//vi->second->setRead2InfoList(&readid2info);
 		}
+		//else { vnode = vi->second; }
 
 		// always set node label for normal reads 
 		// even if kmer has low quality bases 
 		if(readid2info[readid].label_m == NML) {
-			ui->second->setIsNormal();
-			vi->second->setIsNormal();
-			ui->second->updateCovStatus('N');
-			vi->second->updateCovStatus('N');
+			unode->setIsNormal();
+			vnode->setIsNormal();
+			unode->updateCovStatus('N');
+			vnode->updateCovStatus('N');
 		}
-		
+						
 		if( (seqAboveQual(uc_qv,MIN_QUAL_CALL) && seqAboveQual(vc_qv,MIN_QUAL_CALL)) ) {
 			
 			// set node label
 			if(readid2info[readid].label_m == TMR) {
-				ui->second->setIsTumor();
-				vi->second->setIsTumor();
-				ui->second->updateCovStatus('T');
-				vi->second->updateCovStatus('T');
+				unode->setIsTumor();
+				vnode->setIsTumor();
+				unode->updateCovStatus('T');
+				vnode->updateCovStatus('T');
 			}
 			/*
 			else if(readid2info[readid].label_m == NML) {
@@ -151,56 +167,55 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 		}
 		//ui->second->appendRefFlag(isRef);
 		//vi->second->appendRefFlag(isRef);
-
+				
 		// add mate name info to the nodes
 		// (used to check for overlapping mates)
-		ui->second->addMateName(readid2info[readid].readname_m, readid2info[readid].mate_order_m);
-		vi->second->addMateName(readid2info[readid].readname_m, readid2info[readid].mate_order_m);
-
+		unode->addMateName(readid2info[readid].readname_m, readid2info[readid].mate_order_m);
+		vnode->addMateName(readid2info[readid].readname_m, readid2info[readid].mate_order_m);
 
 		if (!isRef)
 		{		
 			if (offset == 0) 
 			{ 
-				if( !(ui->second->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m)) ) { // do not update coverage for overlapping mates
+				if( !(unode->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m)) ) { // do not update coverage for overlapping mates
 					
 					if(readid2info[readid].label_m == TMR) {	
-						ui->second->incTmrCov(strand);
-						ui->second->updateCovDistr((int)(ui->second->getTmrCov(strand)),uc_qv,strand,'T');
+						unode->incTmrCov(strand);
+						unode->updateCovDistr((int)(unode->getTmrCov(strand)),uc_qv,strand,'T');
 						ref_m->updateCoverage(uc.mer_m, strand, 'T'); // update reference k-mer coverage for tumor
 					}
 					else if(readid2info[readid].label_m == NML) {
-						ui->second->incNmlCov(strand);
-						ui->second->updateCovDistr((int)(ui->second->getNmlCov(strand)),uc_qv,strand,'N');
+						unode->incNmlCov(strand);
+						unode->updateCovDistr((int)(unode->getNmlCov(strand)),uc_qv,strand,'N');
 						ref_m->updateCoverage(uc.mer_m, strand, 'N'); // update reference k-mer coverage for normal
 					}
 
 					if (uc.ori_m == F)
 					{
-						ui->second->addReadStart(readid, 0, trim5, uc.ori_m);
+						unode->addReadStart(readid, 0, trim5, uc.ori_m);
 					}
 					else
 					{
-						ui->second->addReadStart(readid, K-1, trim5, uc.ori_m);
+						unode->addReadStart(readid, K-1, trim5, uc.ori_m);
 					}
 				}
 			}
 
-			if( !(vi->second->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m)) ) { // do not update coverage for overlapping mates
+			if( !(vnode->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m)) ) { // do not update coverage for overlapping mates
 
 				if(readid2info[readid].label_m == TMR) {
-					vi->second->incTmrCov(strand);
-					vi->second->updateCovDistr((int)(vi->second->getTmrCov(strand)),vc_qv,strand,'T');
+					vnode->incTmrCov(strand);
+					vnode->updateCovDistr((int)(vnode->getTmrCov(strand)),vc_qv,strand,'T');
 					ref_m->updateCoverage(vc.mer_m, strand, 'T'); // update reference k-mer coverage for tumor
 				}
 				else if(readid2info[readid].label_m == NML) {
-					vi->second->incNmlCov(strand);
-					vi->second->updateCovDistr((int)(vi->second->getNmlCov(strand)),vc_qv,strand,'N');
+					vnode->incNmlCov(strand);
+					vnode->updateCovDistr((int)(vnode->getNmlCov(strand)),vc_qv,strand,'N');
 					ref_m->updateCoverage(vc.mer_m, strand, 'N'); // update reference k-mer coverage for normal
 				}
 			}
 		}
-
+		
 		Edgedir_t fdir = FF;
 		Edgedir_t rdir = FF;
 
@@ -227,9 +242,8 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 
 			//readid = -1;
 		}
-
-		ui->second->addEdge(vc.mer_m, fdir, readid);
-		vi->second->addEdge(uc.mer_m, rdir, readid);
+		unode->addEdge(vc.mer_m, fdir, readid);
+		vnode->addEdge(uc.mer_m, rdir, readid);
 	}
 }
 
@@ -420,7 +434,7 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 		is_ref_added = true;
 		if (VERBOSE) { cerr << "refid: " << refid << endl; }
 	}	
-	
+		
 	for (unsigned int i = 0; i < readid2info.size(); ++i)
 	{
 		if ( !(readid2info[i].isjunk) ) { // skip junk (not A,C,G,T)
@@ -440,12 +454,13 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 				seq = readid2info[i].seq_m;
 				qv = readid2info[i].qv_m;
 			}
+																			
 			if(readid2info[i].label_m == REF) {
 				loadSequence(i, seq, qv, true, t5, strand);
 			}
 			else {
 				loadSequence(i, seq, qv, false, t5, strand);
-			}
+			}			
 		}
 	}
 	
@@ -453,7 +468,15 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 	MerTable_t::iterator mi;
 	for (mi = nodes_m.begin(); mi != nodes_m.end(); ++mi) {
 		(mi->second)->computeMinCov();
+		
+		sort((mi->second)->mate1_name.begin(), (mi->second)->mate1_name.end()); // sort mate1 names
+		sort((mi->second)->mate2_name.begin(), (mi->second)->mate2_name.end()); // sort mate2 names
+		
+		(mi->second)->mate1_name.erase(unique((mi->second)->mate1_name.begin(), (mi->second)->mate1_name.end()), (mi->second)->mate1_name.end()); // remove duplicates
+		(mi->second)->mate2_name.erase(unique((mi->second)->mate2_name.begin(), (mi->second)->mate2_name.end()), (mi->second)->mate2_name.end()); // remove duplicates
 	}
+	
+	//cerr << "# of nodes: " << nodes_m.size() << endl;
 	
 	ref_m->computeCoverage('T');
 	ref_m->computeCoverage('N');
@@ -626,7 +649,8 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	int &complete, int &perfect, int &withsnps, int &withindel, int &withmix) {
 	
 	const string & refseq = ref->seq;
-	
+	int HD_DISTANCE_CUTOFF = 5;
+		
 	path->match_bp = 0;
 	path->snp_bp = 0;
 	path->ins_bp = 0;
@@ -648,15 +672,18 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	assert(coverageN.size() == coverageT.size());
 	
 	string pathseq = path->str();
-		
-	// perform SW alignment only if the two strings are different
-	if(refseq == pathseq) {
+	
+	// Run global align if strings have different length or large hamming distance	
+	int hd = HammingDistance(refseq,pathseq); 
+	//cerr << "HD=" << hd << endl;	
+	if( (hd == -1) || (hd > HD_DISTANCE_CUTOFF) ) { 
+		global_align_aff(refseq, pathseq, ref_aln, path_aln, 0, 0); 
+	}
+	else {
 		ref_aln = refseq;
 		path_aln = pathseq;
 	}
-	else {
-		global_align_aff(refseq, pathseq, ref_aln, path_aln, 0, 0);
-	}
+
 	/*
 	global_cov_align_aff(refseq, path->str(), coverageT_fwd, ref_aln, path_aln, cov_path_aln, 0, 0);
 	coverageT = cov_path_aln;

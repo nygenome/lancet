@@ -39,6 +39,7 @@
 
 using namespace std;
 
+
 // Node_t
 //////////////////////////////////////////////////////////////////////////
 
@@ -78,8 +79,10 @@ public:
 	vector<Edge_t> edges_m;
 	unordered_set<ReadId_t> reads_m;
 	
-	unordered_set<string> mate1_name;
-	unordered_set<string> mate2_name;
+	//unordered_set<string> mate1_name;
+	//unordered_set<string> mate2_name;
+	vector<string> mate1_name;
+	vector<string> mate2_name;
 	
 	vector<ReadStart_t> readstarts_m;
 	ContigLinkMap_t contiglinks_m;

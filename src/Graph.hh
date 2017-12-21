@@ -32,6 +32,7 @@
 #include <stdexcept> // out_of_range exception
 #include <iostream>
 #include <unordered_map>
+//#include <sparsepp/spp.h>
 
 #include "align.hh"
 #include "util.hh"
@@ -45,6 +46,7 @@
 #include "Variant.hh"
 #include "VariantDB.hh"
 
+
 #define WHITE 1
 #define GREY 2
 #define BLACK 3
@@ -57,11 +59,15 @@
 #define NML 5
 
 using namespace std;
+//using spp::sparse_hash_map;
+
+
 
 // Graph_t
 //////////////////////////////////////////////////////////////////////////
 
 typedef unordered_map<Mer_t, Node_t *> MerTable_t;
+//typedef sparse_hash_map<Mer_t, Node_t *> MerTable_t;
 
 class Graph_t
 {
@@ -109,7 +115,7 @@ public:
 	int MIN_REPORT_UNITS;
 	int MIN_REPORT_LEN;
 	int DIST_FROM_STR;
-	
+		
 	MerTable_t nodes_m;
 	int totalreadbp_m;
 

@@ -66,7 +66,7 @@ void VariantDB_t::addVar(Variant_t v) {
 
 void VariantDB_t::printHeader(const string version, const string reference, char * date, Filters &fs, string &sample_name_N, string &sample_name_T) {
 	
-	cout << "##fileformat=VCFv4.1\n"
+	cout << "##fileformat=VCFv4.2\n"
 			"##fileDate=" << date << ""
 			"##source=lancet " << version << "\n"
 			"##reference=" << reference << "\n"
@@ -76,7 +76,7 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##INFO=<ID=NORMAL,Number=0,Type=Flag,Description=\"Mutation present only in the normal\">\n"
 			"##INFO=<ID=NONE,Number=0,Type=Flag,Description=\"Mutation not supported by data\">\n"
 			"##INFO=<ID=KMERSIZE,Number=1,Type=Integer,Description=\"K-mer size used to assemble the locus\">\n"
-			"##INFO=<ID=SB,Number=1,Type=Integer,Description=\"Phred-scaled strand bias of the Fisher's exact test (two-sided)\">\n"
+			"##INFO=<ID=SB,Number=1,Type=Float,Description=\"Phred-scaled strand bias of the Fisher's exact test (two-sided)\">\n"
 			"##INFO=<ID=MS,Number=1,Type=String,Description=\"Microsatellite mutation (format: #LEN#MOTIF)\">\n"
 			"##INFO=<ID=LEN,Number=1,Type=Integer,Description=\"Variant size in base pairs\">\n"
 			"##INFO=<ID=TYPE,Number=1,Type=String,Description=\"Variant type (snv, del, ins)\">\n"

@@ -26,7 +26,7 @@
 
 #include "Microassembler.hh"
 
-string VERSION = "1.0.2 (beta), Ocotber 17 2017";
+string VERSION = "1.0.3 (beta), January 31 2018";
 
 /****  configuration parameters ****/
 int NUM_THREADS = 1;
@@ -44,6 +44,7 @@ int MIN_QUAL_TRIM = MIN_QV_TRIM + QV_RANGE;
 int MIN_QUAL_CALL = MIN_QV_CALL + QV_RANGE;
 int MIN_MAP_QUAL = 15;
 int WINDOW_SIZE = 600;
+int PADDING = 300;
 
 string TUMOR;
 string NORMAL;

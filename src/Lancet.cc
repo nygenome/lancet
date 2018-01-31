@@ -70,6 +70,7 @@ void printHelpText(Filters & filters) {
 		"   --max-avg-cov, -u         <int>         : maximum average coverage allowed per region [default: " << MAX_AVG_COV << "]\n"
 		"   --low-cov, -d             <int>         : low coverage threshold [default: " << LOW_COV_THRESHOLD << "]\n"
 		"   --window-size, -w         <int>         : window size of the region to assemble (in base-pairs) [default: " << WINDOW_SIZE << "]\n"
+		"   --padding, -P             <int>         : left/right padding (in base-pairs) for regions in BED file [default: " << PADDING << "]\n"
 		"   --dfs-limit, -F           <int>         : limit dfs/bfs graph traversal search space [default: " << DFS_LIMIT << "]\n"
 		"   --max-indel-len, -T       <int>         : limit on size of detectable indel [default: " << MAX_INDEL_LEN << "]\n"
 		"   --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: " << MAX_MISMATCH << "]\n"
@@ -130,6 +131,7 @@ void printConfiguration(ostream & out, Filters & filters)
 	cerr.precision(1);
 	out << "low-cov: "          << LOW_COV_THRESHOLD << endl;
 	out << "window-size: "      << WINDOW_SIZE << endl;
+	out << "padding: "          << PADDING << endl;
 	out << "max-avg-cov: "      << MAX_AVG_COV << endl;
 	out << "min-map-qual: "     << MIN_MAP_QUAL << endl;
 	out << "min-base-qual: "    << MIN_QV_CALL << endl;
@@ -189,8 +191,9 @@ int loadRefs(const string reference, const string region, vector< map<string, Re
 	
 	if ( (x == string::npos) && (hdr.length()>0) ) { // no ":" symbol found -> assume single chromosome name format	
 		CHR   = hdr.substr(0,x);
-		START = "1";		
-	    for (std::vector<RefData>::iterator it = bamrefs.begin() ; it != bamrefs.end(); ++it) {
+		START = "1";
+		std::vector<RefData>::iterator it;
+	    for (it = bamrefs.begin() ; it != bamrefs.end(); ++it) {
 			//cerr << it->RefName << endl;
 			if (it->RefName == CHR) { 
 			    std::ostringstream oss;
@@ -199,6 +202,12 @@ int loadRefs(const string reference, const string region, vector< map<string, Re
 				break; 
 			}
 	    }
+		
+		// report error if the chromosome label is not found in BAM header.
+		if (it == bamrefs.end()) {
+			cerr << "ERROR: chromosome label " << CHR << " not found in BAM header!" << endl;  
+		}
+		
 	}
 	else {
 		size_t y = hdr.find_first_of('-', x);
@@ -221,7 +230,11 @@ int loadRefs(const string reference, const string region, vector< map<string, Re
 	// convert char* to string
 	string s(seq, seq + seq_len);
 	
-	for (unsigned int i = 0; i < s.length(); ++i) { s[i] = toupper(s[i]); }
+	// convert to upper case and change IUPAC ambiguos codes in reference to Ns
+	for (unsigned int i = 0; i < s.length(); ++i) {
+		s[i] = toupper(s[i]);
+		if(isAmbiguos(s[i])) { s[i]='N'; }
+	}
 
 	// split into overalpping windows if sequence is too long
 	int end = s.length();
@@ -302,8 +315,12 @@ void loadBed(const string bedfile, vector< map<string, Ref_t *> > &reftable, Ref
 		    while(std::getline(iss, token, '\t')) {  // but we can specify a different one
 				tokens.push_back(token);
 			}
-
-			region = tokens[0] + ":" + tokens[1] + "-" + tokens[2];			
+			
+			int SP = stoi(tokens[1]) - PADDING;
+			int EP = stoi(tokens[2]) + PADDING;
+				
+			//region = tokens[0] + ":" + tokens[1] + "-" + tokens[2];	
+			region = tokens[0] + ":" + itos(SP) + "-" + itos(EP);	
 			t = loadRefs(REFFILE,region,reftable,bamrefs,num_threads, t);
 		}
 		bfile.close();
@@ -591,6 +608,7 @@ int main(int argc, char** argv)
 		{"cov-ratio",  required_argument, 0, 'x'},
 		{"low-cov",  required_argument, 0, 'd'},
 		{"window-size",  required_argument, 0, 'w'},
+		{"padding",  required_argument, 0, 'P'},
 		{"max-avg-cov",  required_argument, 0, 'u'},
 		{"min-map-qual",  required_argument, 0, 'b'},
 		{"min-base-qual",  required_argument, 0, 'C'},
@@ -636,7 +654,7 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSWL:T:M:vVF:q:b:B:Q:p:s:E:a:m:e:i:o:y:z:w:j:X:U:N:Y:D:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSWL:T:P:M:vVF:q:b:B:Q:p:s:E:a:m:e:i:o:y:z:w:j:X:U:N:Y:D:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -655,6 +673,7 @@ int main(int argc, char** argv)
 			case 'x': MIN_COV_RATIO    = atof(optarg); break;
 			case 'd': LOW_COV_THRESHOLD= atoi(optarg); break;
 			case 'w': WINDOW_SIZE      = atoi(optarg); break;
+			case 'P': PADDING          = atoi(optarg); break;
 			case 'u': MAX_AVG_COV      = atoi(optarg); break;
 			
 			case 'q': MIN_QV_TRIM      = atoi(optarg); break;

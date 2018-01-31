@@ -92,6 +92,54 @@ void xfclose(FILE * fp)
 	}
 }
 
+/*
+------------------------------------------
+Symbol       Meaning      Nucleic Acid
+------------------------------------------
+A             A           Adenine
+C             C           Cytosine
+G             G           Guanine
+T             T           Thymine
+U             U           Uracil
+M           A or C
+R           A or G
+W           A or T
+S           C or G
+Y           C or T
+K           G or T
+V         A or C or G
+H         A or C or T
+D         A or G or T
+B         C or G or T
+X or N  G or A or T or C
+N       G or A or T or C
+. or -       gap
+*/
+
+// isAmbiguos 
+// return true if the base is an ambiguos IUPAC code
+//////////////////////////////////////////////////////////////////////////
+
+bool isAmbiguos(char b)
+{
+	if (b == 'M' || b == 'm' ||
+		b == 'R' || b == 'r' ||
+		b == 'W' || b == 'w' ||
+		b == 'S' || b == 's' ||
+		b == 'Y' || b == 'y' ||
+		b == 'K' || b == 'k' ||
+		b == 'V' || b == 'v' ||
+		b == 'H' || b == 'h' ||
+		b == 'D' || b == 'd' ||
+		b == 'B' || b == 'b' ||
+		b == 'X' || b == 'x')
+	{ 
+		return true;
+	}
+
+	return false;
+}
+	
 // isDNA
 //////////////////////////////////////////////////////////////////////////
 

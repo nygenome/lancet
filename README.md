@@ -7,7 +7,6 @@ Lancet is based on the colored de Bruijn graph assembly paradigm where tumor and
 
 Narzisi G, Corvelo A, Arora K, Bergmann E, Shah M, Musunuri R, Emde AK, Robine N, Vacic V, Zody MC. *Lancet: genome-wide somatic variant calling using localized colored DeBruijn graphs.* (2017) bioRxiv 196311; doi: [https://doi.org/10.1101/196311](https://doi.org/10.1101/196311)
 
-* Version: 1.0.1
 * Author: Giuseppe Narzisi, [New York Genome Center](https://www.nygenome.org)
 
 Lancet is freely available for academic and non-commercial research purposes ([`LICENSE.txt`](https://github.com/nygenome/lancet/blob/master/LICENSE.txt)).  
@@ -143,7 +142,7 @@ The final graph (after compression) containing one single variant is depicted be
  _____|\__,_|_|  _|\___|\___|\__|
 
 Program: lancet (micro-assembly somatic variant caller)
-Version: 1.0.2 (beta), Ocotber 17 2017
+Version: 1.0.3 (beta), January 31 2018
 Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>
 
 Usage: lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>
@@ -169,6 +168,7 @@ Optional
    --max-avg-cov, -u         <int>         : maximum average coverage allowed per region [default: 10000]
    --low-cov, -d             <int>         : low coverage threshold [default: 1]
    --window-size, -w         <int>         : window size of the region to assemble (in base-pairs) [default: 600]
+   --padding, -P             <int>         : left/right padding (in base-pairs) applied to the input genomic regions [default: 300]
    --dfs-limit, -F           <int>         : limit dfs/bfs graph traversal search space [default: 1000000]
    --max-indel-len, -T       <int>         : limit on size of detectable indel [default: 500]
    --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: 2]

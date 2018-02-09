@@ -293,7 +293,7 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 				// parse MD string
 				// String for mismatching positions. Regex : [0-9]+(([A-Z]|\^[A-Z]+)[0-9]+)*10
 				al.GetTag("MD", md); // get string of mismatching positions
-				//cerr << "Q: " << al.Qualities << endl;
+				//cerr << "MD: " << md << " alstart: " << alstart << " Q: " << al.Qualities << " MinQ " << MIN_QUAL_CALL << endl;
 				parseMD(md, mapX, alstart, al.Qualities, MIN_QUAL_CALL);
 				
 				// add SNV to database

@@ -70,7 +70,7 @@ void printHelpText(Filters & filters) {
 		"   --max-avg-cov, -u         <int>         : maximum average coverage allowed per region [default: " << MAX_AVG_COV << "]\n"
 		"   --low-cov, -d             <int>         : low coverage threshold [default: " << LOW_COV_THRESHOLD << "]\n"
 		"   --window-size, -w         <int>         : window size of the region to assemble (in base-pairs) [default: " << WINDOW_SIZE << "]\n"
-		"   --padding, -P             <int>         : left/right padding (in base-pairs) for regions in BED file [default: " << PADDING << "]\n"
+		"   --padding, -P             <int>         : left/right padding (in base-pairs) applied to the input genomic regions [default: " << PADDING << "]\n"
 		"   --dfs-limit, -F           <int>         : limit dfs/bfs graph traversal search space [default: " << DFS_LIMIT << "]\n"
 		"   --max-indel-len, -T       <int>         : limit on size of detectable indel [default: " << MAX_INDEL_LEN << "]\n"
 		"   --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: " << MAX_MISMATCH << "]\n"
@@ -173,7 +173,6 @@ void printConfiguration(ostream & out, Filters & filters)
 	out << endl;
 }
 
-
 // loadRef
 //////////////////////////////////////////////////////////////
 int loadRefs(const string reference, const string region, vector< map<string, Ref_t *> > &reftable, RefVector &bamrefs, int num_threads, int thread)	
@@ -214,6 +213,22 @@ int loadRefs(const string reference, const string region, vector< map<string, Re
 		CHR  	 = hdr.substr(0,x);
 		START	 = hdr.substr(x+1, y-x-1);
 		END   	 = hdr.substr(y+1, string::npos);
+				
+		int SP = stoi(START) - PADDING;
+		int EP = stoi(END) + PADDING;
+		
+		if(SP<0) {SP=0;} // start position cannnot be negative
+		// check chromosome size
+		std::vector<RefData>::iterator it;
+	    for (it = bamrefs.begin() ; it != bamrefs.end(); ++it) {
+			if (it->RefName == CHR) {
+				if(EP > it->RefLength) { EP = it->RefLength; } 
+				break; 
+			}
+		}		
+		// save updated coordinates
+		START = itos(SP);
+		END = itos(EP);
 	}
 	//cerr << CHR << ":" << START << "-" << END << endl; 
 	string REG = CHR+":"+START+"-"+END;
@@ -692,13 +707,13 @@ int main(int argc, char** argv)
 			case 'Y': MIN_REPORT_LEN   = atoi(optarg); break;
 			case 'D': DIST_FROM_STR    = atoi(optarg); break;
 
-			case 'E': filters.minPhredFisherSTR = atoi(optarg); break;			
-			case 's': filters.minPhredFisher = atoi(optarg); break;
-			case 'f': filters.minStrandBias = atoi(optarg); break;
+			case 'E': filters.minPhredFisherSTR = atof(optarg); break;			
+			case 's': filters.minPhredFisher = atof(optarg); break;
+			case 'f': filters.minStrandBias = atof(optarg); break;
 			case 'a': filters.minAltCntTumor = atoi(optarg); break;
 			case 'm': filters.maxAltCntNormal = atoi(optarg); break;
-			case 'e': filters.minVafTumor = atoi(optarg); break;
-			case 'i': filters.maxVafNormal = atoi(optarg); break;
+			case 'e': filters.minVafTumor = atof(optarg); break;
+			case 'i': filters.maxVafNormal = atof(optarg); break;
 			case 'o': filters.minCovTumor = atoi(optarg); break;
 			case 'y': filters.maxCovTumor = atoi(optarg); break;
 			case 'z': filters.minCovNormal = atoi(optarg); break;

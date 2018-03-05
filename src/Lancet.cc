@@ -217,7 +217,7 @@ int loadRefs(const string reference, const string region, vector< map<string, Re
 		int SP = stoi(START) - PADDING;
 		int EP = stoi(END) + PADDING;
 		
-		if(SP<0) {SP=0;} // start position cannnot be negative
+		if(SP<1) {SP=1;} // start position cannnot be less than 1
 		// check chromosome size
 		std::vector<RefData>::iterator it;
 	    for (it = bamrefs.begin() ; it != bamrefs.end(); ++it) {
@@ -333,6 +333,8 @@ void loadBed(const string bedfile, vector< map<string, Ref_t *> > &reftable, Ref
 			
 			int SP = stoi(tokens[1]) - PADDING;
 			int EP = stoi(tokens[2]) + PADDING;
+			
+			if(SP<1) {SP=1;} // start position cannnot be less than 1
 				
 			//region = tokens[0] + ":" + tokens[1] + "-" + tokens[2];	
 			region = tokens[0] + ":" + itos(SP) + "-" + itos(EP);	

@@ -375,24 +375,29 @@ void parseMD(string & md, map<int,int> & M, int start, string & qual, int min_qv
 	size_t p2;
 	string del;
 	string num;
-	int pos = start;
+	int step;
+	int pos = start; // traks position in the reference
+	size_t rpos = 0; // traks relative position in the read
 	while(p!=string::npos) {
 		num = md.substr(p_old+1,p-(p_old+1));
-		pos += atoi(num.c_str());
 		//cerr << num << "|";
-		if(md[p]=='^') { 
+		step = atoi(num.c_str());
+		pos += step; rpos += step;
+		if(md[p]=='^') { // the reference contains bases that are missing in the read
 			p2 = md.find_first_not_of("ACGT^",p+1); // find next number
-			del = md.substr(p,p2-p);
-			pos += del.size();
+			del = md.substr(p+1,p2-(p+1)); // sequence in ref missing from the read
+			pos += del.size(); // increase only reference pointer -- read postion does not change
 			//cerr << del << "|";
 			p = md.find_first_of("ACGT^",p2);
 			p_old = p2-1;
 		}
 		else {
-			++pos;
-			assert( (pos-start) >= 0 );
-			if(qual[pos-start] >= min_qv) {
-				//cerr << qual[pos-start] << ">=?" << min_qv << endl;
+			++pos; ++rpos;
+			assert( rpos >= 0 );
+			assert( rpos <= qual.length() );
+			
+			//if(qual[pos-start] >= min_qv) {
+			if(qual[rpos] >= min_qv) {
 				mit = M.find(pos);
 				if (mit != M.end()) { ++((*mit).second); }
 				else { M.insert(std::pair<int,int>(pos,1)); }
@@ -402,8 +407,10 @@ void parseMD(string & md, map<int,int> & M, int start, string & qual, int min_qv
 			p = md.find_first_of("ACGT^",p_old+1);
 		}
 	}
-	num = md.substr(p_old+1);				
-	//cerr << num << endl;
+	num = md.substr(p_old+1);
+	step = atoi(num.c_str());
+	pos += step; rpos += step;
+	//cerr << num << "\t" << md << "\t" << rpos << "?" << qual.length() << endl;
 }
 
 // Fasta_Read

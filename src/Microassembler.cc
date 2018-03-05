@@ -255,6 +255,7 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 	BamAlignment al;
 	int totalreadbp = 0;
 	bool ans = false;
+	bool flag = false;
 	int MQ = MIN_MAP_QUAL;
 	string CIGAR = "";
 	string rg = "";
@@ -288,17 +289,20 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 			al.GetTag("RG", rg); // get the read group information for the read
 			if(rg.empty()) { rg = "null"; }
 			
+			if( (al.QueryBases).length() != (al.Qualities).length() ) { 
+				cerr << "WARNING: inconsistent length between read sequence (L=" << (al.QueryBases).length() << ") and base qualities (L=" << (al.Qualities).length() << ")" << endl; 
+			}
+			
 			if ( (readgroups.find("null") != readgroups.end())  || (readgroups.find(rg) != readgroups.end()) ) { // select reads in the read group RG
 				
 				// parse MD string
 				// String for mismatching positions. Regex : [0-9]+(([A-Z]|\^[A-Z]+)[0-9]+)*10
-				al.GetTag("MD", md); // get string of mismatching positions
+				flag = al.GetTag("MD", md); // get string of mismatching positions
 				//cerr << "MD: " << md << " alstart: " << alstart << " Q: " << al.Qualities << " MinQ " << MIN_QUAL_CALL << endl;
-				parseMD(md, mapX, alstart, al.Qualities, MIN_QUAL_CALL);
+				if(flag==true) { parseMD(md, mapX, alstart, al.Qualities, MIN_QUAL_CALL); }
 				
 				// add SNV to database
 				//Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_, int ref_cov_tumor_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters &fs)
-				
 				
 				// example: 31M1I17M1D37M
 				CIGAR = "";

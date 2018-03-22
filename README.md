@@ -5,7 +5,8 @@ Lancet is a somatic variant caller (SNVs and indels) for short read data. Lancet
 Lancet is based on the colored de Bruijn graph assembly paradigm where tumor and normal reads are jointly analyzed within the same graph. On-the-fly repeat composition analysis and self-tuning k-mer strategy are used together to increase specificity in regions characterized by low complexity sequences. Lancet requires the raw reads to be aligned with BWA (See [BWA](http://bio-bwa.sourceforge.net/bwa.shtml) description for more info). Lancet is implemented in C++.
 
 
-Narzisi G, Corvelo A, Arora K, Bergmann E, Shah M, Musunuri R, Emde AK, Robine N, Vacic V, Zody MC. *Lancet: genome-wide somatic variant calling using localized colored DeBruijn graphs.* (2017) bioRxiv 196311; doi: [https://doi.org/10.1101/196311](https://doi.org/10.1101/196311)
+Narzisi G, Corvelo A, Arora K, Bergmann E, Shah M, Musunuri R, Emde AK, Robine N, Vacic V, Zody MC. *Lancet: genome-wide somatic variant calling using localized colored DeBruijn graphs.* 
+<b>Communications Biology</b>, Nature Research publishing, volume 1, Article number: 20, 2018 (DOI:<a href=https://www.nature.com/articles/s42003-018-0023-9>10.1038/s42003-018-0023-9</a>). Also available at <b>CSHL bioRxiv</b> 196311; 2017 (DOI: <a href="https://doi.org/10.1101/196311">10.1101/196311</a>)
 
 * Author: Giuseppe Narzisi, [New York Genome Center](https://www.nygenome.org)
 

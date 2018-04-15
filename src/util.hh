@@ -29,6 +29,10 @@
 #include <assert.h>
 #include <map>
 
+#include "api/BamReader.h"
+
+using namespace BamTools;
+
 #ifdef UNICODE //Test to see if we're using wchar_ts or not.
     typedef std::wstring StringType;
 #else
@@ -60,6 +64,7 @@
   #define HASHMAP std
 #endif
 
+std::string buildCommandLine(int argc, char** argv);
 StringType GetBaseFilename(const char *filename);
 FILE * xfopen(const std::string & filename, const std::string & mode);
 void xfclose(FILE * fp);
@@ -77,6 +82,7 @@ bool isRepeat(const std::string & seq, int K);
 bool isAlmostRepeat(const std::string & seq, int K, int max);
 bool kMismatch(size_t s, size_t e, const std::string & t, size_t start, int max);
 bool seqAboveQual(std::string qv, int Q);
+bool checkPresenceOfMDtag(BamReader &reader);
 void parseMD(std::string & md, std::map<int,int> & map, int start, std::string & qual, int min_qv);
 bool findTandems(const std::string & seq, const std::string & tag, int max_unit_len, int min_report_units, int min_report_len, int dist_from_str, int pos, int & len, std::string & motif);
 

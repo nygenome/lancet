@@ -28,6 +28,8 @@
 
 #include <string>
 #include <iostream>
+#include <limits>
+#include <cfloat>
 #include "util.hh"
 #include "FET.hh"
 

@@ -409,13 +409,29 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 
 	if(verbose) { printConfiguration(cerr, filters); }
 	
-	BamReader reader;
+	BamReader readerT;
 	// attempt to open the BamReader
-	if ( !reader.Open(TUMOR) ) {
-		cerr << "Could not open BAM file." << endl;
+	if ( !readerT.Open(TUMOR) ) {
+		cerr << "Could not open tumor BAM file." << endl;
 		return -1;
 	}
-	RefVector references = reader.GetReferenceData(); // Extract all reference sequence entries.
+	
+	BamReader readerN;
+	// attempt to open the BamReader
+	if ( !readerN.Open(NORMAL) ) {
+		cerr << "Could not open normal BAM file." << endl;
+		return -1;
+	}
+	
+	bool found = (checkPresenceOfMDtag(readerT) || checkPresenceOfMDtag(readerN));		
+	if(!found && ACTIVE_REGIONS) {
+		cerr << endl << "--------WARNING--------" << endl;
+		cerr << "MD tag required to select active regions, but is missing from alignments." << endl;
+		cerr << "RECOMMENDED ACTION: turn off the active region module (--active-region-off)" << endl;
+		cerr << "-----------------------" << endl << endl;
+	}
+	
+	RefVector references = readerT.GetReferenceData(); // Extract all reference sequence entries.
 	
 	// run the assembler on each region
 	try {
@@ -585,6 +601,8 @@ int main(int argc, char** argv)
 		exit(0);
 	}
 
+	COMMAND_LINE = buildCommandLine(argc,argv);
+	
 	cerr.setf(ios::fixed,ios::floatfield);
 	cerr.precision(1);
 	
@@ -762,13 +780,29 @@ int main(int argc, char** argv)
 
 	if(verbose) { printConfiguration(cerr, filters); }
 	
-	BamReader reader;
+	BamReader readerT;
 	// attempt to open the BamReader
-	if ( !reader.Open(TUMOR) ) {
-		cerr << "Could not open BAM file." << endl;
+	if ( !readerT.Open(TUMOR) ) {
+		cerr << "Could not open tumor BAM file." << endl;
 		return -1;
 	}
-	RefVector references = reader.GetReferenceData(); // Extract all reference sequence entries.
+	
+	BamReader readerN;
+	// attempt to open the BamReader
+	if ( !readerN.Open(NORMAL) ) {
+		cerr << "Could not open normal BAM file." << endl;
+		return -1;
+	}
+	
+	bool found = (checkPresenceOfMDtag(readerT) || checkPresenceOfMDtag(readerN));	
+	if(!found && ACTIVE_REGIONS) {
+		cerr << endl << "--------WARNING--------" << endl;
+		cerr << "MD tag required to select active regions, but is missing from alignments." << endl;
+		cerr << "RECOMMENDED ACTION: turn off the active region module (--active-region-off)" << endl;
+		cerr << "-----------------------" << endl << endl;
+	}
+
+	RefVector references = readerT.GetReferenceData(); // Extract all reference sequence entries.
 	
 	// run the assembler on each region
 	try {
@@ -871,6 +905,7 @@ int main(int argc, char** argv)
 		//merge variant from all threads
 		cerr << "Merge variants" << endl;
 		VariantDB_t variantDB; // variants DB
+		variantDB.setCommandLine(COMMAND_LINE);
 		for( i=0; i < NUM_THREADS; ++i ) {
 			
 			tot_skip += assemblers[i]->num_skip;

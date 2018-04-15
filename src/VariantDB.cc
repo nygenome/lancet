@@ -69,6 +69,7 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 	cout << "##fileformat=VCFv4.2\n"
 			"##fileDate=" << date << ""
 			"##source=lancet " << version << "\n"
+			"##cmdline=" << command_line << "\n"
 			"##reference=" << reference << "\n"
 			"##INFO=<ID=FETS,Number=1,Type=Float,Description=\"phred-scaled p-value of the Fisher's exact test for tumor-normal allele counts (right-sided)\">\n"
 			"##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n"

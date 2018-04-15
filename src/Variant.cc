@@ -199,21 +199,20 @@ double Variant_t::compute_FET_score() {
 	
 	// fisher exaxt test (FET) score for tumor/normal coverages
 	prob = fet.kt_fisher_exact((ref_cov_normal_fwd+ref_cov_normal_rev), (ref_cov_tumor_fwd+ref_cov_tumor_rev), (alt_cov_normal_fwd+alt_cov_normal_rev), (alt_cov_tumor_fwd+alt_cov_tumor_rev), &left, &right, &twotail);
-	if(prob == 1) { fet_score = 0.0; }
+	if(prob == 1.0) { fet_score = 0.0; }
+	else if(prob == 0.0) { fet_score = -10.0*log10(1/std::numeric_limits<double>::max()); }
 	else { fet_score = -10.0*log10(prob); }
 	
-	/*
-	cerr << endl;
-	cerr << "FET score: " << fet_score << " (p = " << prob << ")" << endl;
-	cerr << "FET score left: " << fet_score_left << " (p = " << left << ")" << endl; 
-	cerr << "FET score right: " << fet_score_right << " (p = " << right << ")" << endl; 
-	cerr << "FET score twotail: " << fet_score_twotail << " (p = " << twotail << ")" << endl; 
-	*/
+	//cerr << endl;
+	//cerr.precision(100);
+	//cerr << "FET score left: " << fet_score_left << " (p = " << left << ")" << endl; 
+	//cerr << "FET score right: " << fet_score_right << " (p = " << right << ")" << endl; 
+	//cerr << "FET score twotail: " << fet_score_twotail << " (p = " << twotail << ")" << endl; 
 	
 	return fet_score;
 }
 
-// compute fisher exaxt test score for strand bias (SB) in tumor
+// compute fisher exact test score for strand bias (SB) in tumor
 double Variant_t::compute_SB_score() {
 	
 	double prob = 0.0;

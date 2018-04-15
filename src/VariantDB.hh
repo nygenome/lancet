@@ -58,9 +58,11 @@ public:
 
 	map<string,Variant_t> DB; // databbase of variants
 	unordered_map<string,int> nCNT; // counts of variants per postion in the normal
+	string command_line; // command line used to run the tool
 
 	VariantDB_t() {}
 	
+	void setCommandLine(string cl) { command_line = cl; }
 	void addVar(Variant_t v);
 	void printHeader(const string version, const string reference, char * date, Filters &fs, string &sample_name_N, string &sample_name_T);
 	void printToVCF(const string version, const string reference, char * date, Filters &fs, string &sample_name_N, string &sample_name_T);

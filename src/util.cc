@@ -27,6 +27,17 @@
 using namespace std;
 
 
+// build the command line used to run the program
+string buildCommandLine(int argc, char** argv) {
+	string command;
+		
+    for(int i=0;i<argc;i++) {
+    	command += string(argv[i]).append(" ");
+    }
+	
+	return command; 
+}
+
 // return file name without extension
 StringType GetBaseFilename(const char *filename)
 {
@@ -361,6 +372,21 @@ bool seqAboveQual(string qv, int Q)
 		if( *it < Q ) { return false; }
 	}
 	return true;
+}
+
+
+// check for presence of MD tag in alignments, returns false if missing.
+bool checkPresenceOfMDtag(BamReader &reader) {
+	BamAlignment al;
+	bool ans = true;
+	
+	if(reader.GetNextAlignment(al)) {
+		//cerr << "Name: " << al.Name << endl; 
+		ans = al.HasTag("MD"); // get string of mismatching positions
+	}
+	//else { cerr << "No valid alignment found!!" << endl; }
+
+	return ans;
 }
 
 // parse MD string 

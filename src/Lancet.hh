@@ -26,7 +26,8 @@
 
 #include "Microassembler.hh"
 
-string VERSION = "1.0.5 (beta), March 1 2018";
+string VERSION = "1.0.6 (beta), April 15 2018";
+string COMMAND_LINE;
 
 /****  configuration parameters ****/
 int NUM_THREADS = 1;

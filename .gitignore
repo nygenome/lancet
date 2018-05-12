@@ -4,7 +4,6 @@ bamtools-2.5.1/bin/
 bamtools-2.5.1/build/
 bamtools-2.5.1/include/
 bamtools-2.5.1/lib64/
-export-code.sh
 htslib-1.8/bcf_sr_sort.o
 htslib-1.8/bcf_sr_sort.pico
 htslib-1.8/bgzf.o

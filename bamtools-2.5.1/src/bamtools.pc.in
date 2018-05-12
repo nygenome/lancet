@@ -1,0 +1,10 @@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: BamTools
+Description: BamTools is a C++ library for reading and manipulating BAM files
+Version: @BamTools_VERSION@
+
+Requires.private: @BAMTOOLS_PRIVATE_DEPS@
+Libs: -L${libdir} -lbamtools
+Cflags: -I${includedir}

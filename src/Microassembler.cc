@@ -626,6 +626,10 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 // extract the reads from BAMs and process them
 int Microassembler::processReads() {
 	
+	struct timespec start, finish;
+	double elapsed;
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	
 	cerr << "Process reads" << endl;
 	
 	// Process the reads
@@ -790,10 +794,15 @@ int Microassembler::processReads() {
 			if(verbose) { cerr << "Skip region: not enough evidence for variation." << endl; }
 		}
 	}
-		
+	
 	readerT.Close();
 	readerN.Close();
 	
+	clock_gettime(CLOCK_MONOTONIC, &finish);
+	elapsed = (finish.tv_sec - start.tv_sec);
+	elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+	cerr << "Thread " << ID << " elapsed time:" << elapsed << " seconds" << endl;
+		
 	if(verbose) cerr << "=======" << endl;
 	if(verbose) cerr << "total reads: " << readcnt << " pairs: " << paircnt << " total graphs: " << graphcnt << " ref sequences: " << reftable->size() <<  endl;
 	

@@ -210,7 +210,7 @@ public:
 	
 	void loadRefs(const string & filename);
 	void loadRG(const string & filename, int member);
-	void processGraph(Graph_t & g, const string & refname, int minK, int maxK);
+	int processGraph(Graph_t & g, const string & refname, int minK, int maxK);
 	int run(int argc, char** argv);
 	bool extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo, BamRegion &region, int &readcnt, int code);
 	bool isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion &region, int code);

@@ -773,13 +773,6 @@ int main(int argc, char** argv)
 
 	if (errflg) { exit(EXIT_FAILURE); }
 	
-    ofstream params_file;
-    params_file.open ("config.txt");
-	printConfiguration(params_file, filters); // save parameters setting to file
-    params_file.close();
-
-	if(verbose) { printConfiguration(cerr, filters); }
-	
 	BamReader readerT;
 	// attempt to open the BamReader
 	if ( !readerT.Open(TUMOR) ) {
@@ -797,12 +790,20 @@ int main(int argc, char** argv)
 	bool found = (checkPresenceOfMDtag(readerT) || checkPresenceOfMDtag(readerN));	
 	if(!found && ACTIVE_REGIONS) {
 		cerr << endl << "--------WARNING--------" << endl;
-		cerr << "MD tag required to select active regions, but is missing from alignments." << endl;
-		cerr << "RECOMMENDED ACTION: turn off the active region module (--active-region-off)" << endl;
+		cerr << "The MD tag is required to select active regions, but is missing from alignments." << endl;
+		cerr << "To avoid unpredictable behavior, the active region module has been automatically turned off (--active-region-off)" << endl;
 		cerr << "-----------------------" << endl << endl;
+		
+		ACTIVE_REGIONS = 0; 
 	}
 
 	RefVector references = readerT.GetReferenceData(); // Extract all reference sequence entries.
+	
+    ofstream params_file;
+    params_file.open ("config.txt");
+	printConfiguration(params_file, filters); // save parameters setting to file
+    params_file.close();
+	if(verbose) { printConfiguration(cerr, filters); }
 	
 	// run the assembler on each region
 	try {

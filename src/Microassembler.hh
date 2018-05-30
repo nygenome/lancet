@@ -90,6 +90,7 @@ public:
 	int MIN_QUAL_CALL;
 	int MIN_QUAL_TRIM;
 	int MIN_MAP_QUAL;
+	int MAX_DELTA_AS_XS;
 
 	string TUMOR;
 	string NORMAL;
@@ -173,6 +174,7 @@ public:
 		MIN_QUAL_CALL  = MIN_QV_CALL + QV_RANGE;
 		MIN_QUAL_CALL  = MIN_QV_TRIM + QV_RANGE;
 		MIN_MAP_QUAL   = 0;
+		MAX_DELTA_AS_XS = 5;
 
 		READSET = "qry";
 

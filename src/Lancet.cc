@@ -63,7 +63,8 @@ void printHelpText(Filters & filters) {
 		"   --trim-lowqual, -q        <int>         : trim bases below qv at 5' and 3' [default: " << MIN_QV_TRIM << "]\n"
 		"   --min-base-qual, -C       <int>         : minimum base quality required to consider a base for SNV calling [default: " << MIN_QV_CALL << "]\n"
 		"   --quality-range, -Q       <char>        : quality value range [default: " << (char) QV_RANGE << "]\n"
-		"   --min-map-qual, -b        <inr>         : minimum read mapping quality in Phred-scale [default: " << MIN_MAP_QUAL << "]\n"
+		"   --min-map-qual, -b        <int>         : minimum read mapping quality in Phred-scale [default: " << MIN_MAP_QUAL << "]\n"
+		"   --max-as-xs-diff, -Z      <int>         : maximum different between AS and XS alignments scores [default: " << MAX_DELTA_AS_XS << "]\n"
 		"   --tip-len, -l             <int>         : max tip length [default: " << MAX_TIP_LEN << "]\n"
 		"   --cov-thr, -c             <int>         : coverage threshold [default: " << COV_THRESHOLD << "]\n"
 		"   --cov-ratio, -x           <float>       : minimum coverage ratio [default: " << MIN_COV_RATIO << "]\n"
@@ -134,6 +135,7 @@ void printConfiguration(ostream & out, Filters & filters)
 	out << "padding: "          << PADDING << endl;
 	out << "max-avg-cov: "      << MAX_AVG_COV << endl;
 	out << "min-map-qual: "     << MIN_MAP_QUAL << endl;
+	out << "max-as-xs-diff: "   << MAX_DELTA_AS_XS << endl;
 	out << "min-base-qual: "    << MIN_QV_CALL << endl;
 	out << "trim-lowqual: "     << MIN_QV_TRIM << endl;
 	out << "quality-range: "    << QV_RANGE << endl;	
@@ -478,6 +480,7 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 			assemblers[i]->MIN_QUAL_TRIM = MIN_QUAL_TRIM;
 			assemblers[i]->MIN_QUAL_CALL = MIN_QUAL_CALL;
 			assemblers[i]->MIN_MAP_QUAL = MIN_MAP_QUAL;
+			assemblers[i]->MAX_DELTA_AS_XS = MAX_DELTA_AS_XS;
 			assemblers[i]->TUMOR = TUMOR;
 			assemblers[i]->NORMAL = NORMAL;
 			assemblers[i]->RG_FILE = RG_FILE;
@@ -493,11 +496,11 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 			assemblers[i]->NODE_STRLEN = NODE_STRLEN;
 			assemblers[i]->DFS_LIMIT = DFS_LIMIT;
 			assemblers[i]->MAX_INDEL_LEN = MAX_INDEL_LEN;
-			assemblers[i]->MAX_MISMATCH = MAX_MISMATCH;		
+			assemblers[i]->MAX_MISMATCH = MAX_MISMATCH;	
 			assemblers[i]->MAX_UNIT_LEN = MAX_UNIT_LEN;
 			assemblers[i]->MIN_REPORT_UNITS = MIN_REPORT_UNITS;
 			assemblers[i]->MIN_REPORT_LEN = MIN_REPORT_LEN;
-			assemblers[i]->DIST_FROM_STR = DIST_FROM_STR;	
+			assemblers[i]->DIST_FROM_STR = DIST_FROM_STR;
 			
 			assemblers[i]->reftable = &reftables[i];
 			assemblers[i]->setFilters(&filters);
@@ -646,6 +649,7 @@ int main(int argc, char** argv)
 		{"padding",  required_argument, 0, 'P'},
 		{"max-avg-cov",  required_argument, 0, 'u'},
 		{"min-map-qual",  required_argument, 0, 'b'},
+		{"max-as-xs-diff",  required_argument, 0, 'Z'},
 		{"min-base-qual",  required_argument, 0, 'C'},
 		{"trim-lowqual",  required_argument, 0, 'q'},
 		{"quality-range",  required_argument, 0, 'Q'},
@@ -689,7 +693,7 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSWL:T:P:M:vVF:q:b:B:Q:p:s:E:a:m:e:i:o:y:z:w:j:X:U:N:Y:D:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSWL:T:P:M:vVF:q:b:B:Q:p:s:E:a:m:e:i:o:y:z:w:j:X:U:N:Y:D:Z:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -714,6 +718,7 @@ int main(int argc, char** argv)
 			case 'q': MIN_QV_TRIM      = atoi(optarg); break;
 			case 'C': MIN_QV_CALL      = atoi(optarg); break;
 			case 'b': MIN_MAP_QUAL     = atoi(optarg); break;
+			case 'Z': MAX_DELTA_AS_XS  = atoi(optarg); break;
 			case 'Q': QV_RANGE         = *optarg;      break;
 
 			case 'L': NODE_STRLEN      = atoi(optarg); break;
@@ -790,7 +795,7 @@ int main(int argc, char** argv)
 	bool found = (checkPresenceOfMDtag(readerT) || checkPresenceOfMDtag(readerN));	
 	if(!found && ACTIVE_REGIONS) {
 		cerr << endl << "--------WARNING--------" << endl;
-		cerr << "The MD tag is required to select active regions, but is missing from alignments." << endl;
+		cerr << "The MD tag is required to select the active regions, but is missing from the alignments in the BAM(s) file(s)." << endl;
 		cerr << "To avoid unpredictable behavior, the active region module has been automatically turned off (--active-region-off)" << endl;
 		cerr << "-----------------------" << endl << endl;
 		

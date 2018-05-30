@@ -439,6 +439,84 @@ void parseMD(string & md, map<int,int> & M, int start, string & qual, int min_qv
 	//cerr << num << "\t" << md << "\t" << rpos << "?" << qual.length() << endl;
 }
 
+// extract tag from the SAM alignment using the appropiate type
+float extract_sam_tag(const string &TAG, BamAlignment &al) {
+	
+	float result = -1.0;
+	char T;
+	
+	// BAM_TAG_TYPE_ASCII = 'A'
+	// BAM_TAG_TYPE_INT8 = 'c'
+	// BAM_TAG_TYPE_UINT8 = 'C'
+	// BAM_TAG_TYPE_INT16 = 's'
+	// BAM_TAG_TYPE_UINT16 = 'S'
+	// BAM_TAG_TYPE_INT32 = 'i'
+	// BAM_TAG_TYPE_UINT32 = 'I'
+	// BAM_TAG_TYPE_FLOAT = 'f'
+	// BAM_TAG_TYPE_STRING = 'Z'
+	// BAM_TAG_TYPE_HEX = 'H'
+	// BAM_TAG_TYPE_ARRAY = 'B'
+	
+	if ( al.GetTagType(TAG, T) ) {
+		switch (T) {
+			case Constants::BAM_TAG_TYPE_INT8 : // c
+			{
+				int8_t value;
+				al.GetTag(TAG, value);
+				result = value;
+				break;
+			}
+			case Constants::BAM_TAG_TYPE_UINT8 : // C
+			{
+				uint8_t value;
+				al.GetTag(TAG, value);
+				result = value;
+				break;
+			}
+			case Constants::BAM_TAG_TYPE_INT16 : // s
+			{
+				int16_t value;
+				al.GetTag(TAG, value);
+				result = value;
+				break;
+			}
+			case Constants::BAM_TAG_TYPE_UINT16 : // S
+			{
+				uint16_t value;
+				al.GetTag(TAG, value);
+				result = value;
+				break;
+			}
+			case Constants::BAM_TAG_TYPE_INT32 : // i
+			{
+				int32_t value;
+				al.GetTag(TAG, value);
+				result = value;
+				break;
+			}
+			case Constants::BAM_TAG_TYPE_UINT32 : // I
+			{
+				uint32_t value;
+				al.GetTag(TAG, value);
+				result = value;
+				break;
+			}
+			case Constants::BAM_TAG_TYPE_FLOAT : // f
+			{
+				float value;
+				al.GetTag(TAG, value);
+				result = value;
+				break;
+			}
+		}
+	} else {
+		// could not get tag type
+	}
+	
+	return result;
+}
+
+
 // Fasta_Read
 // By default, it finds all microsatellites that are at least 8bp long (total length), 
 // where the repeat sequence is between 1bp and 4bp, and is repeated at least 3 times.

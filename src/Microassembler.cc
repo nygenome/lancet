@@ -445,7 +445,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	double CLIP_PRC = 0.5; // percent of soft-clipped bases in alignment
 	//double MAX_PRC_HIGH_CLIP_READS = 30; // max percent of reads with high soft-clipping rate (>CLIP_PRC)
 	int MIN_XM = 5;
-	int MIN_DELTA = 5; // min difference for AS adn XS tags (AS-XS)
+	int MIN_DELTA = MAX_DELTA_AS_XS; // min difference for AS and XS tags (AS-XS)
 	
 	// iterate through all alignments
 	//int num_PCR_duplicates = 0;
@@ -454,8 +454,8 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	string xt = "";	
 	string xa = "";	
 	int nm = 0;
-	int as = -1;
-	int xs = -1;
+	float as = -1; 
+	float xs = -1; 
 	
 	int num_unmapped = 0;
 	int num_XA_read = 0;
@@ -512,14 +512,17 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			*/
 			
 			// extract AS and XS tags (available in bwa-mem , not in bwa-aln)
-			as = -1;
-			xs = -1;
-			al.GetTag("AS", as); // get the AS tag for the read
-			al.GetTag("XS", xs); // get the XS tag for the read
-			//if(as.empty()) { as = -1; }
-			//if(xs.empty()) { xs = -1; }
-			int delta = abs(as-xs);	
-			//cerr << al.Name << " " <<  as << " " << xs << endl;
+			as = -1; xs = -1;
+			
+			as = extract_sam_tag("AS", al);
+			xs = extract_sam_tag("XS", al);
+			float delta = abs(as-xs);
+			
+			/*
+			char T;
+			al.GetTagType("AS", T);
+			cerr << al.Name << " " <<  as << " " << xs << " " << T << endl;
+			*/
 			
 			//if( as==xs && as!=-1 && xs!=-1 ) { ++num_equal_AS_XS_read; continue; } // skip alignments with equal score for AS and XS
 			if( (delta <= MIN_DELTA) && as!=-1 && xs!=-1 ) { ++num_equal_AS_XS_read; continue; } // skip alignments where AS and XS are very close
@@ -621,7 +624,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 		cerr << "Num reads with alternative hits (XA tag): " << num_XA_read << endl;
 		cerr << "Num reads with >=" << (100*CLIP_PRC) << "\% soft-clipping: " << num_high_softclip_read << "(" << prc_high_clippied_reads << "%)" << endl;
 		cerr << "Num reads with >=" << MIN_XM << " mis-matches: " << num_high_XM_read << endl;
-		cerr << "Num reads with equal alignment score (AS==XS): " << num_equal_AS_XS_read << endl;
+		cerr << "Num reads with |AS-XS|<=" << MIN_DELTA << ": " << num_equal_AS_XS_read << endl;
 	}
 	
 	return skip;

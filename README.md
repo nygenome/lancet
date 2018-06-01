@@ -143,7 +143,7 @@ The final graph (after compression) containing one single variant is depicted be
  _____|\__,_|_|  _|\___|\___|\__|
 
 Program: lancet (micro-assembly somatic variant caller)
-Version: 1.0.3 (beta), January 31 2018
+Version: 1.0.6 (beta), April 15 2018
 Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>
 
 Usage: lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>
@@ -162,14 +162,15 @@ Optional
    --trim-lowqual, -q        <int>         : trim bases below qv at 5' and 3' [default: 10]
    --min-base-qual, -C       <int>         : minimum base quality required to consider a base for SNV calling [default: 17]
    --quality-range, -Q       <char>        : quality value range [default: !]
-   --min-map-qual, -b        <inr>         : minimum read mapping quality in Phred-scale [default: 15]
+   --min-map-qual, -b        <int>         : minimum read mapping quality in Phred-scale [default: 15]
+   --max-as-xs-diff, -Z      <int>         : maximum different between AS and XS alignments scores [default: 5]
    --tip-len, -l             <int>         : max tip length [default: 11]
    --cov-thr, -c             <int>         : coverage threshold [default: 5]
    --cov-ratio, -x           <float>       : minimum coverage ratio [default: 0.01]
    --max-avg-cov, -u         <int>         : maximum average coverage allowed per region [default: 10000]
    --low-cov, -d             <int>         : low coverage threshold [default: 1]
    --window-size, -w         <int>         : window size of the region to assemble (in base-pairs) [default: 600]
-   --padding, -P             <int>         : left/right padding (in base-pairs) applied to the input genomic regions [default: 300]
+   --padding, -P             <int>         : left/right padding (in base-pairs) applied to the input genomic regions [default: 250]
    --dfs-limit, -F           <int>         : limit dfs/bfs graph traversal search space [default: 1000000]
    --max-indel-len, -T       <int>         : limit on size of detectable indel [default: 500]
    --max-mismatch, -M        <int>         : max number of mismatches for near-perfect repeats [default: 2]

@@ -49,6 +49,7 @@ void Variant_t::printVCF() {
 	if(type=='I') { INFO += ";TYPE=ins"; }
 	if(type=='D') { INFO += ";TYPE=del"; }
 	if(type=='S') { INFO += ";TYPE=snv"; }
+	if(type=='C') { INFO += ";TYPE=complex"; }
 		
 	INFO += ";LEN=" + itos(len) + ";KMERSIZE=" + itos(kmer) + ";SB=" + dtos(fet_score_strand_bias);
 	

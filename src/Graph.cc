@@ -728,6 +728,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		Node_t * spanner;
 
 		char code = '?';
+		char prev_code = '?';
 
 		vector<Transcript_t> transcript;
 		
@@ -756,6 +757,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			unsigned int old_pathpos = pathpos;
 			*/
 			
+			prev_code = code;
 			if (ref_aln[i] == '-') {
 				code = '^'; // insertion
 				pos_in_ref = refpos; // save value of position in reference before increment
@@ -871,7 +873,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				while( (ref_aln[pr] != 'A') && (ref_aln[pr] != 'C') && (ref_aln[pr]) != 'G' && (ref_aln[pr] != 'T') ) { --pr; }
 				while( (path_aln[pa] != 'A') && (path_aln[pa] != 'C') && (path_aln[pa] != 'G') && (path_aln[pa] != 'T') ) { --pa; }
 				
-
+				/*
 				if (((code == '^') && (ts > 0) && (transcript[ts-1].code == code) && (transcript[ts-1].pos == rrpos)) ||
 					((code == 'v') && (ts > 0) && (transcript[ts-1].code == code) && ((transcript[ts-1].pos + transcript[ts-1].ref.length()) == rrpos)))
 				{
@@ -897,8 +899,46 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 						transcript[ts-1].addRefCovTrev(ref_cov_at_pos_T_rev);
 					}
 				}
-				else
+				*/
+				
+				if ( (ts > 0) && (prev_code != '=') ) // combination of multiple consecutive SNV,ins,del
 				{
+					if(within_tumor_node) { 
+						transcript[ts-1].isSomatic = true; 
+						//transcript[ts-1].nodesize = spanner->getSize();
+					}
+					transcript[ts-1].ref += ref_aln[i];
+					transcript[ts-1].qry += path_aln[i];
+					transcript[ts-1].end_pos = P; // update end position (in the path)
+					transcript[ts-1].ref_end_pos = pos_in_ref + ref->trim5; // update end position (in the ref)
+					
+					if ( (code == '^') && (transcript[ts-1].code == code) && (transcript[ts-1].pos == rrpos) ) { // extending insertion
+						transcript[ts-1].addCovNfwd(cov_at_pos_N_fwd);
+						transcript[ts-1].addCovNrev(cov_at_pos_N_rev);
+						transcript[ts-1].addCovTfwd(cov_at_pos_T_fwd);
+						transcript[ts-1].addCovTrev(cov_at_pos_T_rev);
+					} 
+					else if ( (code == 'v') && (transcript[ts-1].code == code) && ((transcript[ts-1].pos + transcript[ts-1].ref.length()) == rrpos) ) { // extending deletion
+						transcript[ts-1].addRefCovNfwd(ref_cov_at_pos_N_fwd);
+						transcript[ts-1].addRefCovNrev(ref_cov_at_pos_N_rev);
+						transcript[ts-1].addRefCovTfwd(ref_cov_at_pos_T_fwd);
+						transcript[ts-1].addRefCovTrev(ref_cov_at_pos_T_rev);
+					} 
+					else if ( (code == 'x') || (transcript[ts-1].code != code) ) { // extending complex replacement event
+						transcript[ts-1].code = 'c'; // complex transcript
+						
+						transcript[ts-1].addCovNfwd(cov_at_pos_N_minqv_fwd);
+						transcript[ts-1].addCovNrev(cov_at_pos_N_minqv_rev);
+						transcript[ts-1].addCovTfwd(cov_at_pos_T_minqv_fwd);
+						transcript[ts-1].addCovTrev(cov_at_pos_T_minqv_rev);
+						transcript[ts-1].addRefCovNfwd(ref_cov_at_pos_N_fwd);
+						transcript[ts-1].addRefCovNrev(ref_cov_at_pos_N_rev);
+						transcript[ts-1].addRefCovTfwd(ref_cov_at_pos_T_fwd);
+						transcript[ts-1].addRefCovTrev(ref_cov_at_pos_T_rev);
+					}
+				}
+				
+				else {
 					// create new transcript for mutation
 					if(code == 'x') { // snv						
 						transcript.push_back(Transcript_t(rrpos, pos_in_ref+ref->trim5, P+1, code, 
@@ -1036,7 +1076,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				
 				vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, 
 					RCNF, RCNR, RCTF, RCTR, ACNF, ACNR, ACTF, ACTR,
-					transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters, K, STR.str()));
+					transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters, K, STR.str(), transcript[ti].code));
 				}
 		}
 		if(verbose) { cerr << endl; }

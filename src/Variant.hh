@@ -29,6 +29,8 @@
 #include <string>
 #include <iostream>
 #include <limits>
+#include <algorithm>
+#include <cmath>
 #include <cfloat>
 #include "util.hh"
 #include "FET.hh"
@@ -80,16 +82,36 @@ public:
 	
 	Filters * filters; // filter thresholds
 
-	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_fwd_, int ref_cov_normal_rev_, int ref_cov_tumor_fwd_, int ref_cov_tumor_rev_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters * fs, int k, string str_)
+	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_fwd_, int ref_cov_normal_rev_, int ref_cov_tumor_fwd_, int ref_cov_tumor_rev_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters * fs, int k, string str_, char code)
 	{ 			
 		kmer = k;
 		str = str_;
 		filters = fs;
 		chr = chr_;
 		pos = pos_;
+		
+		/*
 		if(ref_.at(0) == '-') { type = 'I'; ref_ = ""; len = alt_.length(); }  // deletion
 		if(alt_.at(0) == '-') { type = 'D'; alt_ = ""; len = ref_.length(); }  // insertion
 		if(ref_.size()==1 && alt_.size()==1 && ref_.at(0)!='-' && alt_.at(0)!='-') { type = 'S'; pos++; } // snp 
+		*/
+		
+		if(code == '^') { type = 'I'; ref_ = ""; len = alt_.length(); }  // deletion
+		if(code == 'v') { type = 'D'; alt_ = ""; len = ref_.length(); }  // insertion
+		if(code == 'x') { type = 'S'; pos++; } // snp 
+		if(code == 'c') { // complex 
+			type = 'C'; 
+			ref_.erase(remove(ref_.begin(), ref_.end(), '-'), ref_.end()); 			
+			alt_.erase(remove(alt_.begin(), alt_.end(), '-'), alt_.end());
+			
+			unsigned short rl = ref_.length();
+			unsigned short al = alt_.length();
+			if(rl == al)  { len = al; }
+			else if(rl > al) {len = rl-al;}
+			else { len = al-rl; }
+			//cout << "R:" << ref_.length() << " A:" << alt_.length() << " LEN:" << len << endl;
+		}
+		
 		if(type != 'S') {
 			ref = prev_bp_alt_ + ref_;
 			alt = prev_bp_alt_ + alt_;

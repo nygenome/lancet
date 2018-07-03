@@ -99,11 +99,12 @@ void printHelpText(Filters & filters) {
 		"   --dist-from-str, -D        <int>        : distance (in bp) of variant from STR locus [default: " << DIST_FROM_STR << "]\n"
 		
 		"\nFlags\n"
-		"   --active-region-off, -W    : turn off active region module\n"		
-		"   --kmer-recovery, -R        : turn on k-mer recovery (experimental)\n"
-		"   --print-graph, -A          : print graph (in .dot format) after every stage\n"
-		"   --verbose, -v              : be verbose\n"
-		"   --more-verbose, -V         : be more verbose\n"
+		"   --primary-alignment-only, -I  : only use primary alignments for variant calling\n"					
+		"   --active-region-off, -W       : turn off active region module\n"		
+		"   --kmer-recovery, -R           : turn on k-mer recovery (experimental)\n"
+		"   --print-graph, -A             : print graph (in .dot format) after every stage\n"
+		"   --verbose, -v                 : be verbose\n"
+		"   --more-verbose, -V            : be more verbose\n"
 		"\n";
 	
 	printUsage();
@@ -165,7 +166,8 @@ void printConfiguration(ostream & out, Filters & filters)
 	out << "max-coverage-tumor: "   << filters.maxCovTumor << endl;
 	out << "min-coverage-normal: "  << filters.minCovNormal << endl;
 	out << "max-coverage-normal: "  << filters.maxCovNormal << endl;
-	
+
+	out << "primary-alignment-only: " << bvalue(PRIMARY_ALIGNMENT_ONLY) << endl;	
 	out << "active-regions: "   << bvalue(ACTIVE_REGIONS) << endl;
 	out << "kmer-recovery: "    << bvalue(KMER_RECOVERY) << endl;
 	out << "print-graphs: "     << bvalue(PRINT_ALL) << endl;
@@ -468,6 +470,7 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 		
 			assemblers[i] = new Microassembler();
 
+			assemblers[i]->PRIMARY_ALIGNMENT_ONLY = PRIMARY_ALIGNMENT_ONLY;
 			assemblers[i]->ACTIVE_REGION_MODULE = ACTIVE_REGIONS;
 			assemblers[i]->KMER_RECOVERY = KMER_RECOVERY;
 			assemblers[i]->verbose = verbose;
@@ -680,12 +683,13 @@ int main(int argc, char** argv)
 		{"min-coverage-normal",  required_argument, 0, 'z'},
 		{"max-coverage-normal",  required_argument, 0, 'j'},
 
-		{"active-region-off", no_argument,      0, 'W'},		
-		{"kmer-recovery-on", no_argument,      0, 'R'},		
-		{"erroflag", no_argument,      0, 'h'},		
-		{"verbose", no_argument,       0, 'v'},
-		{"more-verbose", no_argument,  0, 'V'},
-		{"print-graph", no_argument,     0, 'A'},
+		{"primary-alignment-only", no_argument, 0, 'I'},
+		{"active-region-off", no_argument, 0, 'W'},		
+		{"kmer-recovery-on", no_argument, 0, 'R'},		
+		{"erroflag", no_argument, 0, 'h'},		
+		{"verbose", no_argument, 0, 'v'},
+		{"more-verbose", no_argument, 0, 'V'},
+		{"print-graph", no_argument, 0, 'A'},
 		
 		{0, 0, 0, 0}
 	};
@@ -693,7 +697,7 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSWL:T:P:M:vVF:q:b:B:Q:p:s:E:a:m:e:i:o:y:z:w:j:X:U:N:Y:D:Z:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSIWL:T:P:M:vVF:q:b:B:Q:p:s:E:a:m:e:i:o:y:z:w:j:X:U:N:Y:D:Z:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -744,6 +748,7 @@ int main(int argc, char** argv)
 			case 'z': filters.minCovNormal = atoi(optarg); break;
 			case 'j': filters.maxCovNormal = atoi(optarg); break;
 
+			case 'I': PRIMARY_ALIGNMENT_ONLY   = 1;    break;
 			case 'W': ACTIVE_REGIONS   = 0;            break;
 			case 'R': KMER_RECOVERY    = 1;            break;
 			case 'v': verbose          = 1;            break;
@@ -843,6 +848,7 @@ int main(int argc, char** argv)
 		
 			assemblers[i] = new Microassembler();
 
+			assemblers[i]->PRIMARY_ALIGNMENT_ONLY = PRIMARY_ALIGNMENT_ONLY;
 			assemblers[i]->ACTIVE_REGION_MODULE = ACTIVE_REGIONS;
 			assemblers[i]->KMER_RECOVERY = KMER_RECOVERY;
 			assemblers[i]->verbose = verbose;

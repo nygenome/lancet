@@ -115,6 +115,7 @@ public:
 	int MIN_REPORT_LEN;
 	int DIST_FROM_STR;
 
+	bool PRIMARY_ALIGNMENT_ONLY;
 	bool ACTIVE_REGION_MODULE;
 	bool SCAFFOLD_CONTIGS;
 	int  INSERT_SIZE;
@@ -158,6 +159,7 @@ public:
 		num_skip = 0;
 		
 		ACTIVE_REGION_MODULE = true;
+		PRIMARY_ALIGNMENT_ONLY = false;
 		
 		BUFFER_SIZE = 10*1024;
 		WINDOW_SIZE = 600;

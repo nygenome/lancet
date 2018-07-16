@@ -26,7 +26,7 @@
 
 #include "Microassembler.hh"
 
-string VERSION = "1.0.6 (beta), April 15 2018";
+string VERSION = "1.0.7, July 16 2018";
 string COMMAND_LINE;
 
 /****  configuration parameters ****/

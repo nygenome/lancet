@@ -143,7 +143,7 @@ The final graph (after compression) containing one single variant is depicted be
  _____|\__,_|_|  _|\___|\___|\__|
 
 Program: lancet (micro-assembly somatic variant caller)
-Version: 1.0.6 (beta), April 15 2018
+Version: 1.0.7, July 16 2018
 Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>
 
 Usage: lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>
@@ -165,10 +165,10 @@ Optional
    --min-map-qual, -b        <int>         : minimum read mapping quality in Phred-scale [default: 15]
    --max-as-xs-diff, -Z      <int>         : maximum different between AS and XS alignments scores [default: 5]
    --tip-len, -l             <int>         : max tip length [default: 11]
-   --cov-thr, -c             <int>         : coverage threshold [default: 5]
-   --cov-ratio, -x           <float>       : minimum coverage ratio [default: 0.01]
+   --cov-thr, -c             <int>         : min coverage threshold used to select reference anchors from the De Bruijn graph [default: 5]
+   --cov-ratio, -x           <float>       : minimum coverage ratio used to remove nodes from the De Bruijn graph [default: 0.01]
+   --low-cov, -d             <int>         : low coverage threshold used to remove nodes from the De Bruijn graph [default: 1]
    --max-avg-cov, -u         <int>         : maximum average coverage allowed per region [default: 10000]
-   --low-cov, -d             <int>         : low coverage threshold [default: 1]
    --window-size, -w         <int>         : window size of the region to assemble (in base-pairs) [default: 600]
    --padding, -P             <int>         : left/right padding (in base-pairs) applied to the input genomic regions [default: 250]
    --dfs-limit, -F           <int>         : limit dfs/bfs graph traversal search space [default: 1000000]
@@ -197,9 +197,10 @@ Short Tandem Repeat parameters
    --dist-from-str, -D        <int>        : distance (in bp) of variant from STR locus [default: 1]
 
 Flags
-   --active-region-off, -W    : turn off active region module
-   --kmer-recovery, -R        : turn on k-mer recovery (experimental)
-   --print-graph, -A          : print graph (in .dot format) after every stage
-   --verbose, -v              : be verbose
-   --more-verbose, -V         : be more verbose
+   --primary-alignment-only, -I  : only use primary alignments for variant calling
+   --active-region-off, -W       : turn off active region module
+   --kmer-recovery, -R           : turn on k-mer recovery (experimental)
+   --print-graph, -A             : print graph (in .dot format) after every stage
+   --verbose, -v                 : be verbose
+   --more-verbose, -V            : be more verbose
 ```

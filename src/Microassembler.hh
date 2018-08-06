@@ -117,6 +117,7 @@ public:
 	
 	bool TENX_MODE;
 	bool PRIMARY_ALIGNMENT_ONLY;
+	bool XA_FILTER;
 	bool ACTIVE_REGION_MODULE;
 	bool SCAFFOLD_CONTIGS;
 	int  INSERT_SIZE;
@@ -161,6 +162,7 @@ public:
 		
 		ACTIVE_REGION_MODULE = true;
 		PRIMARY_ALIGNMENT_ONLY = false;
+		XA_FILTER = false;
 		
 		BUFFER_SIZE = 10*1024;
 		WINDOW_SIZE = 600;

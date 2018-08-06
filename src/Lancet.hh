@@ -33,6 +33,7 @@ string COMMAND_LINE;
 int NUM_THREADS = 1;
 
 bool TENX_MODE = false;
+bool XA_FILTER = false;
 bool PRIMARY_ALIGNMENT_ONLY = false;
 bool ACTIVE_REGIONS = true;
 bool verbose = false;

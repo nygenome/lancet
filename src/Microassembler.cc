@@ -568,7 +568,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			if(xa != "null") {
 				//cerr << al.Name << "\t" << xa << endl;
 				++num_XA_read; 
-				if (code != NML) { // keep all reads in the normal, apply repeat filter only to tumor
+				if (code != NML && XA_FILTER) { // keep all reads in the normal, apply repeat filter only to tumor
 					continue; // skip alignments with alternative hits
 				}
 			}

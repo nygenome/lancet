@@ -44,8 +44,8 @@ typedef int ReadId_t;
 class ReadInfo_t
 {
 public:
-	ReadInfo_t(const int label, const string & set, const string & readname, const string & seq, const string & qv, char code, unsigned int strnd, unsigned int mate_order)
-		: label_m(label), set_m(set), readname_m(readname), seq_m(seq), qv_m(qv), code_m(code), mateid_m(-1), mate_order_m(mate_order), strand(strnd), trm5(0), trm3(0), isjunk(false)
+	ReadInfo_t(const int label, const string & set, const string & readname, const string & seq, const string & qv, char code, unsigned int strnd, unsigned int mate_order, const string & bx)
+		: label_m(label), set_m(set), readname_m(readname), seq_m(seq), qv_m(qv), code_m(code), mateid_m(-1), strand(strnd), mate_order_m(mate_order), barcode10x(bx),  trm5(0), trm3(0), isjunk(false)
 		{ }
 
 	int            label_m;
@@ -55,10 +55,11 @@ public:
 	string         qv_m;
 	char           code_m;
 	ReadId_t       mateid_m;
+	unsigned short strand; // FWD or REV
 	unsigned short mate_order_m; // is first or second mate? (1=first, 2=mate, 0=unmated)
+	string         barcode10x;
 	Mer_t          contigid_m;
 	unsigned int   readstartidx_m;
-	unsigned short strand; // FWD or REV
 	unsigned short trm5;
 	unsigned short trm3;
 	bool           isjunk;

@@ -452,7 +452,8 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	BamAlignment al;
 	string rg = "";
 	string xt = "";	
-	string xa = "";	
+	string xa = "";
+	string bx = ""; // 10x barcode
 	int nm = 0;
 	float as = -1; 
 	float xs = -1; 
@@ -558,7 +559,9 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 				//}
 			}
 		
-			// XA  Alternative hits; format: (chr,pos,CIGAR,NM;)
+			// XA  
+			// -- BWA (Illumina): alternative hits; format: (chr,pos,CIGAR,NM;)
+			// -- tmap (Ion Torrent): stores the algorithm that produced this mapping and from what stage. The format is the algorithm name, and then the zero-based stage, separated by a dash.
 			xa = "";
 			al.GetTag("XA", xa); // get the XA for the read
 			if(xa.empty()) { xa = "null"; }
@@ -570,7 +573,14 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 				}
 			}
 			
-			// clear arrays (otherwise they keep growing from previosu alignment that are parsed) 
+			// BX: 10x barcode (string)
+			if(TENX_MODE) { 
+				bx = "";
+				al.GetTag("BX", bx); // get the BX barcode for the read
+				if(bx.empty()) { bx = "null"; }
+			}
+			
+			// clear arrays (otherwise they keep growing from previous alignment that are parsed) 
 			clipSizes.clear();
 			readPositions.clear();
 			genomePositions.clear();
@@ -594,12 +604,12 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			if ( (readgroups.find("null") != readgroups.end())  || (readgroups.find(rg) != readgroups.end()) ) { // select reads in the read group RG
 				
 				if( !(al.IsMapped()) ) { // unmapped read
-					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, code, strand);
+					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, code, strand, bx);
 					//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_BASTARD, code, strand);
 					++num_unmapped; 
 				}
 				else { // mapped reads
-					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, code, strand);								
+					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, code, strand, bx);								
 					//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_MAPPED, code, strand);								
 				}
 				//cout << al.Name << endl;
@@ -722,6 +732,7 @@ int Microassembler::processReads() {
 	g.setInsertStdev(INSERT_STDEV);
 	g.setMaxMismatch(MAX_MISMATCH);
 	g.setFilters(filters);
+	g.setTenXMode(TENX_MODE);
 	
 	// set STR params
 	g.setMaxUnitLen(MAX_UNIT_LEN);

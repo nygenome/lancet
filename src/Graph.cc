@@ -172,12 +172,31 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 		// (used to check for overlapping mates)
 		unode->addMateName(readid2info[readid].readname_m, readid2info[readid].mate_order_m);
 		vnode->addMateName(readid2info[readid].readname_m, readid2info[readid].mate_order_m);
+		
+		bool isOvlMate = false;
+		//bool bxovl_u = false;
+		//bool bxovl_v = false;
+		
+		if(TENX_MODE) { 
+			if (offset == 0) {
+				unode->addBX(readid2info[readid].barcode10x);
+				vnode->addBX(readid2info[readid].barcode10x);
+			}	
+			else {
+				vnode->addBX(readid2info[readid].barcode10x);			
+			}
+		}
 
 		if (!isRef)
 		{		
 			if (offset == 0) 
 			{ 
-				if( !(unode->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m)) ) { // do not update coverage for overlapping mates
+				isOvlMate = (unode->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m)); //kmer from overlapping mates
+				//bxovl_u = unode->hasBX(readid2info[readid].barcode10x);
+					
+				//cerr << "BX: " << readid2info[readid].barcode10x << " bxovl_u:" << bxovl_u << " isOvlMate:" << isOvlMate << endl;
+				
+				if( !isOvlMate) { // do not update coverage for overlapping mates
 					
 					if(readid2info[readid].label_m == TMR) {	
 						unode->incTmrCov(strand);
@@ -200,8 +219,13 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 					}
 				}
 			}
+			
+			isOvlMate = (vnode->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m));
+			//bxovl_v = vnode->hasBX(readid2info[readid].barcode10x);
 
-			if( !(vnode->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m)) ) { // do not update coverage for overlapping mates
+			if( !isOvlMate ) { // do not update coverage for overlapping mates
+				
+				//cerr << "BX: " << readid2info[readid].barcode10x << " bxovl_v:" << bxovl_v << " isOvlMate:" << isOvlMate << endl;
 
 				if(readid2info[readid].label_m == TMR) {
 					vnode->incTmrCov(strand);
@@ -353,10 +377,10 @@ int Graph_t::countMappedReads()
 // addRead
 ////////////////////////////////////////////////////////////////
 
-ReadId_t Graph_t::addRead(const string & set, const string & readname, const string & seq, const string & qv, char code, int label, unsigned int strand, int mate_order)
+ReadId_t Graph_t::addRead(const string & set, const string & readname, const string & seq, const string & qv, char code, int label, unsigned int strand, int mate_order, const string & bx)
 {
 	ReadId_t retval = readid2info.size();
-	readid2info.push_back(ReadInfo_t(label, set, readname, seq, qv, code, strand, mate_order));
+	readid2info.push_back(ReadInfo_t(label, set, readname, seq, qv, code, strand, mate_order, bx));
 	return retval;
 }
 
@@ -390,9 +414,10 @@ void Graph_t::addAlignment(const string & set,
 	const int mate_id,
 	char code,
 	int label,
-	unsigned int strand)
+	unsigned int strand,
+	const string & bx)
 {
-	int rd = addRead(set, readname, seq, qv, code, label, strand, mate_id);
+	int rd = addRead(set, readname, seq, qv, code, label, strand, mate_id, bx);
 	trim(rd, seq, qv, false);
 }
 
@@ -430,7 +455,7 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 	int refid = 0; 
 	if(!is_ref_added) {
 		string qv ((ref_m->rawseq).size(), 'K'); // create base-quality value string for reference
-		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, qv, 'R', REF, FWD, 0);
+		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, qv, 'R', REF, FWD, 0, "null");
 		is_ref_added = true;
 		if (VERBOSE) { cerr << "refid: " << refid << endl; }
 	}	
@@ -1928,7 +1953,7 @@ void Graph_t::markRefEnds(Ref_t * refinfo, int compid)
 	int refid = 0; 
 	if(!is_ref_added) {
 		string qv ((ref_m->rawseq).size(), 'K'); // create base-quality value string for reference
-		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, qv, 'R', REF, FWD, 0);
+		refid = addRead("ref", ref_m->hdr, ref_m->rawseq, qv, 'R', REF, FWD, 0, "null");
 		is_ref_added = true;
 		if (VERBOSE) { cerr << "refid: " << refid << endl; }
 	}

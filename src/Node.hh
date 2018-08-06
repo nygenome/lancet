@@ -78,6 +78,7 @@ public:
 	
 	vector<Edge_t> edges_m;
 	unordered_set<ReadId_t> reads_m;
+	unordered_set<string> bxset; // set of barcodes associated to the kmer
 	
 	//unordered_set<string> mate1_name;
 	//unordered_set<string> mate2_name;
@@ -170,9 +171,11 @@ public:
 	void sortReadStarts();
 	void addContigLink(Mer_t contigid, ReadId_t rid);
 	int cntReadCode(char code);
-	bool hasOverlappingMate(std::string & read_name, int id);
+	bool hasOverlappingMate(std::string & read_name, int id);	
 	void addMateName(std::string & read_name, int id);
-
+	bool addBX(std::string & bx);
+	bool hasBX(std::string & bx);
+	
 	int readOverlaps(const Node_t & other);
 	
 	void swap(cov_t & a, cov_t & b);

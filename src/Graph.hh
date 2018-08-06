@@ -89,6 +89,8 @@ public:
 	bool verbose;
 	bool VERBOSE;
 	bool PRINT_DOT_READS;
+	
+	bool TENX_MODE;
 
 	int MIN_QUAL_TRIM;
 	int MIN_QUAL_CALL;
@@ -156,6 +158,7 @@ public:
 	void setInsertStdev(int is) { INSERT_STDEV = is; }
 	void setMaxMismatch(int mm) { MAX_MISMATCH = mm; }
 	void setFilters(Filters * fs) { filters = fs; }
+	void setTenXMode(bool mode) { TENX_MODE = mode; }
 	
 	//set STR params
 	void setMaxUnitLen(int l) { MAX_UNIT_LEN = l; }
@@ -175,7 +178,7 @@ public:
 
 	int countMappedReads();
 
-	ReadId_t addRead(const string & set, const string & readname, const string & seq, const string & qv, char code, int label, unsigned int strand, int mate_order);
+	ReadId_t addRead(const string & set, const string & readname, const string & seq, const string & qv, char code, int label, unsigned int strand, int mate_order, const string & bx);
 
 	void addMates(ReadId_t r1, ReadId_t r2);
 
@@ -188,7 +191,8 @@ public:
 		const int mate_id,
 		char code,
 		int label,
-		unsigned int strand);
+		unsigned int strand,
+		const string & bx);
 	/*
 	void addpaired(const string & set,
 		const string & readname,

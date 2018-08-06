@@ -22,6 +22,30 @@
 **
 *************************** /COPYRIGHT **************************************/
 
+
+// addEdge
+// add 10x barcode to set of barcodes for this node
+// return false if the insertion was not succesfull
+//////////////////////////////////////////////////////////////
+bool Node_t::addBX(std::string & bx) { 
+	auto it = bxset.insert(bx); 
+	return it.second;
+}
+
+
+// hasBX
+// return true if the barcode is already present in the bxset
+//////////////////////////////////////////////////////////////
+bool Node_t::hasBX(std::string & bx) {
+
+	bool ans = false;
+	auto got = bxset.find(bx);
+	if ( got != bxset.end() ) { ans = true; }
+	
+	return ans;
+}
+
+
 // isTandem
 //////////////////////////////////////////////////////////////
 
@@ -539,6 +563,7 @@ bool Node_t::hasOverlappingMate(string & read_name, int id)
 }
 
 // add mate name to the set of mates containing this kmer
+// also store  mate order (1st or 2nd in pair) 
 void Node_t::addMateName(string & read_name, int id) 
 {	
 	//if(id == 1) { mate1_name.insert(read_name); }

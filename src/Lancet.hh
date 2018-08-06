@@ -32,6 +32,7 @@ string COMMAND_LINE;
 /****  configuration parameters ****/
 int NUM_THREADS = 1;
 
+bool XA_FILTER = false;
 bool PRIMARY_ALIGNMENT_ONLY = false;
 bool ACTIVE_REGIONS = true;
 bool verbose = false;

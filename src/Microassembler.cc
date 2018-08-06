@@ -557,15 +557,17 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 					/*continue;*/  // skip alignments which are marked XT:M
 				//}
 			}
-		
-			// XA  Alternative hits; format: (chr,pos,CIGAR,NM;)
+
+			// XA
+			// -- BWA (Illumina): alternative hits; format: (chr,pos,CIGAR,NM;)
+			// -- tmap (Ion Torrent): stores the algorithm that produced this mapping and from what stage. The format is the algorithm name, and then the zero-based stage, separated by a dash.
 			xa = "";
 			al.GetTag("XA", xa); // get the XA for the read
 			if(xa.empty()) { xa = "null"; }
 			if(xa != "null") {
 				//cerr << al.Name << "\t" << xa << endl;
 				++num_XA_read; 
-				if (code != NML) { // keep all reads in the normal, apply repeat filter only to tumor
+				if (code != NML && XA_FILTER) { // keep all reads in the normal, apply repeat filter only to tumor
 					continue; // skip alignments with alternative hits
 				}
 			}

@@ -78,7 +78,8 @@ public:
 	
 	vector<Edge_t> edges_m;
 	unordered_set<ReadId_t> reads_m;
-	unordered_set<string> bxset; // set of barcodes associated to the kmer
+	unordered_set<string> bxset_fwd; // set of barcodes associated to the kmer in the fwd strand
+	unordered_set<string> bxset_rev; // set of barcodes associated to the kmer in the rev strand
 	
 	//unordered_set<string> mate1_name;
 	//unordered_set<string> mate2_name;
@@ -143,7 +144,7 @@ public:
 	float getTotNmlCov() { return cov_nml_m_fwd + cov_nml_m_rev; }
 	float getTotCov() { return cov_tmr_m_fwd + cov_tmr_m_rev + cov_nml_m_fwd + cov_nml_m_rev; }
 	bool isStatusCnt(char c);
-	void updateCovDistr(int c, const string & qv, unsigned int strand, char sample);
+	void updateCovDistr(int rc, int mc, const string & qv, unsigned int strand, char sample);
 	void updateCovStatus(char c);
 	void revCovDistr();
 	void computeMinCov();
@@ -173,8 +174,10 @@ public:
 	int cntReadCode(char code);
 	bool hasOverlappingMate(std::string & read_name, int id);	
 	void addMateName(std::string & read_name, int id);
-	bool addBX(std::string & bx);
+	
+	bool addBX(std::string & bx, unsigned int strand);
 	bool hasBX(std::string & bx);
+	int BXcnt(unsigned int strand);
 	
 	int readOverlaps(const Node_t & other);
 	

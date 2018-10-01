@@ -32,14 +32,41 @@ void VariantDB_t::addVar(Variant_t v) {
 	
 	if (it_v != DB.end()) {		
 		// keep highest supporting coverage found
-		if (it_v->second.ref_cov_normal_fwd < v.ref_cov_normal_fwd) { it_v->second.ref_cov_normal_fwd = v.ref_cov_normal_fwd; }
-		if (it_v->second.ref_cov_normal_rev < v.ref_cov_normal_rev) { it_v->second.ref_cov_normal_rev = v.ref_cov_normal_rev; }
-		if (it_v->second.ref_cov_tumor_fwd  < v.ref_cov_tumor_fwd ) { it_v->second.ref_cov_tumor_fwd  = v.ref_cov_tumor_fwd;  }
-		if (it_v->second.ref_cov_tumor_rev  < v.ref_cov_tumor_rev ) { it_v->second.ref_cov_tumor_rev  = v.ref_cov_tumor_rev;  }
-		if (it_v->second.alt_cov_normal_fwd < v.alt_cov_normal_fwd) { it_v->second.alt_cov_normal_fwd = v.alt_cov_normal_fwd; }
-		if (it_v->second.alt_cov_normal_rev < v.alt_cov_normal_rev) { it_v->second.alt_cov_normal_rev = v.alt_cov_normal_rev; }		
-		if (it_v->second.alt_cov_tumor_fwd  < v.alt_cov_tumor_fwd ) { it_v->second.alt_cov_tumor_fwd  = v.alt_cov_tumor_fwd;  }
-		if (it_v->second.alt_cov_tumor_rev  < v.alt_cov_tumor_rev ) { it_v->second.alt_cov_tumor_rev  = v.alt_cov_tumor_rev;  }
+		//if (it_v->second.ref_cov_normal_fwd < v.ref_cov_normal_fwd) { it_v->second.ref_cov_normal_fwd = v.ref_cov_normal_fwd; }
+		//if (it_v->second.ref_cov_normal_rev < v.ref_cov_normal_rev) { it_v->second.ref_cov_normal_rev = v.ref_cov_normal_rev; }
+		int old_ref_cov_normal = it_v->second.ref_cov_normal_rev + it_v->second.ref_cov_normal_rev;
+		int new_ref_cov_normal = v.ref_cov_normal_fwd + v.ref_cov_normal_rev;
+		if (old_ref_cov_normal < new_ref_cov_normal) {
+			it_v->second.ref_cov_normal_fwd = v.ref_cov_normal_fwd;
+			it_v->second.ref_cov_normal_rev = v.ref_cov_normal_rev;
+		}
+		
+		//if (it_v->second.ref_cov_tumor_fwd  < v.ref_cov_tumor_fwd ) { it_v->second.ref_cov_tumor_fwd  = v.ref_cov_tumor_fwd;  }
+		//if (it_v->second.ref_cov_tumor_rev  < v.ref_cov_tumor_rev ) { it_v->second.ref_cov_tumor_rev  = v.ref_cov_tumor_rev;  }
+		int old_ref_cov_tumor = it_v->second.ref_cov_tumor_fwd + it_v->second.ref_cov_tumor_rev;
+		int new_ref_cov_tumor = v.ref_cov_tumor_fwd + v.ref_cov_tumor_rev;
+		if (old_ref_cov_tumor < new_ref_cov_tumor) {
+			it_v->second.ref_cov_tumor_fwd  = v.ref_cov_tumor_fwd;
+			it_v->second.ref_cov_tumor_rev  = v.ref_cov_tumor_rev;
+		}
+		
+		//if (it_v->second.alt_cov_normal_fwd < v.alt_cov_normal_fwd) { it_v->second.alt_cov_normal_fwd = v.alt_cov_normal_fwd; }
+		//if (it_v->second.alt_cov_normal_rev < v.alt_cov_normal_rev) { it_v->second.alt_cov_normal_rev = v.alt_cov_normal_rev; }
+		int old_alt_cov_normal = it_v->second.alt_cov_normal_fwd + it_v->second.alt_cov_normal_rev;
+		int new_alt_cov_normal = v.alt_cov_normal_fwd + v.alt_cov_normal_rev;
+		if (old_alt_cov_normal < new_alt_cov_normal) {
+			it_v->second.alt_cov_normal_fwd = v.alt_cov_normal_fwd; 
+			it_v->second.alt_cov_normal_rev = v.alt_cov_normal_rev;
+		}
+		
+		//if (it_v->second.alt_cov_tumor_fwd  < v.alt_cov_tumor_fwd ) { it_v->second.alt_cov_tumor_fwd  = v.alt_cov_tumor_fwd;  }
+		//if (it_v->second.alt_cov_tumor_rev  < v.alt_cov_tumor_rev ) { it_v->second.alt_cov_tumor_rev  = v.alt_cov_tumor_rev;  }
+		int old_alt_cov_tumor = it_v->second.alt_cov_tumor_fwd + it_v->second.alt_cov_tumor_rev;
+		int new_alt_cov_tumor = v.alt_cov_tumor_fwd + v.alt_cov_tumor_rev;
+		if (old_alt_cov_tumor < new_alt_cov_tumor) {
+			it_v->second.alt_cov_tumor_fwd  = v.alt_cov_tumor_fwd;
+			it_v->second.alt_cov_tumor_rev  = v.alt_cov_tumor_rev;
+		}
 		
 		it_v->second.reGenotype(); // recompute genotype
 	}

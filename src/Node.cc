@@ -27,8 +27,12 @@
 // add 10x barcode to set of barcodes for this node
 // return false if the insertion was not succesfull
 //////////////////////////////////////////////////////////////
-bool Node_t::addBX(std::string & bx) { 
-	auto it = bxset.insert(bx); 
+bool Node_t::addBX(std::string & bx, unsigned int strand) { 
+
+	pair<unordered_set<string>::iterator,bool> it;
+	if(strand == FWD) { it = bxset_fwd.insert(bx); }
+	if(strand == REV) { it = bxset_rev.insert(bx); }
+	
 	return it.second;
 }
 
@@ -39,12 +43,25 @@ bool Node_t::addBX(std::string & bx) {
 bool Node_t::hasBX(std::string & bx) {
 
 	bool ans = false;
-	auto got = bxset.find(bx);
-	if ( got != bxset.end() ) { ans = true; }
+	auto got_fwd = bxset_fwd.find(bx);
+	if ( got_fwd != bxset_fwd.end() ) { ans = true; }
+	else {
+		auto got_rev = bxset_rev.find(bx);
+		if ( got_rev != bxset_rev.end() ) { ans = true; }
+	}
 	
 	return ans;
 }
 
+int Node_t::BXcnt(unsigned int strand) {
+	
+	int cnt = -1;
+	
+	if(strand == FWD) { cnt = bxset_fwd.size(); }
+	if(strand == REV) { cnt = bxset_rev.size(); }
+	
+	return cnt;
+}
 
 // isTandem
 //////////////////////////////////////////////////////////////
@@ -396,7 +413,7 @@ void Node_t::updateCovStatus(char c)
 // updateCovDistr
 // updated the coverage distribution along the node string
 //////////////////////////////////////////////////////////////
-void Node_t::updateCovDistr(int c, const string & qv, unsigned int strand, char sample) 
+void Node_t::updateCovDistr(int rc, int mc, const string & qv, unsigned int strand, char sample) 
 {
 	vector<cov_t> * cov_distr = NULL;
 	
@@ -406,15 +423,26 @@ void Node_t::updateCovDistr(int c, const string & qv, unsigned int strand, char 
 	
  	//string::const_iterator it=qv.begin();
 	for (unsigned int i = 0; i < cov_distr->size(); ++i) {
+		
 		if(strand == FWD) { 
-			((*cov_distr)[i]).fwd = c;
+			((*cov_distr)[i]).fwd = rc;
+			((*cov_distr)[i]).bxcov_fwd = mc; // molecule coverage
 			//if(*it >= MIN_QUAL) { (((*cov_distr)[i]).minqv_fwd)++; }
-			if(qv[i] >= MIN_QUAL) { ++(((*cov_distr)[i]).minqv_fwd); }
+			if(qv[i] >= MIN_QUAL) { 
+				//++(((*cov_distr)[i]).minqv_fwd); 
+				((*cov_distr)[i]).minqv_fwd = rc;
+				((*cov_distr)[i]).bxcov_minqv_fwd = mc;
+			}
 		}
 		else if(strand == REV) { 
-			((*cov_distr)[i]).rev = c;
+			((*cov_distr)[i]).rev = rc;
+			((*cov_distr)[i]).bxcov_rev = mc; // molecule coverage
 			//if(*it >= MIN_QUAL) { (((*cov_distr)[i]).minqv_rev)++; }
-			if(qv[i] >= MIN_QUAL) { ++(((*cov_distr)[i]).minqv_rev); }	
+			if(qv[i] >= MIN_QUAL) { 
+				//++(((*cov_distr)[i]).minqv_rev); 
+				((*cov_distr)[i]).minqv_rev = rc;
+				((*cov_distr)[i]).bxcov_minqv_rev = mc;
+			}
 		}
 		//if (it!=qv.end()) { it++; }
 		//else {cerr << "Error: reached end of quality string (qv)" << endl; }
@@ -422,7 +450,7 @@ void Node_t::updateCovDistr(int c, const string & qv, unsigned int strand, char 
 }
 
 // avgCovDistr
-// average coverage of non-zoero elements
+// average coverage of non-zero elements
 //////////////////////////////////////////////////////////////
 int Node_t::avgCovDistr(char sample)
 {

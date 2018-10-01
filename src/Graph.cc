@@ -176,14 +176,14 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 		bool isOvlMate = false;
 		//bool bxovl_u = false;
 		//bool bxovl_v = false;
-		
+				 
 		if(TENX_MODE) { 
 			if (offset == 0) {
-				unode->addBX(readid2info[readid].barcode10x);
-				vnode->addBX(readid2info[readid].barcode10x);
+				unode->addBX(readid2info[readid].barcode10x, strand);
+				vnode->addBX(readid2info[readid].barcode10x, strand);
 			}	
 			else {
-				vnode->addBX(readid2info[readid].barcode10x);			
+				vnode->addBX(readid2info[readid].barcode10x, strand);			
 			}
 		}
 
@@ -192,21 +192,18 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			if (offset == 0) 
 			{ 
 				isOvlMate = (unode->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m)); //kmer from overlapping mates
-				//bxovl_u = unode->hasBX(readid2info[readid].barcode10x);
-					
-				//cerr << "BX: " << readid2info[readid].barcode10x << " bxovl_u:" << bxovl_u << " isOvlMate:" << isOvlMate << endl;
-				
+									
 				if( !isOvlMate) { // do not update coverage for overlapping mates
 					
 					if(readid2info[readid].label_m == TMR) {	
 						unode->incTmrCov(strand);
-						unode->updateCovDistr((int)(unode->getTmrCov(strand)),uc_qv,strand,'T');
-						ref_m->updateCoverage(uc.mer_m, strand, 'T'); // update reference k-mer coverage for tumor
+						unode->updateCovDistr((int)(unode->getTmrCov(strand)), unode->BXcnt(strand), uc_qv, strand, 'T');
+						ref_m->updateCoverage(uc.mer_m, unode->BXcnt(strand), strand, 'T'); // update reference k-mer coverage for tumor
 					}
 					else if(readid2info[readid].label_m == NML) {
 						unode->incNmlCov(strand);
-						unode->updateCovDistr((int)(unode->getNmlCov(strand)),uc_qv,strand,'N');
-						ref_m->updateCoverage(uc.mer_m, strand, 'N'); // update reference k-mer coverage for normal
+						unode->updateCovDistr((int)(unode->getNmlCov(strand)), unode->BXcnt(strand), uc_qv, strand, 'N');
+						ref_m->updateCoverage(uc.mer_m, unode->BXcnt(strand), strand, 'N'); // update reference k-mer coverage for normal
 					}
 
 					if (uc.ori_m == F)
@@ -221,21 +218,18 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			}
 			
 			isOvlMate = (vnode->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m));
-			//bxovl_v = vnode->hasBX(readid2info[readid].barcode10x);
 
 			if( !isOvlMate ) { // do not update coverage for overlapping mates
-				
-				//cerr << "BX: " << readid2info[readid].barcode10x << " bxovl_v:" << bxovl_v << " isOvlMate:" << isOvlMate << endl;
-
+								
 				if(readid2info[readid].label_m == TMR) {
 					vnode->incTmrCov(strand);
-					vnode->updateCovDistr((int)(vnode->getTmrCov(strand)),vc_qv,strand,'T');
-					ref_m->updateCoverage(vc.mer_m, strand, 'T'); // update reference k-mer coverage for tumor
+					vnode->updateCovDistr((int)(vnode->getTmrCov(strand)), vnode->BXcnt(strand), vc_qv, strand, 'T');
+					ref_m->updateCoverage(vc.mer_m, vnode->BXcnt(strand), strand, 'T'); // update reference k-mer coverage for tumor
 				}
 				else if(readid2info[readid].label_m == NML) {
 					vnode->incNmlCov(strand);
-					vnode->updateCovDistr((int)(vnode->getNmlCov(strand)),vc_qv,strand,'N');
-					ref_m->updateCoverage(vc.mer_m, strand, 'N'); // update reference k-mer coverage for normal
+					vnode->updateCovDistr((int)(vnode->getNmlCov(strand)), vnode->BXcnt(strand), vc_qv, strand, 'N');
+					ref_m->updateCoverage(vc.mer_m, vnode->BXcnt(strand), strand, 'N'); // update reference k-mer coverage for normal
 				}
 			}
 		}
@@ -718,6 +712,24 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	
 	//print coverage distribution along the sequence path
 	if (verbose) { 
+		
+		/*
+		cerr << "T_mol_cov\tT_read_cov\tN_mol_cov\tN_read_cov" << endl; 
+		for (unsigned int i=0; i<coverageT.size(); ++i) {
+			//cerr << (coverageT[i].bxcov_fwd + coverageT[i].bxcov_rev) << "\t" << (coverageT[i].fwd + coverageT[i].rev) << "\t";
+			//cerr << (coverageN[i].bxcov_fwd + coverageN[i].bxcov_rev) << "\t" << (coverageN[i].fwd + coverageN[i].rev) << endl;
+			
+			cerr << (coverageT[i].bxcov_minqv_fwd + coverageT[i].bxcov_minqv_rev) << "\t" << (coverageT[i].minqv_fwd + coverageT[i].minqv_rev) << "\t";
+			cerr << (coverageN[i].bxcov_minqv_fwd + coverageN[i].bxcov_minqv_rev) << "\t" << (coverageN[i].minqv_fwd + coverageN[i].minqv_rev) << endl;
+		}
+		cerr << endl;
+		
+		cerr << "t':"; 
+		for (unsigned int i=0; i<coverageT.size(); ++i) {
+			cerr << (coverageT[i].fwd + coverageT[i].rev) << " ";
+		}
+		cerr << endl;
+		
 		cerr << "t+':"; 
 		for (unsigned int i=0; i<coverageT.size(); ++i) {
 			cerr << coverageT[i].fwd << " ";
@@ -741,6 +753,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			cerr << coverageN[i].rev << " ";
 		}
 		cerr << endl;
+		*/
 	}
 	
 	try {
@@ -831,16 +844,39 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			else if(code == 'v') { P = pathpos-1; } // del
 			else if(code == '^') { P = pathpos-1; } //ins
 			
-			int cov_at_pos_N_fwd = coverageN[P].fwd;
-			int cov_at_pos_T_fwd = coverageT[P].fwd;
-			int cov_at_pos_N_rev = coverageN[P].rev;
-			int cov_at_pos_T_rev = coverageT[P].rev;
+			int cov_at_pos_N_fwd = 0;
+			int cov_at_pos_T_fwd = 0;
+			int cov_at_pos_N_rev = 0;
+			int cov_at_pos_T_rev = 0;
+		
+			int cov_at_pos_N_minqv_fwd = 0;
+			int cov_at_pos_T_minqv_fwd = 0;
+			int cov_at_pos_N_minqv_rev = 0;
+			int cov_at_pos_T_minqv_rev = 0;
 			
-			int cov_at_pos_N_minqv_fwd = coverageN[P].minqv_fwd;
-			int cov_at_pos_T_minqv_fwd = coverageT[P].minqv_fwd;
-			int cov_at_pos_N_minqv_rev = coverageN[P].minqv_rev;
-			int cov_at_pos_T_minqv_rev = coverageT[P].minqv_rev;
+			if(TENX_MODE) {
+				cov_at_pos_N_fwd = coverageN[P].bxcov_fwd;
+				cov_at_pos_T_fwd = coverageT[P].bxcov_fwd;
+				cov_at_pos_N_rev = coverageN[P].bxcov_rev;
+				cov_at_pos_T_rev = coverageT[P].bxcov_rev;
 			
+				cov_at_pos_N_minqv_fwd = coverageN[P].bxcov_minqv_fwd;
+				cov_at_pos_T_minqv_fwd = coverageT[P].bxcov_minqv_fwd;
+				cov_at_pos_N_minqv_rev = coverageN[P].bxcov_minqv_rev;
+				cov_at_pos_T_minqv_rev = coverageT[P].bxcov_minqv_rev;
+			}
+			else {
+				cov_at_pos_N_fwd = coverageN[P].fwd;
+				cov_at_pos_T_fwd = coverageT[P].fwd;
+				cov_at_pos_N_rev = coverageN[P].rev;
+				cov_at_pos_T_rev = coverageT[P].rev;
+			
+				cov_at_pos_N_minqv_fwd = coverageN[P].minqv_fwd;
+				cov_at_pos_T_minqv_fwd = coverageT[P].minqv_fwd;
+				cov_at_pos_N_minqv_rev = coverageN[P].minqv_rev;
+				cov_at_pos_T_minqv_rev = coverageT[P].minqv_rev;
+			}
+
 			int ref_cov_at_pos_N_fwd = ref->getCovAt(pos_in_ref+ref->trim5, FWD, 'N');
 			int ref_cov_at_pos_N_rev = ref->getCovAt(pos_in_ref+ref->trim5, REV, 'N');
 			int ref_cov_at_pos_T_fwd = ref->getCovAt(pos_in_ref+ref->trim5, FWD, 'T');

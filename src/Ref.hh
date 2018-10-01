@@ -37,10 +37,15 @@ using namespace std;
 
 typedef struct cov_t
 {
-  int fwd; // total fwd coverage
-  int rev; // total rev coverage 
-  int minqv_fwd; // min base quality fwd coverage
-  int minqv_rev; // min base quality rev coverage
+  int fwd; // total fwd read coverage
+  int rev; // total rev read coverage 
+  int minqv_fwd; // min base quality fwd read coverage
+  int minqv_rev; // min base quality rev read coverage
+  int bxcov_fwd; // fwd 10x molecule coverage (based on barcode BX) 
+  int bxcov_rev; // rev 10x molecule coverage (based on barcode BX)
+  int bxcov_minqv_fwd; // min base quality 10x fwd molecule coverage (based on barcode BX)
+  int bxcov_minqv_rev; // min base quality 10x rev molecule coverage (based on barcode BX)
+  
   //int minmq_fwd; // min mapping quality fwd coverage
   //int minmq_rev; // min mapping quality rev coverage
 } cov_t;
@@ -96,7 +101,7 @@ public:
 	bool hasMer(const string & cmer);
 	bool isRefComp(int comp) { return refcompids.find(comp) != refcompids.end(); }
 	
-	void updateCoverage(const string & cmer, unsigned int strand, char sample);
+	void updateCoverage(const string & cmer, int mc, unsigned int strand, char sample);
 	void computeCoverage(char sample);
 	int getCovAt(unsigned pos, unsigned int strand, char sample);
 	int getMinCovInKbp(unsigned pos, int K, char sample);

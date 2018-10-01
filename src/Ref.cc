@@ -70,7 +70,7 @@ bool Ref_t::hasMer(const string & cmer)
 }
 
 // updated coverage for input mer
-void Ref_t::updateCoverage(const string & cmer, unsigned int strand, char sample) {
+void Ref_t::updateCoverage(const string & cmer, int mc, unsigned int strand, char sample) {
 	indexMers();
 	
 	unordered_map<string,cov_t> * mertable = NULL;
@@ -84,8 +84,14 @@ void Ref_t::updateCoverage(const string & cmer, unsigned int strand, char sample
 	
 	std::unordered_map<string,cov_t>::iterator it = mertable->find(cmer);
 	if (it != mertable->end()) {
-		if(strand == FWD) { ((*it).second).fwd += 1; }
-		else if(strand == REV) { ((*it).second).rev += 1; }
+		if(strand == FWD) { 
+			((*it).second).fwd += 1; 
+			((*it).second).bxcov_fwd = mc;
+		}
+		else if(strand == REV) { 
+			((*it).second).rev += 1; 
+			((*it).second).bxcov_rev = mc;
+		}
 	}
 }
 
@@ -110,6 +116,8 @@ void Ref_t::computeCoverage(char sample) {
 		if (it != mertable->end()) {
 			int cov_fwd = ((*it).second).fwd;
 			int cov_rev = ((*it).second).rev;
+			int bx_cov_fwd = ((*it).second).bxcov_fwd;
+			int bx_cov_rev = ((*it).second).bxcov_rev;
 			
 			/*
 			normal_coverage.at(i) = n_cov;			
@@ -127,12 +135,15 @@ void Ref_t::computeCoverage(char sample) {
 				for (int j=i; j<K; ++j) { 
 					coverage->at(j).fwd = cov_fwd; 				
 					coverage->at(j).fwd = cov_rev; 
+					coverage->at(j).bxcov_fwd = bx_cov_fwd; 
+					coverage->at(j).bxcov_rev = bx_cov_rev; 
 				}
 			}
 			else {
 				coverage->at(i+K-1).fwd = cov_fwd;
 				coverage->at(i+K-1).rev = cov_rev;
-				
+				coverage->at(i+K-1).bxcov_fwd = bx_cov_fwd;
+				coverage->at(i+K-1).bxcov_rev = bx_cov_rev;
 				
 				//for (int l = 0; l < K-1; l++) {
 					//if(normal_coverage.at(i+l) < n_cov) { normal_coverage.at(i+l) = n_cov; }
@@ -146,6 +157,8 @@ void Ref_t::computeCoverage(char sample) {
 		else {
 			coverage->at(i).fwd = 0;
 			coverage->at(i).rev = 0;
+			coverage->at(i).bxcov_fwd = 0;
+			coverage->at(i).bxcov_rev = 0;
 		}
 	}
 }

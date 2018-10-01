@@ -285,10 +285,12 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 		int alstart = al.Position;
 		int alend = al.GetEndPosition();
 		if( (alstart < region.LeftPosition) || (alend > region.RightPosition) ) { continue; } // skip alignments outside region
-		
+				
 		if ( (al.MapQuality >= MQ) && !al.IsDuplicate() ) { // only keep reads with high map quality and skip PCR duplicates
 			
 			al.BuildCharData(); // Populates alignment string fields (read name, bases, qualities, tag data)
+			
+			if( (al.QueryBases).empty() || (al.Qualities).empty() ) { continue; } // skip alignments with undefined sequence or qualities
 			
 			al.GetTag("RG", rg); // get the read group information for the read
 			if(rg.empty()) { rg = "null"; }

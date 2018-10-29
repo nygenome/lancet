@@ -32,6 +32,8 @@
 #include "Mer.hh"
 #include "ReadInfo.hh"
 
+#define TMR 4
+#define NML 5
 
 using namespace std;
 
@@ -41,11 +43,9 @@ typedef struct cov_t
   int rev; // total rev read coverage 
   int minqv_fwd; // min base quality fwd read coverage
   int minqv_rev; // min base quality rev read coverage
-  int bxcov_fwd; // fwd 10x molecule coverage (based on barcode BX) 
-  int bxcov_rev; // rev 10x molecule coverage (based on barcode BX)
-  int bxcov_minqv_fwd; // min base quality 10x fwd molecule coverage (based on barcode BX)
-  int bxcov_minqv_rev; // min base quality 10x rev molecule coverage (based on barcode BX)
-  
+  int hp0; // number of reads in haplotype 0 (unassigned)
+  int hp1; // number of reads in haplotype 1
+  int hp2; // number of reads in haplotype 2
   //int minmq_fwd; // min mapping quality fwd coverage
   //int minmq_rev; // min mapping quality rev coverage
 } cov_t;
@@ -101,11 +101,15 @@ public:
 	bool hasMer(const string & cmer);
 	bool isRefComp(int comp) { return refcompids.find(comp) != refcompids.end(); }
 	
-	void updateCoverage(const string & cmer, int mc, unsigned int strand, char sample);
-	void computeCoverage(char sample);
-	int getCovAt(unsigned pos, unsigned int strand, char sample);
-	int getMinCovInKbp(unsigned pos, int K, char sample);
-	void printKmerCoverage(char sample);
+	void updateCoverage(const string & cmer, int cov, unsigned int strand, int sample);
+	void updateHPCoverage(const string & cmer, int hp0_cov, int hp1_cov, int hp2_cov, int sample);
+	void computeCoverage(int sample);
+	
+	int getCovAt(unsigned pos, unsigned int strand, int sample);
+	int getHPCovAt(unsigned pos, unsigned int hp, int sample);
+	
+	int getMinCovInKbp(unsigned pos, int K, int sample);
+	void printKmerCoverage(int sample);
 	void resetCoverage();
 	void clear();
 	void init();

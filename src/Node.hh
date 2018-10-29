@@ -39,7 +39,6 @@
 
 using namespace std;
 
-
 // Node_t
 //////////////////////////////////////////////////////////////////////////
 
@@ -72,14 +71,20 @@ public:
 	int mincov;
 	int mincovQV;
 
-	vector<char> cov_status; // T=tumot,N=normal,B=both,E=empty
+	vector<char> cov_status; // T=tumor,N=normal,B=both,E=empty
 	vector<cov_t> cov_distr_tmr;
 	vector<cov_t> cov_distr_nml;
 	
 	vector<Edge_t> edges_m;
 	unordered_set<ReadId_t> reads_m;
-	unordered_set<string> bxset_fwd; // set of barcodes associated to the kmer in the fwd strand
-	unordered_set<string> bxset_rev; // set of barcodes associated to the kmer in the rev strand
+	
+	unordered_set<string> bxset_tmr_fwd; // set of barcodes associated to the kmer in the fwd strand
+	unordered_set<string> bxset_tmr_rev; // set of barcodes associated to the kmer in the rev strand
+	unordered_set<string> bxset_nml_fwd; // set of barcodes associated to the kmer in the fwd strand
+	unordered_set<string> bxset_nml_rev; // set of barcodes associated to the kmer in the rev strand
+	
+	vector<int> hpset_tmr; // kmer count per haplotype in tumor
+	vector<int> hpset_nml; // kmer count per haplotype in normal
 	
 	//unordered_set<string> mate1_name;
 	//unordered_set<string> mate2_name;
@@ -89,7 +94,6 @@ public:
 	vector<ReadStart_t> readstarts_m;
 	ContigLinkMap_t contiglinks_m;
 	ReadInfoList_t * readid2info;
-
 
 	Node_t(Mer_t mer) 
 		: nodeid_m(mer), 
@@ -113,6 +117,8 @@ public:
 			cov_status.resize(str_m.size(),'E'); 
 			cov_distr_tmr.resize(str_m.size()); 
 			cov_distr_nml.resize(str_m.size()); 
+			hpset_tmr.resize(3,0); 
+			hpset_nml.resize(3,0); 
 		}
 
 	friend ostream& operator<<(std::ostream& o, const Node_t & n) { return n.print(o); }
@@ -133,18 +139,17 @@ public:
 	void setMinQV(int q) { MIN_QUAL = q; }
 	void setK(int k) { K = k; }
 	
-	void incTmrCov(unsigned int strand) { if(strand == FWD) { cov_tmr_m_fwd++; } else if(strand == REV) { cov_tmr_m_rev++; } }
-	void incNmlCov(unsigned int strand) { if(strand == FWD) { cov_nml_m_fwd++; } else if(strand == REV) { cov_nml_m_rev++; } }
+	void incCov(unsigned int strand, int label);
 	//void setTmrCov(int c) { cov_tmr_m = c; }
 	//void setNmlCov(int c) { cov_nml_m = c; }
 	int getSize() { return (str_m.size()-K+1); }
-	float getTmrCov(unsigned int strand);
-	float getNmlCov(unsigned int strand);
+	float getCov(unsigned int strand, int label);
 	float getTotTmrCov() { return cov_tmr_m_fwd + cov_tmr_m_rev; }
 	float getTotNmlCov() { return cov_nml_m_fwd + cov_nml_m_rev; }
 	float getTotCov() { return cov_tmr_m_fwd + cov_tmr_m_rev + cov_nml_m_fwd + cov_nml_m_rev; }
 	bool isStatusCnt(char c);
-	void updateCovDistr(int rc, int mc, const string & qv, unsigned int strand, char sample);
+	void updateCovDistr(int cov, const string & qv, unsigned int strand, int sample);
+	void updateHPCovDistr(int hp0_cov, int hp1_cov, int hp2_cov, int sample);
 	void updateCovStatus(char c);
 	void revCovDistr();
 	void computeMinCov();
@@ -175,9 +180,11 @@ public:
 	bool hasOverlappingMate(std::string & read_name, int id);	
 	void addMateName(std::string & read_name, int id);
 	
-	bool addBX(std::string & bx, unsigned int strand);
-	bool hasBX(std::string & bx);
-	int BXcnt(unsigned int strand);
+	void addHP(int hp, int label); 
+	bool addBX(std::string & bx, unsigned int strand, int label);
+	bool hasBX(std::string & bx, int label);
+	int BXcnt(unsigned int strand, int label);
+	int HPcnt(unsigned int hp_num, int label);
 	
 	int readOverlaps(const Node_t & other);
 	

@@ -23,42 +23,90 @@
 *************************** /COPYRIGHT **************************************/
 
 
-// addEdge
+// addBX
 // add 10x barcode to set of barcodes for this node
 // return false if the insertion was not succesfull
 //////////////////////////////////////////////////////////////
-bool Node_t::addBX(std::string & bx, unsigned int strand) { 
+bool Node_t::addBX(std::string & bx, unsigned int strand, int label) { 
 
 	pair<unordered_set<string>::iterator,bool> it;
-	if(strand == FWD) { it = bxset_fwd.insert(bx); }
-	if(strand == REV) { it = bxset_rev.insert(bx); }
-	
+	if (label == TMR) {
+		if(strand == FWD) { it = bxset_tmr_fwd.insert(bx); }
+		if(strand == REV) { it = bxset_tmr_rev.insert(bx); }
+	}
+	if (label == NML) {
+		if(strand == FWD) { it = bxset_nml_fwd.insert(bx); }
+		if(strand == REV) { it = bxset_nml_rev.insert(bx); }
+	}
 	return it.second;
 }
 
+// addHP
+// add 10x haplotype number to set of haplotypes for this node
+// return false if the insertion was not succesfull
+//////////////////////////////////////////////////////////////
+void Node_t::addHP(int hp, int label) { 
+	if (label == TMR) { hpset_tmr.at(hp) += 1; }
+	if (label == NML) { hpset_nml.at(hp) += 1; }
+}
 
 // hasBX
 // return true if the barcode is already present in the bxset
 //////////////////////////////////////////////////////////////
-bool Node_t::hasBX(std::string & bx) {
+bool Node_t::hasBX(std::string & bx, int label) {
 
 	bool ans = false;
-	auto got_fwd = bxset_fwd.find(bx);
-	if ( got_fwd != bxset_fwd.end() ) { ans = true; }
-	else {
-		auto got_rev = bxset_rev.find(bx);
-		if ( got_rev != bxset_rev.end() ) { ans = true; }
+	
+	if(label == TMR) {
+		auto got_fwd = bxset_tmr_fwd.find(bx);
+		if ( got_fwd != bxset_tmr_fwd.end() ) { ans = true; }
+		else {
+			auto got_rev = bxset_tmr_rev.find(bx);
+			if ( got_rev != bxset_tmr_rev.end() ) { ans = true; }
+		}
+	}
+	
+	if(label == NML) {
+		auto got_fwd = bxset_nml_fwd.find(bx);
+		if ( got_fwd != bxset_nml_fwd.end() ) { ans = true; }
+		else {
+			auto got_rev = bxset_nml_rev.find(bx);
+			if ( got_rev != bxset_nml_rev.end() ) { ans = true; }
+		}
 	}
 	
 	return ans;
 }
 
-int Node_t::BXcnt(unsigned int strand) {
+// BXcnt
+// return BX coverage by strand
+//////////////////////////////////////////////////////////////
+int Node_t::BXcnt(unsigned int strand, int label) {
 	
 	int cnt = -1;
 	
-	if(strand == FWD) { cnt = bxset_fwd.size(); }
-	if(strand == REV) { cnt = bxset_rev.size(); }
+	if (label == TMR) {
+		if(strand == FWD) { cnt = bxset_tmr_fwd.size(); }
+		if(strand == REV) { cnt = bxset_tmr_rev.size(); }
+	}
+	
+	if (label == NML) {
+		if(strand == FWD) { cnt = bxset_nml_fwd.size(); }
+		if(strand == REV) { cnt = bxset_nml_rev.size(); }
+	}
+	
+	return cnt;
+}
+
+// HPcnt
+// return haplotype coverage
+//////////////////////////////////////////////////////////////
+int Node_t::HPcnt(unsigned int hp_num, int label) {
+	
+	int cnt = -1;
+	
+	if (label == TMR) { cnt = hpset_tmr.at(hp_num); }
+	if (label == NML) { cnt = hpset_nml.at(hp_num); }
 	
 	return cnt;
 }
@@ -413,39 +461,49 @@ void Node_t::updateCovStatus(char c)
 // updateCovDistr
 // updated the coverage distribution along the node string
 //////////////////////////////////////////////////////////////
-void Node_t::updateCovDistr(int rc, int mc, const string & qv, unsigned int strand, char sample) 
+void Node_t::updateCovDistr(int cov, const string & qv, unsigned int strand, int sample) 
 {
 	vector<cov_t> * cov_distr = NULL;
 	
-	if(sample == 'T')      { cov_distr = &cov_distr_tmr; }
-	else if(sample == 'N') { cov_distr = &cov_distr_nml; }
+	if(sample == TMR)      { cov_distr = &cov_distr_tmr; }
+	else if(sample == NML) { cov_distr = &cov_distr_nml; }
 	else { cerr << "Error: unrecognized sample " << sample << endl; }
 	
  	//string::const_iterator it=qv.begin();
 	for (unsigned int i = 0; i < cov_distr->size(); ++i) {
 		
 		if(strand == FWD) { 
-			((*cov_distr)[i]).fwd = rc;
-			((*cov_distr)[i]).bxcov_fwd = mc; // molecule coverage
-			//if(*it >= MIN_QUAL) { (((*cov_distr)[i]).minqv_fwd)++; }
+			((*cov_distr)[i]).fwd = cov;
 			if(qv[i] >= MIN_QUAL) { 
-				//++(((*cov_distr)[i]).minqv_fwd); 
-				((*cov_distr)[i]).minqv_fwd = rc;
-				((*cov_distr)[i]).bxcov_minqv_fwd = mc;
+				((*cov_distr)[i]).minqv_fwd = cov;
 			}
 		}
 		else if(strand == REV) { 
-			((*cov_distr)[i]).rev = rc;
-			((*cov_distr)[i]).bxcov_rev = mc; // molecule coverage
-			//if(*it >= MIN_QUAL) { (((*cov_distr)[i]).minqv_rev)++; }
+			((*cov_distr)[i]).rev = cov;
 			if(qv[i] >= MIN_QUAL) { 
-				//++(((*cov_distr)[i]).minqv_rev); 
-				((*cov_distr)[i]).minqv_rev = rc;
-				((*cov_distr)[i]).bxcov_minqv_rev = mc;
+				((*cov_distr)[i]).minqv_rev = cov;
 			}
 		}
 		//if (it!=qv.end()) { it++; }
 		//else {cerr << "Error: reached end of quality string (qv)" << endl; }
+	}
+}
+
+// updateHPCovDistr
+// updated the haplotype coverage distribution along the node string
+//////////////////////////////////////////////////////////////
+void Node_t::updateHPCovDistr(int hp0_cov, int hp1_cov, int hp2_cov, int sample) 
+{
+	vector<cov_t> * cov_distr = NULL;
+	
+	if(sample == TMR)      { cov_distr = &cov_distr_tmr; }
+	else if(sample == NML) { cov_distr = &cov_distr_nml; }
+	else { cerr << "Error: unrecognized sample " << sample << endl; }
+	
+	for (unsigned int i = 0; i < cov_distr->size(); ++i) {
+		((*cov_distr)[i]).hp0 = hp0_cov;
+		((*cov_distr)[i]).hp1 = hp1_cov;
+		((*cov_distr)[i]).hp2 = hp2_cov;
 	}
 }
 
@@ -600,24 +658,34 @@ void Node_t::addMateName(string & read_name, int id)
 	if(id == 2) { mate2_name.push_back(read_name); }
 }
 
-// return tumor coverage on the input strand
+
+// return  coverage on the input strand for tumor or normal sample
 //////////////////////////////////////////////////////////////
-float Node_t::getTmrCov(unsigned int strand) { 
+float Node_t::getCov(unsigned int strand, int label) { 
 	float ans = 0;
 	
-	if(strand == FWD) { ans = cov_tmr_m_fwd; } 
-	else if(strand == REV) { ans = cov_tmr_m_rev; } 
+	if (label == TMR) {
+		if(strand == FWD) { ans = cov_tmr_m_fwd; } 
+		if(strand == REV) { ans = cov_tmr_m_rev; } 
+	}	
+	if (label == NML) {
+		if(strand == FWD) { ans = cov_nml_m_fwd; } 
+		if(strand == REV) { ans = cov_nml_m_rev; } 
+	}
 	
 	return ans;
 }
 
-// return normal coverage on the input strand
+// increase node coverage for tumor or normal
 //////////////////////////////////////////////////////////////
-float Node_t::getNmlCov(unsigned int strand) { 
-	float ans = 0;
+void Node_t::incCov(unsigned int strand, int label) { 
 	
-	if(strand == FWD) { ans = cov_nml_m_fwd; } 
-	else if(strand == REV) { ans = cov_nml_m_rev; } 
-	
-	return ans;
+	if (label == TMR) {
+		if(strand == FWD) { cov_tmr_m_fwd++; } 
+		else if(strand == REV) { cov_tmr_m_rev++; }
+	}
+	if (label == NML) {
+		if(strand == FWD) { cov_nml_m_fwd++; } 
+		else if(strand == REV) { cov_nml_m_rev++; }
+	}
 }

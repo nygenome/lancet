@@ -472,7 +472,7 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 		
 			assemblers[i] = new Microassembler();
 
-			assemblers[i]->TENX_MODE = TENX_MODE;
+			assemblers[i]->LR_MODE = LR_MODE;
 			assemblers[i]->XA_FILTER = XA_FILTER;
 			assemblers[i]->PRIMARY_ALIGNMENT_ONLY = PRIMARY_ALIGNMENT_ONLY;
 			assemblers[i]->ACTIVE_REGION_MODULE = ACTIVE_REGIONS;
@@ -854,7 +854,7 @@ int main(int argc, char** argv)
 		
 			assemblers[i] = new Microassembler();
 
-			assemblers[i]->TENX_MODE = TENX_MODE;
+			assemblers[i]->LR_MODE = LR_MODE;
 			assemblers[i]->XA_FILTER = XA_FILTER;
 			assemblers[i]->PRIMARY_ALIGNMENT_ONLY = PRIMARY_ALIGNMENT_ONLY;
 			assemblers[i]->ACTIVE_REGION_MODULE = ACTIVE_REGIONS;

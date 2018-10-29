@@ -115,7 +115,7 @@ public:
 	int MIN_REPORT_LEN;
 	int DIST_FROM_STR;
 	
-	bool TENX_MODE;
+	bool LR_MODE;
 	bool PRIMARY_ALIGNMENT_ONLY;
 	bool XA_FILTER;
 	bool ACTIVE_REGION_MODULE;

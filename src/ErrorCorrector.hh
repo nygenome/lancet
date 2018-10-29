@@ -87,10 +87,10 @@ public:
 									
 									// retrive strand info
 									unsigned int strand;
-									if(nodeA->getTmrCov(FWD)>0) { strand = FWD; }
+									if(nodeA->getCov(FWD,TMR)>0) { strand = FWD; }
 									else { strand = REV; }
 								
-									nodeB->incTmrCov(strand);
+									nodeB->incCov(strand,TMR);
 									//nodeB->updateCovDistr((int)(nodeB->getTmrCov(strand)),strand,'T');
 									//ref_m->updateCoverage(merB, 'T'); // update referecne k-mer coverage for tumor
 									//nodeB->updateCovDistrMinQV(uc_qv,strand,'T');
@@ -114,10 +114,10 @@ public:
 									
 									// retrive strand info
 									unsigned int strand;
-									if(nodeA->getTmrCov(FWD)>0) { strand = FWD; }
+									if(nodeA->getCov(FWD,TMR)>0) { strand = FWD; }
 									else { strand = REV; }
 								
-									nodeB->incTmrCov(strand);
+									nodeB->incCov(strand,TMR);
 									//nodeB->updateCovDistr((int)(nodeB->getTmrCov(strand)),strand,'T');
 									//ref_m->updateCoverage(merB, 'T'); // update referecne k-mer coverage for tumor
 									//nodeB->updateCovDistrMinQV(uc_qv,strand,'T');

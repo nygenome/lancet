@@ -290,6 +290,8 @@ bool Microassembler::isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion
 			
 			al.BuildCharData(); // Populates alignment string fields (read name, bases, qualities, tag data)
 			
+			if( (al.QueryBases).empty() || (al.Qualities).empty() ) { continue; } // skip alignments with undefined sequence or qualities
+			
 			al.GetTag("RG", rg); // get the read group information for the read
 			if(rg.empty()) { rg = "null"; }
 			
@@ -454,6 +456,8 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	string xt = "";	
 	string xa = "";
 	string bx = ""; // 10x barcode
+	int hp = 0; // 10x Haplotype number of the molecule that generated the read
+	
 	int nm = 0;
 	float as = -1; 
 	float xs = -1; 
@@ -532,7 +536,8 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			
 			// XM	Number of mismatches in the alignment
 			nm = 0;
-			al.GetTag("XM", nm); // get the XM tag for the read
+			nm = extract_sam_tag("XM", al);
+			//al.GetTag("XM", nm); // get the XM tag for the read
 			if(nm >= MIN_XM) { ++num_high_XM_read; /*continue;*/ } // skip alignments with too many mis-matches
 			
 			// XT type: Unique/Repeat/N/Mate-sw
@@ -574,10 +579,16 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			}
 			
 			// BX: 10x barcode (string)
-			if(TENX_MODE) { 
+			if(LR_MODE) { 
 				bx = "";
 				al.GetTag("BX", bx); // get the BX barcode for the read
 				if(bx.empty()) { bx = "null"; }
+				
+				hp = 0;
+				hp = extract_sam_tag("HP", al);
+				if(hp == -1) { hp = 0; }
+				//al.GetTag("HP", hp); // get the HP haplotype number assigned to each read
+				//if(hp.empty()) { hp = -1; }
 			}
 			
 			// clear arrays (otherwise they keep growing from previous alignment that are parsed) 
@@ -604,12 +615,12 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 			if ( (readgroups.find("null") != readgroups.end())  || (readgroups.find(rg) != readgroups.end()) ) { // select reads in the read group RG
 				
 				if( !(al.IsMapped()) ) { // unmapped read
-					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, code, strand, bx);
+					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_BASTARD, code, strand, bx, hp);
 					//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_BASTARD, code, strand);
 					++num_unmapped; 
 				}
 				else { // mapped reads
-					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, code, strand, bx);								
+					g.addAlignment(sampleType, al.Name, al.QueryBases, al.Qualities, mate, Graph_t::CODE_MAPPED, code, strand, bx, hp);								
 					//g.addpaired("tumor", al.Name, al.QueryBases, oq, mate, Graph_t::CODE_MAPPED, code, strand);								
 				}
 				//cout << al.Name << endl;
@@ -732,7 +743,7 @@ int Microassembler::processReads() {
 	g.setInsertStdev(INSERT_STDEV);
 	g.setMaxMismatch(MAX_MISMATCH);
 	g.setFilters(filters);
-	g.setTenXMode(TENX_MODE);
+	g.setTenXMode(LR_MODE);
 	
 	// set STR params
 	g.setMaxUnitLen(MAX_UNIT_LEN);

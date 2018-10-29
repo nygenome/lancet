@@ -70,13 +70,13 @@ bool Ref_t::hasMer(const string & cmer)
 }
 
 // updated coverage for input mer
-void Ref_t::updateCoverage(const string & cmer, int mc, unsigned int strand, char sample) {
+void Ref_t::updateCoverage(const string & cmer, int cov, unsigned int strand, int sample) {
 	indexMers();
 	
 	unordered_map<string,cov_t> * mertable = NULL;
 		
-	if(sample == 'T')      { mertable = mertable_tmr; }
-	else if(sample == 'N') { mertable = mertable_nml; }
+	if(sample == TMR)      { mertable = mertable_tmr; }
+	else if(sample == NML) { mertable = mertable_nml; }
 	else { cerr << "Error: unrecognized sample " << sample << endl; }
 	
 	assert(mertable != NULL);
@@ -85,25 +85,44 @@ void Ref_t::updateCoverage(const string & cmer, int mc, unsigned int strand, cha
 	std::unordered_map<string,cov_t>::iterator it = mertable->find(cmer);
 	if (it != mertable->end()) {
 		if(strand == FWD) { 
-			((*it).second).fwd += 1; 
-			((*it).second).bxcov_fwd = mc;
+			((*it).second).fwd = cov; 
 		}
 		else if(strand == REV) { 
-			((*it).second).rev += 1; 
-			((*it).second).bxcov_rev = mc;
+			((*it).second).rev = cov; 
 		}
 	}
 }
 
+// updated haplotype coverage for input mer
+void Ref_t::updateHPCoverage(const string & cmer, int hp0_cov, int hp1_cov, int hp2_cov, int sample) {
+	indexMers();
+	
+	unordered_map<string,cov_t> * mertable = NULL;
+		
+	if(sample == TMR)      { mertable = mertable_tmr; }
+	else if(sample == NML) { mertable = mertable_nml; }
+	else { cerr << "Error: unrecognized sample " << sample << endl; }
+	
+	assert(mertable != NULL);
+	//if (mertable == NULL) { cerr << "Error: null pointer to mer-table!" << endl; } 
+	
+	std::unordered_map<string,cov_t>::iterator it = mertable->find(cmer);
+	if (it != mertable->end()) {
+		((*it).second).hp0 = hp0_cov; 
+		((*it).second).hp1 = hp1_cov; 
+		((*it).second).hp2 = hp2_cov; 
+	}
+}
+
 // compute kmer coverage over the reference sequence 
-void Ref_t::computeCoverage(char sample) {
+void Ref_t::computeCoverage(int sample) {
 	CanonicalMer_t cmer;
 	
 	unordered_map<string,cov_t> * mertable = NULL;
 	vector<cov_t> * coverage = NULL;
 	
-	if(sample == 'T')      { mertable = mertable_tmr; coverage = tumor_coverage; }
-	else if(sample == 'N') { mertable = mertable_nml; coverage = normal_coverage; }
+	if(sample == TMR)      { mertable = mertable_tmr; coverage = tumor_coverage; }
+	else if(sample == NML) { mertable = mertable_nml; coverage = normal_coverage; }
 	else { cerr << "Error: unrecognized sample " << sample << endl; }
 	
 	assert(mertable != NULL);
@@ -116,8 +135,9 @@ void Ref_t::computeCoverage(char sample) {
 		if (it != mertable->end()) {
 			int cov_fwd = ((*it).second).fwd;
 			int cov_rev = ((*it).second).rev;
-			int bx_cov_fwd = ((*it).second).bxcov_fwd;
-			int bx_cov_rev = ((*it).second).bxcov_rev;
+			int cov_hp0 = ((*it).second).hp0;
+			int cov_hp1 = ((*it).second).hp1;
+			int cov_hp2 = ((*it).second).hp2;
 			
 			/*
 			normal_coverage.at(i) = n_cov;			
@@ -135,15 +155,17 @@ void Ref_t::computeCoverage(char sample) {
 				for (int j=i; j<K; ++j) { 
 					coverage->at(j).fwd = cov_fwd; 				
 					coverage->at(j).fwd = cov_rev; 
-					coverage->at(j).bxcov_fwd = bx_cov_fwd; 
-					coverage->at(j).bxcov_rev = bx_cov_rev; 
+					coverage->at(j).hp0 = cov_hp0;
+					coverage->at(j).hp1 = cov_hp1; 				
+					coverage->at(j).hp2 = cov_hp2; 
 				}
 			}
 			else {
 				coverage->at(i+K-1).fwd = cov_fwd;
 				coverage->at(i+K-1).rev = cov_rev;
-				coverage->at(i+K-1).bxcov_fwd = bx_cov_fwd;
-				coverage->at(i+K-1).bxcov_rev = bx_cov_rev;
+				coverage->at(i+K-1).hp0 = cov_hp0;
+				coverage->at(i+K-1).hp1 = cov_hp1;
+				coverage->at(i+K-1).hp2 = cov_hp2;
 				
 				//for (int l = 0; l < K-1; l++) {
 					//if(normal_coverage.at(i+l) < n_cov) { normal_coverage.at(i+l) = n_cov; }
@@ -157,18 +179,19 @@ void Ref_t::computeCoverage(char sample) {
 		else {
 			coverage->at(i).fwd = 0;
 			coverage->at(i).rev = 0;
-			coverage->at(i).bxcov_fwd = 0;
-			coverage->at(i).bxcov_rev = 0;
+			coverage->at(i).hp0 = 0;
+			coverage->at(i).hp1 = 0;
+			coverage->at(i).hp2 = 0;
 		}
 	}
 }
 
 // return k-mer coverage at position 
-int Ref_t::getCovAt(unsigned pos, unsigned int strand, char sample) {
+int Ref_t::getCovAt(unsigned pos, unsigned int strand, int sample) {
 	
 	vector<cov_t> * coverage = NULL;
-	if(sample == 'N') { coverage = normal_coverage; }
-	else if(sample == 'T') { coverage = tumor_coverage; }
+	if(sample == NML) { coverage = normal_coverage; }
+	else if(sample == TMR) { coverage = tumor_coverage; }
 	else { cerr << "Error: unknown sample " << sample << endl; }
 	
 	assert(coverage != NULL);
@@ -184,12 +207,34 @@ int Ref_t::getCovAt(unsigned pos, unsigned int strand, char sample) {
 	return c;
 }
 
+// return k-mer haplotype coverage at position 
+int Ref_t::getHPCovAt(unsigned pos, unsigned int hp, int sample) {
+	
+	vector<cov_t> * coverage = NULL;
+	if(sample == NML) { coverage = normal_coverage; }
+	else if(sample == TMR) { coverage = tumor_coverage; }
+	else { cerr << "Error: unknown sample " << sample << endl; }
+	
+	assert(coverage != NULL);
+	//if (coverage == NULL) { cerr << "Error: null pointer to coverage vector!" << endl; } 
+	
+	int c = 0;
+	if(coverage->size()>pos) {	
+		if(hp == 0) { c = coverage->at(pos).hp0; }
+		if(hp == 1) { c = coverage->at(pos).hp1; }
+		if(hp == 2) { c = coverage->at(pos).hp2; }
+	}
+	else { c = 0; }
+	
+	return c;
+}
+
 // return min k-mer coverage in radius of size K bp
-int Ref_t::getMinCovInKbp(unsigned pos, int K, char sample) {
+int Ref_t::getMinCovInKbp(unsigned pos, int K, int sample) {
 		
 	vector<cov_t> * cov = NULL;
-	if (sample == 'T') { cov = tumor_coverage; }
-	else if (sample == 'N') { cov = normal_coverage; }
+	if (sample == TMR) { cov = tumor_coverage; }
+	else if (sample == NML) { cov = normal_coverage; }
 	else { cerr << "Error: unknown sample " << sample << endl; }	
 	
 	assert(cov != NULL);
@@ -206,11 +251,11 @@ int Ref_t::getMinCovInKbp(unsigned pos, int K, char sample) {
 }
 
 // print k-mer coverage along the reference
-void Ref_t::printKmerCoverage(char sample) {
+void Ref_t::printKmerCoverage(int sample) {
 
 	vector<cov_t> * coverage = NULL;
-	if(sample == 'N') { coverage = normal_coverage; }
-	else if(sample == 'T') { coverage = tumor_coverage; }
+	if(sample == NML) { coverage = normal_coverage; }
+	else if(sample == TMR) { coverage = tumor_coverage; }
 	else { cerr << "Error: unknown sample " << sample << endl; return; }
 	
 	assert(coverage != NULL);

@@ -105,6 +105,7 @@ public:
 	void updateHPCoverage(const string & cmer, int hp0_cov, int hp1_cov, int hp2_cov, int sample);
 	void computeCoverage(int sample);
 	
+	cov_t getCovStructAt(unsigned pos, int sample);
 	int getCovAt(unsigned pos, unsigned int strand, int sample);
 	int getHPCovAt(unsigned pos, unsigned int hp, int sample);
 	

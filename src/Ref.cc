@@ -186,6 +186,23 @@ void Ref_t::computeCoverage(int sample) {
 	}
 }
 
+// return k-mer coverage struct at position 
+cov_t Ref_t::getCovStructAt(unsigned pos, int sample) {
+	
+	vector<cov_t> * coverage = NULL;
+	if(sample == NML) { coverage = normal_coverage; }
+	else if(sample == TMR) { coverage = tumor_coverage; }
+	else { cerr << "Error: unknown sample " << sample << endl; }
+	
+	assert(coverage != NULL);
+	//if (coverage == NULL) { cerr << "Error: null pointer to coverage vector!" << endl; } 
+	
+	cov_t c;
+	if(coverage->size()>pos) {c = coverage->at(pos); }
+	
+	return c;
+}
+
 // return k-mer coverage at position 
 int Ref_t::getCovAt(unsigned pos, unsigned int strand, int sample) {
 	

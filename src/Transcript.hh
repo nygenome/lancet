@@ -43,112 +43,60 @@ public:
 	string qry;
 	bool isSomatic;
 
-	float mean_cov_N_fwd;
-	float mean_cov_N_rev;
-	float mean_cov_T_fwd;
-	float mean_cov_T_rev;
+	cov_t min_alt_cov_N;
+	cov_t min_alt_cov_T;
 	
-	float mean_cov_N_non0_fwd;
-	float mean_cov_N_non0_rev;
-	float mean_cov_T_non0_fwd;
-	float mean_cov_T_non0_rev;
+	cov_t min_non0_alt_cov_N;
+	cov_t min_non0_alt_cov_T;
 	
-	int min_cov_N_fwd;
-	int min_cov_N_rev;
-	int min_cov_T_fwd;
-	int min_cov_T_rev;
+	cov_t mean_alt_cov_N;
+	cov_t mean_alt_cov_T;
 	
-	int median_cov_N_fwd;
-	int median_cov_N_rev;
-	int median_cov_T_fwd;
-	int median_cov_T_rev;
+	cov_t mean_non0_alt_cov_N;
+	cov_t mean_non0_alt_cov_T;
 	
-	int min_nonzero_cov_N_fwd;
-	int min_nonzero_cov_N_rev;
-	int min_nonzero_cov_T_fwd;
-	int min_nonzero_cov_T_rev;
+	cov_t min_ref_cov_N;
+	cov_t min_ref_cov_T;
 	
-	int min_ref_cov_N_fwd;
-	int min_ref_cov_N_rev;
-	int min_ref_cov_T_fwd;
-	int min_ref_cov_T_rev;
+	cov_t min_non0_ref_cov_N;
+	cov_t min_non0_ref_cov_T;
+	
+	cov_t mean_ref_cov_N;
+	cov_t mean_ref_cov_T;
 
-	int median_ref_cov_N_fwd;
-	int median_ref_cov_N_rev;
-	int median_ref_cov_T_fwd;
-	int median_ref_cov_T_rev;
-	
-	int min_nonzero_ref_cov_N_fwd;
-	int min_nonzero_ref_cov_N_rev;
-	int min_nonzero_ref_cov_T_fwd;
-	int min_nonzero_ref_cov_T_rev;
-	
-	float mean_ref_cov_N_fwd;
-	float mean_ref_cov_N_rev;
-	float mean_ref_cov_T_fwd;
-	float mean_ref_cov_T_rev;
+	cov_t mean_non0_ref_cov_N;
+	cov_t mean_non0_ref_cov_T;
 
-	float mean_ref_cov_N_non0_fwd;
-	float mean_ref_cov_N_non0_rev;
-	float mean_ref_cov_T_non0_fwd;
-	float mean_ref_cov_T_non0_rev;
+	vector<cov_t> alt_cov_N;
+	vector<cov_t> alt_cov_T;
+	vector<cov_t> ref_cov_N;
+	vector<cov_t> ref_cov_T;	
 	
-	vector<int> cov_distr_N_fwd;
-	vector<int> cov_distr_T_fwd;
-	vector<int> cov_distr_N_rev;
-	vector<int> cov_distr_T_rev;
-	vector<int> ref_cov_distr_N_fwd;
-	vector<int> ref_cov_distr_N_rev;
-	vector<int> ref_cov_distr_T_fwd;
-	vector<int> ref_cov_distr_T_rev;
 	char prev_bp_ref; // base-pair preceding the mutation in reference
 	char prev_bp_alt; // base-pair preceding the mutation in alternative
 
-	Transcript_t(int pos_, int ref_pos_, int start_pos_, char code_, char ref_, char qry_, int covN_fwd_, int covN_rev_, int covT_fwd_, int covT_rev_, int ref_covN_fwd_, int ref_covN_rev_, int ref_covT_fwd_, int ref_covT_rev_, char prev_bp_ref_, char prev_bp_alt_, int end_pos_, int ref_end_pos_, bool flag)
+	Transcript_t(int pos_, int ref_pos_, int start_pos_, char code_, char ref_, char qry_, cov_t alt_cov_nml, cov_t alt_cov_tmr, cov_t ref_cov_nml, cov_t ref_cov_tmr, char prev_bp_ref_, char prev_bp_alt_, int end_pos_, int ref_end_pos_, bool flag)
 		: pos(pos_), ref_pos(ref_pos_), start_pos(start_pos_), code(code_), end_pos(end_pos_), ref_end_pos(ref_end_pos_)
 	{ 	
 		isSomatic = flag;
 		ref = ref_;
 		qry = qry_;
-		cov_distr_N_fwd.push_back(covN_fwd_);
-		cov_distr_N_rev.push_back(covN_rev_);
-		cov_distr_T_fwd.push_back(covT_fwd_);
-		cov_distr_T_rev.push_back(covT_rev_);
+		alt_cov_N.push_back(alt_cov_nml);
+		alt_cov_T.push_back(alt_cov_tmr);
+		ref_cov_N.push_back(ref_cov_nml);
+		ref_cov_T.push_back(ref_cov_tmr);
 		
-		ref_cov_distr_N_fwd.push_back(ref_covN_fwd_);
-		ref_cov_distr_N_rev.push_back(ref_covN_rev_);
-		ref_cov_distr_T_fwd.push_back(ref_covT_fwd_);
-		ref_cov_distr_T_rev.push_back(ref_covT_rev_);
-		
-		min_cov_N_fwd = covN_fwd_;
-		min_cov_N_rev = covN_rev_;
-		min_cov_T_fwd = covT_fwd_;
-		min_cov_T_rev = covT_rev_;
+		min_alt_cov_N = alt_cov_nml;
+		min_alt_cov_T = alt_cov_tmr;
 
-		min_nonzero_cov_N_fwd = 0;
-		min_nonzero_cov_N_rev = 0;
-		min_nonzero_cov_T_fwd = 0;
-		min_nonzero_cov_T_rev = 0;
-		if(min_cov_N_fwd != 0) { min_nonzero_cov_N_fwd = min_cov_N_fwd; }
-		if(min_cov_N_rev != 0) { min_nonzero_cov_N_rev = min_cov_N_rev; }
-		if(min_cov_T_fwd != 0) { min_nonzero_cov_T_fwd = min_cov_T_fwd; }
-		if(min_cov_T_rev != 0) { min_nonzero_cov_T_rev = min_cov_T_rev; }
+		min_non0_alt_cov_N = min_alt_cov_N;
+		min_non0_alt_cov_T = min_alt_cov_T;
 				
-		min_ref_cov_N_fwd = ref_covN_fwd_;
-		min_ref_cov_N_rev = ref_covN_rev_;
-		min_ref_cov_T_fwd = ref_covT_fwd_;
-		min_ref_cov_T_rev = ref_covT_rev_;
-
-		min_nonzero_ref_cov_N_fwd = 0;
-		min_nonzero_ref_cov_N_rev = 0;
-		min_nonzero_ref_cov_T_fwd = 0;
-		min_nonzero_ref_cov_T_rev = 0;
-						
-		if(ref_covN_fwd_ != 0) { min_nonzero_ref_cov_N_fwd = ref_covN_fwd_; }
-		if(ref_covN_rev_ != 0) { min_nonzero_ref_cov_N_rev = ref_covN_rev_; }
-
-		if(ref_covT_fwd_ != 0) { min_nonzero_ref_cov_T_fwd = ref_covT_fwd_; }
-		if(ref_covT_rev_ != 0) { min_nonzero_ref_cov_T_rev = ref_covT_rev_; }
+		min_ref_cov_N = ref_cov_nml;
+		min_ref_cov_T = ref_cov_tmr;
+		
+		min_non0_ref_cov_N = min_ref_cov_N;
+		min_non0_ref_cov_T = min_ref_cov_T;
 		
 		prev_bp_ref = prev_bp_ref_;
 		prev_bp_alt = prev_bp_alt_;
@@ -158,28 +106,28 @@ public:
 	void updateStats() {				
 
 		// normal
-		computeStats(cov_distr_N_fwd, min_cov_N_fwd, min_nonzero_cov_N_fwd, mean_cov_N_fwd, mean_cov_N_non0_fwd, median_cov_N_fwd);
-		computeStats(cov_distr_N_rev, min_cov_N_rev, min_nonzero_cov_N_rev, mean_cov_N_rev, mean_cov_N_non0_rev, median_cov_N_rev);
+		computeStats(alt_cov_N, min_alt_cov_N, min_non0_alt_cov_N, mean_alt_cov_N, mean_non0_alt_cov_N);
 		
 		//tumor
-		computeStats(cov_distr_T_fwd, min_cov_T_fwd, min_nonzero_cov_T_fwd, mean_cov_T_fwd, mean_cov_T_non0_fwd, median_cov_T_fwd);
-		computeStats(cov_distr_T_rev, min_cov_T_rev, min_nonzero_cov_T_rev, mean_cov_T_rev, mean_cov_T_non0_rev, median_cov_T_rev);
+		computeStats(alt_cov_T, min_alt_cov_T, min_non0_alt_cov_T, mean_alt_cov_T, mean_non0_alt_cov_T);
 		
 		// normal reference coverage
-		computeStats(ref_cov_distr_N_fwd, min_ref_cov_N_fwd, min_nonzero_ref_cov_N_fwd, mean_ref_cov_N_fwd, mean_ref_cov_N_non0_fwd, median_ref_cov_N_fwd);
-		computeStats(ref_cov_distr_N_rev, min_ref_cov_N_rev, min_nonzero_ref_cov_N_rev, mean_ref_cov_N_rev, mean_ref_cov_N_non0_rev, median_ref_cov_N_rev);
+		computeStats(ref_cov_N, min_ref_cov_N, min_non0_ref_cov_N, mean_ref_cov_N, mean_non0_ref_cov_N);
 
 		// tumor reference coverage
-		computeStats(ref_cov_distr_T_fwd, min_ref_cov_T_fwd, min_nonzero_ref_cov_T_fwd, mean_ref_cov_T_fwd, mean_ref_cov_T_non0_fwd, median_ref_cov_T_fwd);
-		computeStats(ref_cov_distr_T_rev, min_ref_cov_T_rev, min_nonzero_ref_cov_T_rev, mean_ref_cov_T_rev, mean_ref_cov_T_non0_rev, median_ref_cov_T_rev);
+		computeStats(ref_cov_T, min_ref_cov_T, min_non0_ref_cov_T, mean_ref_cov_T, mean_non0_ref_cov_T);		
 	}
 	
 	// compute coverage stats
-	void computeStats(vector<int> &cov_distr, int &min_cov, int &min_nonzero_cov, float &mean_cov, float &mean_cov_non0, int &median_cov) {
-		float sum= 0;
+	void computeStats(vector<cov_t> &cov_distr, cov_t &min, cov_t &min_non0, cov_t &mean, cov_t &mean_non0) {
+		//float sum= 0;
+		//float sum_non0 = 0;
 		unsigned int n = cov_distr.size();
-		unsigned int n_non0 = 0;
-		float sum_non0 = 0;
+		//unsigned int n_non0 = 0;
+		
+		cov_t sum = {0,0,0,0,0,0,0};
+		cov_t sum_non0 = {0,0,0,0,0,0,0};
+		cov_t n_non0 = {0,0,0,0,0,0,0};
 
 		/*
 		cerr << endl << "Transcript coverage: ";		
@@ -189,92 +137,124 @@ public:
 		cerr << "(node size = " << nodesize << ")" << endl;
 		*/
 		
-		sort (cov_distr.begin(), cov_distr.end());  
+		//sort (cov_distr.begin(), cov_distr.end());  
 		
 		for (unsigned int i = 0; i < n; ++i) {
-			sum += cov_distr[i];
-			if(cov_distr[i] != 0) { sum_non0 += cov_distr[i]; ++n_non0; }
-			if(cov_distr[i] < min_cov) { min_cov = cov_distr[i]; }
-			if(cov_distr[i] < min_nonzero_cov && cov_distr[i] != 0) { min_nonzero_cov = cov_distr[i]; }
+			sum.fwd += cov_distr[i].fwd;
+			sum.rev += cov_distr[i].rev;
+			sum.minqv_fwd += cov_distr[i].minqv_fwd;
+			sum.minqv_rev += cov_distr[i].minqv_rev;
+			sum.hp0 += cov_distr[i].hp0;
+			sum.hp1 += cov_distr[i].hp1;
+			sum.hp2 += cov_distr[i].hp2;
+			
+			if(cov_distr[i].fwd != 0) { sum_non0.fwd += cov_distr[i].fwd; ++n_non0.fwd; }
+			if(cov_distr[i].rev != 0) { sum_non0.rev += cov_distr[i].rev; ++n_non0.rev; }
+			if(cov_distr[i].minqv_fwd != 0) { sum_non0.minqv_fwd += cov_distr[i].minqv_fwd; ++n_non0.minqv_fwd; }
+			if(cov_distr[i].minqv_rev != 0) { sum_non0.minqv_rev += cov_distr[i].minqv_rev; ++n_non0.minqv_rev; }
+			if(cov_distr[i].hp0 != 0) { sum_non0.hp0 += cov_distr[i].hp0; ++n_non0.hp0; }
+			if(cov_distr[i].hp1 != 0) { sum_non0.hp1 += cov_distr[i].hp1; ++n_non0.hp1; }
+			if(cov_distr[i].hp2 != 0) { sum_non0.hp2 += cov_distr[i].hp2; ++n_non0.hp2; }
+			
+			if(cov_distr[i].fwd < min.fwd) { min.fwd = cov_distr[i].fwd; }
+			if(cov_distr[i].rev < min.rev) { min.rev = cov_distr[i].rev; }
+			if(cov_distr[i].minqv_fwd < min.minqv_fwd) { min.minqv_fwd = cov_distr[i].minqv_fwd; }
+			if(cov_distr[i].minqv_rev < min.minqv_rev) { min.minqv_rev = cov_distr[i].minqv_rev; }
+			if(cov_distr[i].hp0 < min.hp0) { min.hp0 = cov_distr[i].hp0; }
+			if(cov_distr[i].hp1 < min.hp1) { min.hp1 = cov_distr[i].hp1; }
+			if(cov_distr[i].hp2 < min.hp2) { min.hp2 = cov_distr[i].hp2; }
+			
+			if(cov_distr[i].fwd < min_non0.fwd && cov_distr[i].fwd != 0) { min_non0.fwd = cov_distr[i].fwd; }
+			if(cov_distr[i].rev < min_non0.rev && cov_distr[i].rev != 0) { min_non0.rev = cov_distr[i].rev; }
+			if(cov_distr[i].minqv_fwd < min_non0.minqv_fwd && cov_distr[i].minqv_fwd != 0) { min_non0.minqv_fwd = cov_distr[i].minqv_fwd; }
+			if(cov_distr[i].minqv_rev < min_non0.minqv_rev && cov_distr[i].minqv_rev != 0) { min_non0.minqv_rev = cov_distr[i].minqv_rev; }
+			if(cov_distr[i].hp0 < min_non0.hp0 && cov_distr[i].hp0 != 0) { min_non0.hp0 = cov_distr[i].hp0; }
+			if(cov_distr[i].hp1 < min_non0.hp1 && cov_distr[i].hp1 != 0) { min_non0.hp1 = cov_distr[i].hp1; }
+			if(cov_distr[i].hp2 < min_non0.hp2 && cov_distr[i].hp2 != 0) { min_non0.hp2 = cov_distr[i].hp2; }
 		}
 		
-		if(n>0) { mean_cov =(float)sum/(float)n; }
-		else { mean_cov = 0; }
-		if (n_non0 > 0) { mean_cov_non0 =(float)sum_non0/(float)n_non0; }
-		else { mean_cov_non0 = 0; }
+		if(n>0) { 
+			mean.fwd = (float)sum.fwd/(float)n; 
+			mean.rev = (float)sum.rev/(float)n; 
+			mean.minqv_fwd = (float)sum.minqv_fwd/(float)n; 
+			mean.minqv_rev = (float)sum.minqv_rev/(float)n; 
+			mean.hp0 = (float)sum.hp0/(float)n; 
+			mean.hp1 = (float)sum.hp1/(float)n; 
+			mean.hp2 = (float)sum.hp2/(float)n; 
+		}
+		else { 
+			mean.fwd = 0; 		
+			mean.rev = 0; 		
+			mean.minqv_fwd = 0; 		
+			mean.minqv_rev = 0; 		
+			mean.hp0 = 0; 		
+			mean.hp1 = 0; 		
+			mean.hp2 = 0; 		
+		}
 		
-		median_cov = cov_distr[int(ceil(n/2))];
+		if (n_non0.fwd > 0) { mean_non0.fwd = ceil((float)sum_non0.fwd/(float)n_non0.fwd); } else { mean_non0.fwd = 0; }
+		if (n_non0.rev > 0) { mean_non0.rev = ceil((float)sum_non0.rev/(float)n_non0.rev); } else { mean_non0.rev = 0; }
+		if (n_non0.minqv_fwd > 0) { mean_non0.minqv_fwd = ceil((float)sum_non0.minqv_fwd/(float)n_non0.minqv_fwd); } else { mean_non0.minqv_fwd = 0; }
+		if (n_non0.minqv_rev > 0) { mean_non0.minqv_rev = ceil((float)sum_non0.minqv_rev/(float)n_non0.minqv_rev); } else { mean_non0.minqv_rev = 0; }
+		if (n_non0.hp0 > 0) { mean_non0.hp0 = ceil((float)sum_non0.hp0/(float)n_non0.hp0); } else { mean_non0.hp0 = 0; }
+		if (n_non0.hp1 > 0) { mean_non0.hp1 = ceil((float)sum_non0.hp1/(float)n_non0.hp1); } else { mean_non0.hp1 = 0; }
+		if (n_non0.hp2 > 0) { mean_non0.hp2 = ceil((float)sum_non0.hp2/(float)n_non0.hp2); } else { mean_non0.hp2 = 0; }
+		
+		//median_cov = cov_distr[int(ceil(n/2))];
 	}
 	
-	void addCovNfwd(int c) { cov_distr_N_fwd.push_back(c); }	
-	void addCovTfwd(int c) { cov_distr_T_fwd.push_back(c); }
-	void addCovNrev(int c) { cov_distr_N_rev.push_back(c); }	
-	void addCovTrev(int c) { cov_distr_T_rev.push_back(c); }
+	void addAltCovNml(cov_t c) { alt_cov_N.push_back(c); }
+	void addAltCovTmr(cov_t c) { alt_cov_T.push_back(c); }
+	void addRefCovNml(cov_t c) { ref_cov_N.push_back(c); }
+	void addRefCovTmr(cov_t c) { ref_cov_T.push_back(c); }
+
+	int getAvgCovNfwd() { if(code == 'x') { return mean_alt_cov_N.minqv_fwd; } else { return mean_alt_cov_N.fwd; } }
+	int getAvgCovNrev() { if(code == 'x') { return mean_alt_cov_N.minqv_rev; } else { return mean_alt_cov_N.rev; } }
 	
-	void addRefCovNfwd(int c) { ref_cov_distr_N_fwd.push_back(c); }	
-	void addRefCovNrev(int c) { ref_cov_distr_N_rev.push_back(c); }
-	void addRefCovTfwd(int c) { ref_cov_distr_T_fwd.push_back(c); }
-	void addRefCovTrev(int c) { ref_cov_distr_T_rev.push_back(c); }
-
-	int getAvgCovNfwd() { return ceil(mean_cov_N_fwd); }
-	int getAvgCovNrev() { return ceil(mean_cov_N_rev); }
+	int getAvgCovTfwd() { if(code == 'x') { return mean_alt_cov_T.minqv_fwd; } else { return mean_alt_cov_T.fwd; } }
+	int getAvgCovTrev() { if(code == 'x') { return mean_alt_cov_T.minqv_rev; } else { return mean_alt_cov_T.rev; } }
 	
-	int getAvgCovTfwd() { return ceil(mean_cov_T_fwd); }
-	int getAvgCovTrev() { return ceil(mean_cov_T_rev); }
+	int getAvgNon0CovNfwd() { if(code == 'x') { return mean_non0_alt_cov_N.minqv_fwd; } else { return mean_non0_alt_cov_N.fwd; } }
+	int getAvgNon0CovNrev() { if(code == 'x') { return mean_non0_alt_cov_N.minqv_rev; } else { return mean_non0_alt_cov_N.rev; } }
+
+	int getAvgNon0CovTfwd() { if(code == 'x') { return mean_non0_alt_cov_T.minqv_fwd; } else { return mean_non0_alt_cov_T.fwd; } }
+	int getAvgNon0CovTrev() { if(code == 'x') { return mean_non0_alt_cov_T.minqv_rev; } else { return mean_non0_alt_cov_T.rev; } }
+
+	int getMinCovNfwd() { if(code == 'x') { return min_alt_cov_N.minqv_fwd; } else { return min_alt_cov_N.fwd; } }
+	int getMinCovNrev() { if(code == 'x') { return min_alt_cov_N.minqv_rev; } else { return min_alt_cov_N.rev; } }
 	
-	int getAvgNon0CovNfwd() { return ceil(mean_cov_N_non0_fwd); }
-	int getAvgNon0CovNrev() { return ceil(mean_cov_N_non0_rev); }
-
-	int getAvgNon0CovTfwd() { return ceil(mean_cov_T_non0_fwd); }
-	int getAvgNon0CovTrev() { return ceil(mean_cov_T_non0_rev); }
-
-	int getMinCovNfwd() { return min_cov_N_fwd; }
-	int getMinCovNrev() { return min_cov_N_rev; }
+	int getMinCovTfwd() { if(code == 'x') { return min_alt_cov_T.minqv_fwd; } else { return min_alt_cov_T.fwd; } }
+	int getMinCovTrev() { if(code == 'x') { return min_alt_cov_T.minqv_rev; } else { return min_alt_cov_T.rev; } }
 	
-	int getMedianCovNfwd() { return median_cov_N_fwd; }
-	int getMedianCovNrev() { return median_cov_N_rev; }
+	int getMinNon0CovNfwd() { if(code == 'x') { return min_non0_alt_cov_N.minqv_fwd; } else { return min_non0_alt_cov_N.fwd; } }
+	int getMinNon0CovNrev() { if(code == 'x') { return min_non0_alt_cov_N.minqv_rev; } else { return min_non0_alt_cov_N.rev; } }
+
+	int getMinNon0CovTfwd() { if(code == 'x') { return min_non0_alt_cov_T.minqv_fwd; } else { return min_non0_alt_cov_T.fwd; } }
+	int getMinNon0CovTrev() { if(code == 'x') { return min_non0_alt_cov_T.minqv_rev; } else { return min_non0_alt_cov_T.rev; } }
+
+	int getMinRefCovNfwd() { if(code == 'x') { return min_ref_cov_N.minqv_fwd; } else { return min_ref_cov_N.fwd; } }
+	int getMinRefCovNrev() { if(code == 'x') { return min_ref_cov_N.minqv_rev; } else { return min_ref_cov_N.rev; } }
+
+	int getMinRefCovTfwd() { if(code == 'x') { return min_ref_cov_T.minqv_fwd; } else { return min_ref_cov_T.fwd; } }
+	int getMinRefCovTrev() { if(code == 'x') { return min_ref_cov_T.minqv_rev; } else { return min_ref_cov_T.rev; } }
 	
-	int getMinCovTfwd() { return min_cov_T_fwd; }
-	int getMinCovTrev() { return min_cov_T_rev; }
+	int getMinNon0RefCovNfwd() { if(code == 'x') { return min_non0_ref_cov_N.minqv_fwd; } else { return min_non0_ref_cov_N.fwd; } }
+	int getMinNon0RefCovNrev() { if(code == 'x') { return min_non0_ref_cov_N.minqv_rev; } else { return min_non0_ref_cov_N.rev; } }
 
-	int getMedianCovTfwd() { return median_cov_T_fwd; }
-	int getMedianCovTrev() { return median_cov_T_rev; }
+	int getMinNon0RefCovTfwd() { if(code == 'x') { return min_non0_ref_cov_T.minqv_fwd; } else { return min_non0_ref_cov_T.fwd; } }
+	int getMinNon0RefCovTrev() { if(code == 'x') { return min_non0_ref_cov_T.minqv_rev; } else { return min_non0_ref_cov_T.rev; } }
 	
-	int getMinNon0CovNfwd() { return min_nonzero_cov_N_fwd; }
-	int getMinNon0CovNrev() { return min_nonzero_cov_N_rev; }
+	int getAvgRefCovNfwd() { if(code == 'x') { return mean_ref_cov_N.minqv_fwd; } else { return mean_ref_cov_N.fwd; } }
+	int getAvgRefCovNrev() { if(code == 'x') { return mean_ref_cov_N.minqv_rev; } else { return mean_ref_cov_N.rev; } }
 
-	int getMinNon0CovTfwd() { return min_nonzero_cov_T_fwd; }
-	int getMinNon0CovTrev() { return min_nonzero_cov_T_rev; }
+	int getAvgRefCovTfwd() { if(code == 'x') { return mean_ref_cov_T.minqv_fwd; } else { return mean_ref_cov_T.fwd; } }
+	int getAvgRefCovTrev() { if(code == 'x') { return mean_ref_cov_T.minqv_rev; } else { return mean_ref_cov_T.rev; } }
 
-	int getMinRefCovNfwd() { return min_ref_cov_N_fwd; }
-	int getMinRefCovNrev() { return min_ref_cov_N_rev; }
+	int getAvgNon0RefCovNfwd() { if(code == 'x') { return mean_non0_ref_cov_N.minqv_fwd; } else { return mean_non0_ref_cov_N.fwd; } }
+	int getAvgNon0RefCovNrev() { if(code == 'x') { return mean_non0_ref_cov_N.minqv_rev; } else { return mean_non0_ref_cov_N.rev; } }
 
-	int getMinRefCovTfwd() { return min_ref_cov_T_fwd; }
-	int getMinRefCovTrev() { return min_ref_cov_T_rev; }
-	
-	int getMedianRefCovNfwd() { return median_ref_cov_N_fwd; }
-	int getMedianRefCovNrev() { return median_ref_cov_N_rev; }
-
-	int getMedianRefCovTfwd() { return median_ref_cov_T_fwd; }
-	int getMedianRefCovTrev() { return median_ref_cov_T_rev; }
-	
-	int getMinNon0RefCovNfwd() { return min_nonzero_ref_cov_N_fwd; }
-	int getMinNon0RefCovNrev() { return min_nonzero_ref_cov_N_rev; }
-
-	int getMinNon0RefCovTfwd() { return min_nonzero_ref_cov_T_fwd; }
-	int getMinNon0RefCovTrev() { return min_nonzero_ref_cov_T_rev; }
-	
-	int getAvgRefCovNfwd() { return ceil(mean_ref_cov_N_fwd); }
-	int getAvgRefCovNrev() { return ceil(mean_ref_cov_N_rev); }
-
-	int getAvgRefCovTfwd() { return ceil(mean_ref_cov_T_fwd); }
-	int getAvgRefCovTrev() { return ceil(mean_ref_cov_T_rev); }
-
-	int getAvgNon0RefCovNfwd() { return ceil(mean_ref_cov_N_non0_fwd); }
-	int getAvgNon0RefCovNrev() { return ceil(mean_ref_cov_N_non0_rev); }
-
-	int getAvgNon0RefCovTfwd() { return ceil(mean_ref_cov_T_non0_fwd); }
-	int getAvgNon0RefCovTrev() { return ceil(mean_ref_cov_T_non0_rev); }
+	int getAvgNon0RefCovTfwd() { if(code == 'x') { return mean_non0_ref_cov_T.minqv_fwd; } else { return mean_non0_ref_cov_T.fwd; } }
+	int getAvgNon0RefCovTrev() { if(code == 'x') { return mean_non0_ref_cov_T.minqv_rev; } else { return mean_non0_ref_cov_T.rev; } }
 };
 
 #endif

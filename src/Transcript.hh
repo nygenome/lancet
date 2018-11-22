@@ -232,29 +232,45 @@ public:
 	int getMinNon0CovTfwd() { if(code == 'x') { return min_non0_alt_cov_T.minqv_fwd; } else { return min_non0_alt_cov_T.fwd; } }
 	int getMinNon0CovTrev() { if(code == 'x') { return min_non0_alt_cov_T.minqv_rev; } else { return min_non0_alt_cov_T.rev; } }
 
-	int getMinRefCovNfwd() { if(code == 'x') { return min_ref_cov_N.minqv_fwd; } else { return min_ref_cov_N.fwd; } }
-	int getMinRefCovNrev() { if(code == 'x') { return min_ref_cov_N.minqv_rev; } else { return min_ref_cov_N.rev; } }
+	int getMinRefCovNfwd() { return min_ref_cov_N.fwd; }
+	int getMinRefCovNrev() { return min_ref_cov_N.rev; }
 
-	int getMinRefCovTfwd() { if(code == 'x') { return min_ref_cov_T.minqv_fwd; } else { return min_ref_cov_T.fwd; } }
-	int getMinRefCovTrev() { if(code == 'x') { return min_ref_cov_T.minqv_rev; } else { return min_ref_cov_T.rev; } }
+	int getMinRefCovTfwd() { return min_ref_cov_T.fwd; }
+	int getMinRefCovTrev() { return min_ref_cov_T.rev; }
 	
-	int getMinNon0RefCovNfwd() { if(code == 'x') { return min_non0_ref_cov_N.minqv_fwd; } else { return min_non0_ref_cov_N.fwd; } }
-	int getMinNon0RefCovNrev() { if(code == 'x') { return min_non0_ref_cov_N.minqv_rev; } else { return min_non0_ref_cov_N.rev; } }
+	int getMinNon0RefCovNfwd() { return min_non0_ref_cov_N.fwd; }
+	int getMinNon0RefCovNrev() { return min_non0_ref_cov_N.rev; }
 
-	int getMinNon0RefCovTfwd() { if(code == 'x') { return min_non0_ref_cov_T.minqv_fwd; } else { return min_non0_ref_cov_T.fwd; } }
-	int getMinNon0RefCovTrev() { if(code == 'x') { return min_non0_ref_cov_T.minqv_rev; } else { return min_non0_ref_cov_T.rev; } }
+	int getMinNon0RefCovTfwd() { return min_non0_ref_cov_T.fwd; }
+	int getMinNon0RefCovTrev() { return min_non0_ref_cov_T.rev; }
 	
-	int getAvgRefCovNfwd() { if(code == 'x') { return mean_ref_cov_N.minqv_fwd; } else { return mean_ref_cov_N.fwd; } }
-	int getAvgRefCovNrev() { if(code == 'x') { return mean_ref_cov_N.minqv_rev; } else { return mean_ref_cov_N.rev; } }
+	int getAvgRefCovNfwd() { return mean_ref_cov_N.fwd; }
+	int getAvgRefCovNrev() { return mean_ref_cov_N.rev; }
 
-	int getAvgRefCovTfwd() { if(code == 'x') { return mean_ref_cov_T.minqv_fwd; } else { return mean_ref_cov_T.fwd; } }
-	int getAvgRefCovTrev() { if(code == 'x') { return mean_ref_cov_T.minqv_rev; } else { return mean_ref_cov_T.rev; } }
+	int getAvgRefCovTfwd() { return mean_ref_cov_T.fwd; }
+	int getAvgRefCovTrev() { return mean_ref_cov_T.rev; }
 
-	int getAvgNon0RefCovNfwd() { if(code == 'x') { return mean_non0_ref_cov_N.minqv_fwd; } else { return mean_non0_ref_cov_N.fwd; } }
-	int getAvgNon0RefCovNrev() { if(code == 'x') { return mean_non0_ref_cov_N.minqv_rev; } else { return mean_non0_ref_cov_N.rev; } }
+	int getAvgNon0RefCovNfwd() { return mean_non0_ref_cov_N.fwd; }
+	int getAvgNon0RefCovNrev() { return mean_non0_ref_cov_N.rev; }
 
-	int getAvgNon0RefCovTfwd() { if(code == 'x') { return mean_non0_ref_cov_T.minqv_fwd; } else { return mean_non0_ref_cov_T.fwd; } }
-	int getAvgNon0RefCovTrev() { if(code == 'x') { return mean_non0_ref_cov_T.minqv_rev; } else { return mean_non0_ref_cov_T.rev; } }
+	int getAvgNon0RefCovTfwd() { return mean_non0_ref_cov_T.fwd; }
+	int getAvgNon0RefCovTrev() { return mean_non0_ref_cov_T.rev; }
+	
+	int getMinRefCovNhp0() { return min_ref_cov_N.hp0; }
+	int getMinRefCovNhp1() { return min_ref_cov_N.hp1; }
+	int getMinRefCovNhp2() { return min_ref_cov_N.hp2; }
+	
+	int getMinRefCovThp0() { return min_ref_cov_T.hp0; }
+	int getMinRefCovThp1() { return min_ref_cov_T.hp1; }
+	int getMinRefCovThp2() { return min_ref_cov_T.hp2; }
+	
+	int getMinCovNhp0() { return min_alt_cov_N.hp0; }
+	int getMinCovNhp1() { return min_alt_cov_N.hp1; }
+	int getMinCovNhp2() { return min_alt_cov_N.hp2; }
+	
+	int getMinCovThp0() { return min_alt_cov_T.hp0; }
+	int getMinCovThp1() { return min_alt_cov_T.hp1; }
+	int getMinCovThp2() { return min_alt_cov_T.hp2; }
 };
 
 #endif

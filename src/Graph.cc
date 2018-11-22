@@ -197,6 +197,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 				if( !isOvlMate) { // do not update coverage for overlapping mates
 										
 					unode->incCov(strand, sample);
+					
 					if(LR_MODE) { 
 						unode->updateCovDistr(unode->BXcnt(strand,sample), uc_qv, strand, sample); 
 						unode->updateHPCovDistr(unode->HPcnt(0,sample), unode->HPcnt(1,sample), unode->HPcnt(2,sample), sample); 
@@ -1047,6 +1048,22 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				//ACTR = transcript[ti].getMedianCovTrev(); // alt tumor cov rev
 			}
 			
+			int HP0RN = transcript[ti].getMinRefCovNhp0();
+			int HP1RN = transcript[ti].getMinRefCovNhp1();
+			int HP2RN = transcript[ti].getMinRefCovNhp2();
+			
+			int HP0RT = transcript[ti].getMinRefCovThp0();
+			int HP1RT = transcript[ti].getMinRefCovThp1();
+			int HP2RT = transcript[ti].getMinRefCovThp2();
+			
+			int HP0AN = transcript[ti].getMinCovNhp0();
+			int HP1AN = transcript[ti].getMinCovNhp1();
+			int HP2AN = transcript[ti].getMinCovNhp2();
+			
+			int HP0AT = transcript[ti].getMinCovThp0();
+			int HP1AT = transcript[ti].getMinCovThp1();
+			int HP2AT = transcript[ti].getMinCovThp2();
+			
 			//int ACTF = (transcript[ti].code=='x') ? transcript[ti].getMinCovTfwd() : transcript[ti].getMedianCovTfwd(); // alt tumor cov fwd
 			//int ACTR = (transcript[ti].code=='x') ? transcript[ti].getMinCovTrev() : transcript[ti].getMedianCovTrev(); // alt tumor cov rev
 					
@@ -1054,7 +1071,13 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 						RCNF << "+," << RCNR << "-)n,(" << 
 						RCTF << "+," << RCTR << "-)t|A:(" << 								
 						ACNF << "+," << ACNR << "-)n,(" << 
-						ACTF << "+," << ACTR << "-)t|" <<
+						ACTF << "+," << ACTR << "-)t|HPref(" <<
+							
+						HP0RN << "," << HP1RN << "," << HP2RN << ")n,(" << 
+						HP0RT << "," << HP1RT << "," << HP2RT << ")t|HPalt(" << 
+						HP0AN << "," << HP1AN << "," << HP2AN << ")n,(" << 
+						HP0AT << "," << HP1AT << "," << HP2AT << ")t|" << 
+						
 						transcript[ti].prev_bp_ref << "|" << transcript[ti].prev_bp_alt; 
 			}
 			
@@ -1072,8 +1095,19 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					//cerr << "STR = " << STR.str() << endl; 					
 				}
 				
-				vDB->addVar(Variant_t(ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, 
-					RCNF, RCNR, RCTF, RCTR, ACNF, ACNR, ACTF, ACTR,
+				pair <int,int> RCN (RCNF,RCNR);   // reference coverage normal
+				pair <int,int> RCT (RCTF,RCTR);   // reference coverage tumor        
+				pair <int,int> ACN (ACNF,ACNR);   // alternative coverage normal        
+				pair <int,int> ACT (ACTF,ACTR);   // alternative coverage tumor
+				
+				array<int,3> HPRN = {HP1RN, HP2RN, HP0RN}; // reference HP normal
+				array<int,3> HPRT = {HP1RT, HP2RT, HP0RT}; // reference HP tumor
+				array<int,3> HPAN = {HP1AN, HP2AN, HP0AN}; // alternative HP normal
+				array<int,3> HPAT = {HP1AT, HP2AT, HP0AT}; // alternative HP tumor
+				
+				vDB->addVar(Variant_t(LR_MODE, ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, 
+					RCN, RCT, ACN, ACT,
+					HPRN, HPRT, HPAN, HPAT,
 					transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters, K, STR.str(), transcript[ti].code));
 				}
 		}

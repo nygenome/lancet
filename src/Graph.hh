@@ -32,6 +32,7 @@
 #include <stdexcept> // out_of_range exception
 #include <iostream>
 #include <unordered_map>
+#include <tuple>
 //#include <sparsepp/spp.h>
 
 #include "align.hh"
@@ -156,7 +157,7 @@ public:
 	void setInsertStdev(int is) { INSERT_STDEV = is; }
 	void setMaxMismatch(int mm) { MAX_MISMATCH = mm; }
 	void setFilters(Filters * fs) { filters = fs; }
-	void setTenXMode(bool mode) { LR_MODE = mode; }
+	void setLRMode(bool mode) { LR_MODE = mode; }
 	
 	//set STR params
 	void setMaxUnitLen(int l) { MAX_UNIT_LEN = l; }

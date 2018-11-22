@@ -108,9 +108,9 @@ void Ref_t::updateHPCoverage(const string & cmer, int hp0_cov, int hp1_cov, int 
 	
 	std::unordered_map<string,cov_t>::iterator it = mertable->find(cmer);
 	if (it != mertable->end()) {
-		((*it).second).hp0 = hp0_cov; 
-		((*it).second).hp1 = hp1_cov; 
-		((*it).second).hp2 = hp2_cov; 
+		((*it).second).hp0 = hp0_cov;
+		((*it).second).hp1 = hp1_cov;
+		((*it).second).hp2 = hp2_cov;
 	}
 }
 
@@ -154,7 +154,7 @@ void Ref_t::computeCoverage(int sample) {
 			if(i==0) {
 				for (int j=i; j<K; ++j) { 
 					coverage->at(j).fwd = cov_fwd; 				
-					coverage->at(j).fwd = cov_rev; 
+					coverage->at(j).rev = cov_rev;
 					coverage->at(j).hp0 = cov_hp0;
 					coverage->at(j).hp1 = cov_hp1; 				
 					coverage->at(j).hp2 = cov_hp2; 
@@ -197,7 +197,7 @@ cov_t Ref_t::getCovStructAt(unsigned pos, int sample) {
 	assert(coverage != NULL);
 	//if (coverage == NULL) { cerr << "Error: null pointer to coverage vector!" << endl; } 
 	
-	cov_t c;
+	cov_t c = {0,0,0,0,0,0,0};
 	if(coverage->size()>pos) {c = coverage->at(pos); }
 	
 	return c;

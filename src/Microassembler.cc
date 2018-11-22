@@ -578,7 +578,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 				}
 			}
 			
-			// BX: 10x barcode (string)
+			// 10x linked-read data
 			if(LR_MODE) { 
 				bx = "";
 				al.GetTag("BX", bx); // get the BX barcode for the read
@@ -743,7 +743,7 @@ int Microassembler::processReads() {
 	g.setInsertStdev(INSERT_STDEV);
 	g.setMaxMismatch(MAX_MISMATCH);
 	g.setFilters(filters);
-	g.setTenXMode(LR_MODE);
+	g.setLRMode(LR_MODE);
 	
 	// set STR params
 	g.setMaxUnitLen(MAX_UNIT_LEN);

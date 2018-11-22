@@ -27,6 +27,7 @@
 #include <unordered_map>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include "util.hh"
 #include "Variant.hh"
 #include "sha256.hh"
@@ -56,14 +57,16 @@ class VariantDB_t
 {
 public:
 
+	bool LR_MODE;
 	map<string,Variant_t> DB; // databbase of variants
 	unordered_map<string,int> nCNT; // counts of variants per postion in the normal
 	string command_line; // command line used to run the tool
 
-	VariantDB_t() {}
+	VariantDB_t(bool lrmode = false) { LR_MODE = lrmode; }
 	
+	void setLRmode (bool lrmode) { LR_MODE = lrmode; }
 	void setCommandLine(string cl) { command_line = cl; }
-	void addVar(Variant_t v);
+	void addVar(const Variant_t & v);
 	void printHeader(const string version, const string reference, char * date, Filters &fs, string &sample_name_N, string &sample_name_T);
 	void printToVCF(const string version, const string reference, char * date, Filters &fs, string &sample_name_N, string &sample_name_T);
 };

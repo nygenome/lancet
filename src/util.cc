@@ -1,6 +1,7 @@
 #include "util.hh"
 #include <iostream>
 #include <cstdio>
+#include <array>
 
 /****************************************************************************
 ** Util.cc

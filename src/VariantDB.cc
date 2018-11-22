@@ -25,50 +25,48 @@
 *************************** /COPYRIGHT **************************************/
 
 // add variant to DB and update counts per position
-void VariantDB_t::addVar(Variant_t v) {
+void VariantDB_t::addVar(const Variant_t & v) {
 	
 	string key = sha256(v.getSignature());	
-    map<string,Variant_t>::iterator it_v = DB.find(key);
+    map<string,Variant_t>::iterator it_v = DB.find(key);	
 	
-	if (it_v != DB.end()) {		
-		// keep highest supporting coverage found
-		//if (it_v->second.ref_cov_normal_fwd < v.ref_cov_normal_fwd) { it_v->second.ref_cov_normal_fwd = v.ref_cov_normal_fwd; }
-		//if (it_v->second.ref_cov_normal_rev < v.ref_cov_normal_rev) { it_v->second.ref_cov_normal_rev = v.ref_cov_normal_rev; }
-		int old_ref_cov_normal = it_v->second.ref_cov_normal_rev + it_v->second.ref_cov_normal_rev;
+	//bool flag = false;
+	
+	if (it_v != DB.end()) {
+		// keep variant at location with highest total coverage (tumor + normal)
+		
+		int old_ref_cov_normal = it_v->second.ref_cov_normal_fwd + it_v->second.ref_cov_normal_rev;
+		int old_ref_cov_tumor = it_v->second.ref_cov_tumor_fwd + it_v->second.ref_cov_tumor_rev;
+		int old_alt_cov_normal = it_v->second.alt_cov_normal_fwd + it_v->second.alt_cov_normal_rev;
+		int old_alt_cov_tumor = it_v->second.alt_cov_tumor_fwd + it_v->second.alt_cov_tumor_rev;
+		
 		int new_ref_cov_normal = v.ref_cov_normal_fwd + v.ref_cov_normal_rev;
-		if (old_ref_cov_normal < new_ref_cov_normal) {
+		int new_ref_cov_tumor = v.ref_cov_tumor_fwd + v.ref_cov_tumor_rev;
+		int new_alt_cov_normal = v.alt_cov_normal_fwd + v.alt_cov_normal_rev;
+		int new_alt_cov_tumor = v.alt_cov_tumor_fwd + v.alt_cov_tumor_rev;
+		
+		int old_tot_cov = old_ref_cov_normal + old_ref_cov_tumor + old_alt_cov_normal + old_alt_cov_tumor;
+		int new_tot_cov = new_ref_cov_normal + new_ref_cov_tumor + new_alt_cov_normal + new_alt_cov_tumor;
+		
+		if(old_tot_cov < new_tot_cov) {
+			it_v->second.kmer = v.kmer;
+			
 			it_v->second.ref_cov_normal_fwd = v.ref_cov_normal_fwd;
 			it_v->second.ref_cov_normal_rev = v.ref_cov_normal_rev;
-		}
-		
-		//if (it_v->second.ref_cov_tumor_fwd  < v.ref_cov_tumor_fwd ) { it_v->second.ref_cov_tumor_fwd  = v.ref_cov_tumor_fwd;  }
-		//if (it_v->second.ref_cov_tumor_rev  < v.ref_cov_tumor_rev ) { it_v->second.ref_cov_tumor_rev  = v.ref_cov_tumor_rev;  }
-		int old_ref_cov_tumor = it_v->second.ref_cov_tumor_fwd + it_v->second.ref_cov_tumor_rev;
-		int new_ref_cov_tumor = v.ref_cov_tumor_fwd + v.ref_cov_tumor_rev;
-		if (old_ref_cov_tumor < new_ref_cov_tumor) {
 			it_v->second.ref_cov_tumor_fwd  = v.ref_cov_tumor_fwd;
 			it_v->second.ref_cov_tumor_rev  = v.ref_cov_tumor_rev;
-		}
-		
-		//if (it_v->second.alt_cov_normal_fwd < v.alt_cov_normal_fwd) { it_v->second.alt_cov_normal_fwd = v.alt_cov_normal_fwd; }
-		//if (it_v->second.alt_cov_normal_rev < v.alt_cov_normal_rev) { it_v->second.alt_cov_normal_rev = v.alt_cov_normal_rev; }
-		int old_alt_cov_normal = it_v->second.alt_cov_normal_fwd + it_v->second.alt_cov_normal_rev;
-		int new_alt_cov_normal = v.alt_cov_normal_fwd + v.alt_cov_normal_rev;
-		if (old_alt_cov_normal < new_alt_cov_normal) {
 			it_v->second.alt_cov_normal_fwd = v.alt_cov_normal_fwd; 
 			it_v->second.alt_cov_normal_rev = v.alt_cov_normal_rev;
-		}
-		
-		//if (it_v->second.alt_cov_tumor_fwd  < v.alt_cov_tumor_fwd ) { it_v->second.alt_cov_tumor_fwd  = v.alt_cov_tumor_fwd;  }
-		//if (it_v->second.alt_cov_tumor_rev  < v.alt_cov_tumor_rev ) { it_v->second.alt_cov_tumor_rev  = v.alt_cov_tumor_rev;  }
-		int old_alt_cov_tumor = it_v->second.alt_cov_tumor_fwd + it_v->second.alt_cov_tumor_rev;
-		int new_alt_cov_tumor = v.alt_cov_tumor_fwd + v.alt_cov_tumor_rev;
-		if (old_alt_cov_tumor < new_alt_cov_tumor) {
 			it_v->second.alt_cov_tumor_fwd  = v.alt_cov_tumor_fwd;
 			it_v->second.alt_cov_tumor_rev  = v.alt_cov_tumor_rev;
+			
+			it_v->second.HPRN = v.HPRN;
+			it_v->second.HPRT = v.HPRT;
+			it_v->second.HPAN = v.HPAN;
+			it_v->second.HPAT = v.HPAT;
+			
+			//it_v->second.reGenotype(); // recompute genotype
 		}
-		
-		it_v->second.reGenotype(); // recompute genotype
 	}
 	else { 
 		DB.insert(pair<string,Variant_t>(key,v));
@@ -93,7 +91,9 @@ void VariantDB_t::addVar(Variant_t v) {
 
 void VariantDB_t::printHeader(const string version, const string reference, char * date, Filters &fs, string &sample_name_N, string &sample_name_T) {
 	
-	cout << "##fileformat=VCFv4.2\n"
+    stringstream hdr;
+	
+	hdr << "##fileformat=VCFv4.2\n"
 			"##fileDate=" << date << ""
 			"##source=lancet " << version << "\n"
 			"##cmdline=" << command_line << "\n"
@@ -124,8 +124,16 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Depth\">\n"
 			"##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"allele depth: # of supporting ref,alt reads at the site\">\n"
 			"##FORMAT=<ID=SR,Number=.,Type=Integer,Description=\"strand counts for ref: # of supporting forward,reverse reads for reference allele\">\n"
-			"##FORMAT=<ID=SA,Number=.,Type=Integer,Description=\"strand counts for alt: # of supporting forward,reverse reads for alterantive allele\">\n"
-			"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << sample_name_N << "\t" << sample_name_T << "\n";
+			"##FORMAT=<ID=SA,Number=.,Type=Integer,Description=\"strand counts for alt: # of supporting forward,reverse reads for alterantive allele\">\n";
+
+	if(LR_MODE)	{
+		hdr << "##FORMAT=<ID=HPR,Number=.,Type=Integer,Description=\"haplotype counts for ref: # of reads supporting reference allele in haplotype 1, 2, and 0 respectively (0 = unassigned)\">\n"
+			   "##FORMAT=<ID=HPA,Number=.,Type=Integer,Description=\"haplotype counts for alt: # of reads supporting alternative allele in haplotype 1, 2, and 0 respectively (0 = unassigned)\">\n";
+	}
+	
+	hdr << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << sample_name_N << "\t" << sample_name_T << "\n";
+	
+	cout << hdr.str();
 }
 
 // print variant in VCF format

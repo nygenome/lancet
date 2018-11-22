@@ -57,6 +57,7 @@ class Variant_t
 {
 public:
 
+	bool LR_MODE;
 	unsigned short kmer;
 	string chr;
 	int pos;
@@ -74,6 +75,12 @@ public:
 	int alt_cov_normal_rev;
 	int alt_cov_tumor_fwd;
 	int alt_cov_tumor_rev;
+	
+	array<int,3> HPRN;
+	array<int,3> HPRT; 
+	array<int,3> HPAN;
+	array<int,3> HPAT;
+	
 	char prev_bp_ref; // base-pair preceding the mutation in reference
 	char prev_bp_alt; // base-pair preceding the mutation in alternative
 	
@@ -82,8 +89,14 @@ public:
 	
 	Filters * filters; // filter thresholds
 
-	Variant_t(string chr_, int pos_, string ref_, string alt_, int ref_cov_normal_fwd_, int ref_cov_normal_rev_, int ref_cov_tumor_fwd_, int ref_cov_tumor_rev_, int alt_cov_normal_fwd_, int alt_cov_normal_rev_, int alt_cov_tumor_fwd_, int alt_cov_tumor_rev_, char prev_bp_ref_, char prev_bp_alt_, Filters * fs, int k, string str_, char code)
-	{ 			
+	Variant_t(bool mode, string chr_, int pos_, string ref_, string alt_, 
+		const pair <int,int> & RCN, const pair <int,int> & RCT,
+		const pair <int,int> & ACN, const pair <int,int> & ACT,
+		const array<int,3> & HPRN_, const array<int,3> & HPRT_, 
+		const array<int,3> & HPAN_, const array<int,3> & HPAT_,
+		char prev_bp_ref_, char prev_bp_alt_, Filters * fs, int k, string str_, char code)
+	{ 	
+		LR_MODE = mode;
 		kmer = k;
 		str = str_;
 		filters = fs;
@@ -118,20 +131,26 @@ public:
 		}
 		else { alt = alt_; ref = ref_; len = 1; }
 		
-		ref_cov_normal_fwd = ref_cov_normal_fwd_;
-		ref_cov_normal_rev = ref_cov_normal_rev_;
-		ref_cov_tumor_fwd = ref_cov_tumor_fwd_;
-		ref_cov_tumor_rev = ref_cov_tumor_rev_;
+		ref_cov_normal_fwd = RCN.first;
+		ref_cov_normal_rev = RCN.second;
+		ref_cov_tumor_fwd  = RCT.first;
+		ref_cov_tumor_rev  = RCT.second;
 		
-		alt_cov_normal_fwd = alt_cov_normal_fwd_;
-		alt_cov_normal_rev = alt_cov_normal_rev_;
-		alt_cov_tumor_fwd = alt_cov_tumor_fwd_;
-		alt_cov_tumor_rev = alt_cov_tumor_rev_;
+		alt_cov_normal_fwd = ACN.first;
+		alt_cov_normal_rev = ACN.second;
+		alt_cov_tumor_fwd  = ACT.first;
+		alt_cov_tumor_rev  = ACT.second;
+		
 		prev_bp_ref = prev_bp_ref_;
 		prev_bp_alt = prev_bp_alt_;
 		
+		HPRN = HPRN_;
+		HPRT = HPRT_; 
+		HPAN = HPAN_;
+		HPAT = HPAT_;
+		
 		//compute genotype
-		reGenotype();
+		//reGenotype();
 	}
 	
 	void printVCF();
@@ -140,7 +159,7 @@ public:
 	string getGenotypeTumor() { return GT_tumor; }
 	void reGenotype();
 	char bestState(int Rn, int An, int Rt, int At);
-	string getSignature();
+	string getSignature() const;
 	string getPosition();
 	double compute_FET_score();
 	double compute_SB_score();

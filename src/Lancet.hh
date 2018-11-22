@@ -32,7 +32,7 @@ string COMMAND_LINE;
 /****  configuration parameters ****/
 int NUM_THREADS = 1;
 
-bool LR_MODE = true; // linked-reads mode
+bool LR_MODE = false; // linked-reads mode
 bool XA_FILTER = false;
 bool PRIMARY_ALIGNMENT_ONLY = false;
 bool ACTIVE_REGIONS = true;

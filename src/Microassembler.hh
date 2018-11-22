@@ -156,7 +156,11 @@ public:
 	int num_snv_or_softclip_regions;
 	int num_snv_or_indel_or_softclip_regions;
 	
-	Microassembler() { 
+	Microassembler(bool lrmode) { 
+		
+		LR_MODE = lrmode;
+		vDB.setLRmode(lrmode);
+		
 		graphCnt = 0;
 		num_skip = 0;
 		

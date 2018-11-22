@@ -99,6 +99,7 @@ void printHelpText(Filters & filters) {
 		"   --dist-from-str, -D        <int>        : distance (in bp) of variant from STR locus [default: " << DIST_FROM_STR << "]\n"
 		
 		"\nFlags\n"
+		"   --10x, -J                     : 10x Genomics linked-read mode\n"	
 		"   --primary-alignment-only, -I  : only use primary alignments for variant calling\n"
 		"   --XA-tag-filter, -O           : skip reads with multiple hits listed in the XA tag (BWA only)\n"
 		"   --active-region-off, -W       : turn off active region module\n"		
@@ -168,6 +169,8 @@ void printConfiguration(ostream & out, Filters & filters)
 	out << "min-coverage-normal: "  << filters.minCovNormal << endl;
 	out << "max-coverage-normal: "  << filters.maxCovNormal << endl;
 
+	// flags
+	out << "10x-mode: "         << bvalue(LR_MODE) << endl;	
 	out << "primary-alignment-only: " << bvalue(PRIMARY_ALIGNMENT_ONLY) << endl;	
 	out << "XA-tag-filter: "    << bvalue(XA_FILTER) << endl;	
 	out << "active-regions: "   << bvalue(ACTIVE_REGIONS) << endl;
@@ -451,7 +454,7 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 		void * status;
 		int rc;
 		int i;		
-		vector<Microassembler*> assemblers(NUM_THREADS, new Microassembler());
+		vector<Microassembler*> assemblers(NUM_THREADS, new Microassembler(LR_MODE));
 		vector< map<string, Ref_t *> > reftables(NUM_THREADS, map<string, Ref_t *>()); // table of references to analyze
 		
 		if (BEDFILE != "") {
@@ -470,9 +473,9 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 		for( i=0; i < NUM_THREADS; ++i ) {
 			cerr << "starting thread " << (i+1) << " on " << reftables[i].size() << " windows" << endl;
 		
-			assemblers[i] = new Microassembler();
+			assemblers[i] = new Microassembler(LR_MODE);
 
-			assemblers[i]->LR_MODE = LR_MODE;
+			//assemblers[i]->LR_MODE = LR_MODE;
 			assemblers[i]->XA_FILTER = XA_FILTER;
 			assemblers[i]->PRIMARY_ALIGNMENT_ONLY = PRIMARY_ALIGNMENT_ONLY;
 			assemblers[i]->ACTIVE_REGION_MODULE = ACTIVE_REGIONS;
@@ -543,7 +546,7 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 		int tot_snv_or_indel_or_softclip = 0;
 		//merge variant from all threads
 		cerr << "Merge variants" << endl;
-		VariantDB_t variantDB; // variants DB
+		VariantDB_t variantDB(LR_MODE); // variants DB
 		for( i=0; i < NUM_THREADS; ++i ) {
 			
 			tot_skip += assemblers[i]->num_skip;
@@ -687,6 +690,7 @@ int main(int argc, char** argv)
 		{"min-coverage-normal",  required_argument, 0, 'z'},
 		{"max-coverage-normal",  required_argument, 0, 'j'},
 
+		{"10x-mode", no_argument, 0, 'J'},
 		{"primary-alignment-only", no_argument, 0, 'I'},
 		{"XA-tag-filter", no_argument, 0, 'O'},
 		{"active-region-off", no_argument, 0, 'W'},		
@@ -702,7 +706,7 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSIWOL:T:P:M:vVF:q:b:B:Q:p:s:E:a:m:e:i:o:y:z:w:j:X:U:N:Y:D:Z:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSIWJOL:T:P:M:vVF:q:b:B:Q:p:s:E:a:m:e:i:o:y:z:w:j:X:U:N:Y:D:Z:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -753,6 +757,7 @@ int main(int argc, char** argv)
 			case 'z': filters.minCovNormal = atoi(optarg); break;
 			case 'j': filters.maxCovNormal = atoi(optarg); break;
 
+			case 'J': LR_MODE          = 1;            break;
 			case 'I': PRIMARY_ALIGNMENT_ONLY   = 1;    break;
 			case 'O': XA_FILTER        = 1;            break;
 			case 'W': ACTIVE_REGIONS   = 0;            break;
@@ -833,7 +838,7 @@ int main(int argc, char** argv)
 		void * status;
 		int rc;
 		int i;		
-		vector<Microassembler*> assemblers(NUM_THREADS, new Microassembler());
+		vector<Microassembler*> assemblers(NUM_THREADS, new Microassembler(LR_MODE));
 		vector< map<string, Ref_t *> > reftables(NUM_THREADS, map<string, Ref_t *>()); // table of references to analyze
 		
 		if (BEDFILE != "") {
@@ -852,9 +857,9 @@ int main(int argc, char** argv)
 		for( i=0; i < NUM_THREADS; ++i ) {
 			cerr << "starting thread " << (i+1) << " on " << reftables[i].size() << " windows" << endl;
 		
-			assemblers[i] = new Microassembler();
+			assemblers[i] = new Microassembler(LR_MODE);
 
-			assemblers[i]->LR_MODE = LR_MODE;
+			//assemblers[i]->LR_MODE = LR_MODE;
 			assemblers[i]->XA_FILTER = XA_FILTER;
 			assemblers[i]->PRIMARY_ALIGNMENT_ONLY = PRIMARY_ALIGNMENT_ONLY;
 			assemblers[i]->ACTIVE_REGION_MODULE = ACTIVE_REGIONS;
@@ -924,7 +929,7 @@ int main(int argc, char** argv)
 		int tot_snv_or_indel_or_softclip = 0;
 		//merge variant from all threads
 		cerr << "Merge variants" << endl;
-		VariantDB_t variantDB; // variants DB
+		VariantDB_t variantDB(LR_MODE); // variants DB
 		variantDB.setCommandLine(COMMAND_LINE);
 		for( i=0; i < NUM_THREADS; ++i ) {
 			

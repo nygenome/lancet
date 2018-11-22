@@ -36,7 +36,7 @@ void Variant_t::printVCF() {
 		
 	double fet_score = compute_FET_score(); // compute FET score
 	double fet_score_strand_bias = compute_SB_score(); // compute strand bias score
-		
+	
 	string status = "?";
 	char flag = bestState(tot_ref_cov_normal,tot_alt_cov_normal,tot_ref_cov_tumor,tot_alt_cov_tumor);
 	if(flag == 'T') { status = "SOMATIC"; }
@@ -50,14 +50,12 @@ void Variant_t::printVCF() {
 	if(type=='D') { INFO += ";TYPE=del"; }
 	if(type=='S') { INFO += ";TYPE=snv"; }
 	if(type=='C') { INFO += ";TYPE=complex"; }
-		
-	INFO += ";LEN=" + itos(len) + ";KMERSIZE=" + itos(kmer) + ";SB=" + dtos(fet_score_strand_bias);
 	
+	INFO += ";LEN=" + itos(len) + ";KMERSIZE=" + itos(kmer) + ";SB=" + dtos(fet_score_strand_bias);
+		
 	if(!str.empty()) { INFO += ";MS=" + str; } // add STR info
 	
-	double QUAL = fet_score;
-	string FORMAT = "GT:AD:SR:SA:DP";
-	
+	double QUAL = fet_score;	
 	// apply filters
 	
 	int tumor_cov = tot_ref_cov_tumor + tot_alt_cov_tumor;
@@ -65,9 +63,9 @@ void Variant_t::printVCF() {
 		
 	int normal_cov = tot_ref_cov_normal + tot_alt_cov_normal;
 	double normal_vaf = (normal_cov == 0) ? 0 : ((double)tot_alt_cov_normal/(double)normal_cov);
-	
-	if (filters == NULL) { cerr << "Error: filters not assigned" << endl; }
 		
+	if (filters == NULL) { cerr << "Error: filters not assigned" << endl; }
+	
 	if(!str.empty()) { // STR variant
 		if(fet_score < filters->minPhredFisherSTR) {
 			if (FILTER.compare("") == 0) { FILTER = "LowFisherSTR"; }
@@ -145,14 +143,40 @@ void Variant_t::printVCF() {
 		
 	if(FILTER.compare("") == 0) { FILTER = "PASS"; }
 		
-	//compute genotype
-	//GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
-	//GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
+	//compute genotype	
+	GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
+	GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
+		
+	string NORMAL = "";
+	string TUMOR = "";
+	string FORMAT = "GT:AD:SR:SA:DP";
 	
-	string NORMAL = GT_normal + ":" + itos(tot_ref_cov_normal) + "," + itos(tot_alt_cov_normal) + ":" + itos(ref_cov_normal_fwd) + "," + itos(ref_cov_normal_rev) +":" + itos(alt_cov_normal_fwd) + "," + itos(alt_cov_normal_rev) + ":" + itos(tot_ref_cov_normal+tot_alt_cov_normal);
-	string TUMOR = GT_tumor + ":" + itos(tot_ref_cov_tumor) + "," + itos(tot_alt_cov_tumor) + ":" + itos(ref_cov_tumor_fwd) + "," + itos(ref_cov_tumor_rev) + ":" + itos(alt_cov_tumor_fwd) + "," + itos(alt_cov_tumor_rev) + ":" + itos(tot_ref_cov_tumor+tot_alt_cov_tumor);
+	NORMAL = GT_normal + ":" + 
+		itos(tot_ref_cov_normal) + "," + itos(tot_alt_cov_normal) + ":" + 
+		itos(ref_cov_normal_fwd) + "," + itos(ref_cov_normal_rev) + ":" + 
+		itos(alt_cov_normal_fwd) + "," + itos(alt_cov_normal_rev) + ":" + 
+		itos(tot_ref_cov_normal+tot_alt_cov_normal);
+
+	TUMOR = GT_tumor + ":" + 
+		itos(tot_ref_cov_tumor) + "," + itos(tot_alt_cov_tumor) + ":" + 
+		itos(ref_cov_tumor_fwd) + "," + itos(ref_cov_tumor_rev) + ":" + 
+		itos(alt_cov_tumor_fwd) + "," + itos(alt_cov_tumor_rev) + ":" + 
+		itos(tot_ref_cov_tumor+tot_alt_cov_tumor);
+
+	if (LR_MODE) {
+		
+		FORMAT += ":HPR:HPA";
+		
+		string HPrefN = itos(HPRN[0]) + "," + itos(HPRN[1]) + "," + itos(HPRN[2]);
+		string HPaltN = itos(HPAN[0]) + "," + itos(HPAN[1]) + "," + itos(HPAN[2]);
+		string HPrefT = itos(HPRT[0]) + "," + itos(HPRT[1]) + "," + itos(HPRT[2]);
+		string HPaltT = itos(HPAT[0]) + "," + itos(HPAT[1]) + "," + itos(HPAT[2]);
 	
-	cout << chr << "\t" << pos << "\t" << ID << "\t" << ref << "\t" << alt << "\t" << QUAL << "\t" << FILTER << "\t" << INFO << "\t" << FORMAT << "\t" << NORMAL << "\t" << TUMOR << endl;
+		NORMAL += ":" + HPrefN + ":" + HPaltN;
+		TUMOR += ":" + HPrefT + ":" + HPaltT;
+	}
+	
+	cout << chr << "\t" << pos << "\t" << ID << "\t" << ref << "\t" << alt << "\t" << QUAL << "\t" << FILTER << "\t" << INFO << "\t" << FORMAT << "\t" << NORMAL << "\t" << TUMOR << endl;	
 }
 
 // compute genotype info in VCF format (GT field)
@@ -198,12 +222,19 @@ double Variant_t::compute_FET_score() {
 	
 	FET_t fet;
 	
+	int RCN = (ref_cov_normal_fwd+ref_cov_normal_rev);
+	int RCT = (ref_cov_tumor_fwd+ref_cov_tumor_rev);
+	int ACN = (alt_cov_normal_fwd+alt_cov_normal_rev);
+	int ACT = (alt_cov_tumor_fwd+alt_cov_tumor_rev);
+		
+	//cout << "RCN:"  << RCN << " RCT:" << RCT << " ACN:" << ACN << " ACT:" << ACT << endl;
+	
 	// fisher exaxt test (FET) score for tumor/normal coverages
-	prob = fet.kt_fisher_exact((ref_cov_normal_fwd+ref_cov_normal_rev), (ref_cov_tumor_fwd+ref_cov_tumor_rev), (alt_cov_normal_fwd+alt_cov_normal_rev), (alt_cov_tumor_fwd+alt_cov_tumor_rev), &left, &right, &twotail);
+	prob = fet.kt_fisher_exact(RCN, RCT, ACN, ACT, &left, &right, &twotail);
+		
 	if(prob == 1.0) { fet_score = 0.0; }
 	else if(prob == 0.0) { fet_score = -10.0*log10(1/std::numeric_limits<double>::max()); }
-	else { fet_score = -10.0*log10(prob); }
-	
+	else { fet_score = -10.0*log10(prob); }	
 	//cerr << endl;
 	//cerr.precision(100);
 	//cerr << "FET score left: " << fet_score_left << " (p = " << left << ")" << endl; 
@@ -238,7 +269,7 @@ double Variant_t::compute_SB_score() {
 char Variant_t::bestState(int Rn, int An, int Rt, int At) {
 	
 	char ans = '?';
-	if ( (An>0) && (At>0) ) { // shred (support in both samples)
+	if ( (An>0) && (At>0) ) { // shared (support in both samples)
 		ans = 'S';
 		//if( (Rn>0) && (Rt==0) ) { ans = 'L'; } // loss of heterozygosity (LOH) [het in normal but hom in tumor]
 	}
@@ -255,7 +286,7 @@ char Variant_t::bestState(int Rn, int An, int Rt, int At) {
 	return ans;
 }
 
-string Variant_t::getSignature() {
+string Variant_t::getSignature() const {
 		
 	string ans = chr+":"+itos(pos)+":"+type+":"+itos(len)+":"+ref+":"+alt;
 	//cerr << ans << endl;

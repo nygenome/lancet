@@ -985,36 +985,37 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		{
 			// if the alignment left-shifts the indel, coverage and alignment can be out of sinc. 
 			// Fix: add coverage for K-1 bp after variant end position
-			for (int j=0; j<=K; ++j) {						
-				unsigned int idx1 = transcript[ti].end_pos + j; 
-				// add coverage
-				if (idx1 < coverageN.size()) { // check for out of range
+			if (transcript[ti].code != 'x') { // only do this for indels (skip SNVs)
+				for (int j=0; j<=K; ++j) {
+					unsigned int idx1 = transcript[ti].end_pos + j; 
+					// add coverage
+					if (idx1 < coverageN.size()) { // check for out of range
 				
-					// chech if within tumor only node
-					spanner = path->pathcontig(idx1);
-					if (spanner == NULL) { cerr << "Error: path position out of range: " << idx1 << endl; break; }
-					if (spanner->isStatusCnt('T')) { 
-					//if (spanner->isTumor() && !spanner->isNormal()) { 
-						//cerr << "Within tumor only node" << endl;
-						transcript[ti].isSomatic = true;
-						//transcript[ti].nodesize = spanner->getSize();
+						// chech if within tumor only node
+						spanner = path->pathcontig(idx1);
+						if (spanner == NULL) { cerr << "Error: path position out of range: " << idx1 << endl; break; }
+						if (spanner->isStatusCnt('T')) { 
+							//if (spanner->isTumor() && !spanner->isNormal()) 
+							//cerr << "Within tumor only node" << endl;
+							transcript[ti].isSomatic = true;
+							//transcript[ti].nodesize = spanner->getSize();
 						
-						// print read ids
-						/*
-						unordered_set<ReadId_t>::const_iterator it;
-						for (auto it = spanner->reads_m.begin(); it != spanner->reads_m.end(); it++) {
+							// print read ids
+							/*
+							unordered_set<ReadId_t>::const_iterator it;
+							for (auto it = spanner->reads_m.begin(); it != spanner->reads_m.end(); it++) {
 							cerr << readid2info[*it].readname_m.c_str() << endl;
+							}
+							*/
 						}
-						*/
+						transcript[ti].addAltCovNml(coverageN[idx1]);
+						transcript[ti].addAltCovTmr(coverageT[idx1]);
 					}
-					transcript[ti].addAltCovNml(coverageN[idx1]);
-					transcript[ti].addAltCovTmr(coverageT[idx1]);
+					unsigned int idx2 = transcript[ti].ref_end_pos + j;
+					transcript[ti].addRefCovNml(ref->getCovStructAt(idx2, NML));
+					transcript[ti].addRefCovTmr(ref->getCovStructAt(idx2, TMR));
 				}
-				unsigned int idx2 = transcript[ti].ref_end_pos + j;
-				transcript[ti].addRefCovNml(ref->getCovStructAt(idx2, NML));
-				transcript[ti].addRefCovTmr(ref->getCovStructAt(idx2, TMR));
 			}
-			
 			
 			// updated transcript stats
 			transcript[ti].updateStats();
@@ -1026,10 +1027,10 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			int RCTF = transcript[ti].getMinRefCovTfwd(); // ref cov tumor fwd
 			int RCTR = transcript[ti].getMinRefCovTrev(); // ref cov tumor rev
 			
-			//int ACNF = transcript[ti].getMinNon0CovNfwd(); // alt normal cov fwd
-			//int ACNR = transcript[ti].getMinNon0CovNrev(); // alt normal cov rev
-			int ACNF = transcript[ti].getMinCovNfwd(); // alt normal cov fwd
-			int ACNR = transcript[ti].getMinCovNrev(); // alt normal cov rev
+			int ACNF = transcript[ti].getMinNon0CovNfwd(); // alt normal cov fwd
+			int ACNR = transcript[ti].getMinNon0CovNrev(); // alt normal cov rev
+			//int ACNF = transcript[ti].getMinCovNfwd(); // alt normal cov fwd
+			//int ACNR = transcript[ti].getMinCovNrev(); // alt normal cov rev
 			
 			int ACTF = transcript[ti].getMinCovTfwd(); // alt tumor cov fwd
 			int ACTR = transcript[ti].getMinCovTrev(); // alt tumor cov rev

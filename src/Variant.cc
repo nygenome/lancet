@@ -37,6 +37,13 @@ void Variant_t::printVCF() {
 	double fet_score = compute_FET_score(); // compute FET score
 	double fet_score_strand_bias = compute_SB_score(); // compute strand bias score
 	
+	double fet_score_haplotype_normal = 0.0;
+	double fet_score_haplotype_tumor = 0.0;
+	if (LR_MODE) {
+		fet_score_haplotype_normal = compute_HP_score(HPRN[0], HPRN[1], HPAN[0], HPAN[1]);
+		fet_score_haplotype_tumor = compute_HP_score(HPRT[0], HPRT[1], HPAT[0], HPAT[1]);
+	}
+	
 	string status = "?";
 	char flag = bestState(tot_ref_cov_normal,tot_alt_cov_normal,tot_ref_cov_tumor,tot_alt_cov_tumor);
 	if(flag == 'T') { status = "SOMATIC"; }
@@ -52,7 +59,11 @@ void Variant_t::printVCF() {
 	if(type=='C') { INFO += ";TYPE=complex"; }
 	
 	INFO += ";LEN=" + itos(len) + ";KMERSIZE=" + itos(kmer) + ";SB=" + dtos(fet_score_strand_bias);
-		
+	
+	if (LR_MODE) { // in linked-read mode add fet-score of haplotype bias in the tumor/normal
+		INFO += ";HPSN=" + dtos(fet_score_haplotype_normal) + ";HPST=" + dtos(fet_score_haplotype_tumor) ;
+	}
+	
 	if(!str.empty()) { INFO += ";MS=" + str; } // add STR info
 	
 	double QUAL = fet_score;	
@@ -242,6 +253,26 @@ double Variant_t::compute_FET_score() {
 	//cerr << "FET score twotail: " << fet_score_twotail << " (p = " << twotail << ")" << endl; 
 	
 	return fet_score;
+}
+
+// compute fisher exact test score for haplotype bias (SB) in tumor
+double Variant_t::compute_HP_score(int hpr1, int hpr2, int hpa1, int hpa2) {
+	
+	double prob = 0.0;
+	double left = 0.0;
+	double right = 0.0;
+	double twotail = 0.0;
+	
+	double hp_score = 0.0;
+	
+	FET_t fet;
+	
+	// fisher exaxt test score for strand bias in tumor
+	prob = fet.kt_fisher_exact(hpr1, hpr2, hpa1, hpa2, &left, &right, &twotail);
+	if(prob == 1) { hp_score = 0.0; }
+	else { hp_score = -10.0*log10(prob); }
+	
+	return hp_score;
 }
 
 // compute fisher exact test score for strand bias (SB) in tumor

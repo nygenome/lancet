@@ -163,6 +163,8 @@ public:
 	string getPosition();
 	double compute_FET_score();
 	double compute_SB_score();
+	double compute_HP_score(int hpr1, int hpr2, int hpa1, int hpa2);
+	
 };
 
 #endif

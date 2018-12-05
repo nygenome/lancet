@@ -475,13 +475,13 @@ void Node_t::updateCovDistr(int cov, const string & qv, unsigned int strand, int
 		if(strand == FWD) { 
 			((*cov_distr)[i]).fwd = cov;
 			if(qv[i] >= MIN_QUAL) { 
-				((*cov_distr)[i]).minqv_fwd = cov;
+				++(((*cov_distr)[i]).minqv_fwd);
 			}
 		}
 		else if(strand == REV) { 
 			((*cov_distr)[i]).rev = cov;
 			if(qv[i] >= MIN_QUAL) { 
-				((*cov_distr)[i]).minqv_rev = cov;
+				++(((*cov_distr)[i]).minqv_rev);
 			}
 		}
 		//if (it!=qv.end()) { it++; }

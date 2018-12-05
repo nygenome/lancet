@@ -98,37 +98,43 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##source=lancet " << version << "\n"
 			"##cmdline=" << command_line << "\n"
 			"##reference=" << reference << "\n"
-			"##INFO=<ID=FETS,Number=1,Type=Float,Description=\"phred-scaled p-value of the Fisher's exact test for tumor-normal allele counts (right-sided)\">\n"
+			"##INFO=<ID=FETS,Number=1,Type=Float,Description=\"Phred-scaled p-value of the Fisher's exact test for tumor-normal allele counts\">\n"
 			"##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n"
 			"##INFO=<ID=SHARED,Number=0,Type=Flag,Description=\"Shared mutation betweem tumor and normal\">\n"
 			"##INFO=<ID=NORMAL,Number=0,Type=Flag,Description=\"Mutation present only in the normal\">\n"
 			"##INFO=<ID=NONE,Number=0,Type=Flag,Description=\"Mutation not supported by data\">\n"
 			"##INFO=<ID=KMERSIZE,Number=1,Type=Integer,Description=\"K-mer size used to assemble the locus\">\n"
-			"##INFO=<ID=SB,Number=1,Type=Float,Description=\"Phred-scaled strand bias of the Fisher's exact test (two-sided)\">\n"
+			"##INFO=<ID=SB,Number=1,Type=Float,Description=\"Strand bias score: phred-scaled p-value of the Fisher's exact test for the forward/reverse read counts in the tumor\">\n"
 			"##INFO=<ID=MS,Number=1,Type=String,Description=\"Microsatellite mutation (format: #LEN#MOTIF)\">\n"
 			"##INFO=<ID=LEN,Number=1,Type=Integer,Description=\"Variant size in base pairs\">\n"
-			"##INFO=<ID=TYPE,Number=1,Type=String,Description=\"Variant type (snv, del, ins, complex)\">\n"
-			"##FILTER=<ID=LowCovNormal,Description=\"low coverage in the normal (<" << fs.minCovNormal << ")\">\n"
-			"##FILTER=<ID=HighCovNormal,Description=\"high coverage in the normal (>" << fs.maxCovNormal << ")\">\n"
-			"##FILTER=<ID=LowCovTumor,Description=\"low coverage in the tumor (<" << fs.minCovTumor << ")\">\n"
-			"##FILTER=<ID=HighCovTumor,Description=\"high coverage in the tumor (>" << fs.maxCovTumor << ")\">\n"
-			"##FILTER=<ID=LowVafTumor,Description=\"low variant allele frequency in the tumor (<" << fs.minVafTumor << ")\">\n"
-			"##FILTER=<ID=HighVafNormal,Description=\"high variant allele frequency in the normal (>" << fs.maxVafNormal << ")\">\n"
-			"##FILTER=<ID=LowAltCntTumor,Description=\"low alternative allele count in the tumor (<" << fs.minAltCntTumor << ")\">\n"
-			"##FILTER=<ID=HighAltCntNormal,Description=\"high alternative allele count in the normal (>" << fs.maxAltCntNormal << ")\">\n"
-			"##FILTER=<ID=LowFisherScore,Description=\"low Fisher's exact test score for tumor-normal allele counts (<" << fs.minPhredFisher << ")\">\n"
-			"##FILTER=<ID=LowFisherSTR,Description=\"low Fisher's exact test score for tumor-normal STR allele counts (<" << fs.minPhredFisherSTR << ")\">\n"
-			"##FILTER=<ID=StrandBias,Description=\"strand bias: # of non-reference reads in either forward or reverse strand below threshold (<" << fs.minStrandBias << ")\">\n"
+			"##INFO=<ID=TYPE,Number=1,Type=String,Description=\"Variant type (snv, del, ins, complex)\">\n";
+	
+	if(LR_MODE)	{
+		hdr << "##FORMAT=<ID=HPSN,Number=1,Type=Float,Description=\"Normal haplotype score: phred-scaled p-value of the Fisher's exact test for ref/alt haplotype counts in the normal\">\n"
+			   "##FORMAT=<ID=HPST,Number=1,Type=Float,Description=\"Tumor haplotype score: phred-scaled p-value of the Fisher's exact test for ref/alt haplotype counts in the tumor\">\n";
+	}
+				
+	hdr <<	"##FILTER=<ID=LowCovNormal,Description=\"Low coverage in the normal (<" << fs.minCovNormal << ")\">\n"
+			"##FILTER=<ID=HighCovNormal,Description=\"High coverage in the normal (>" << fs.maxCovNormal << ")\">\n"
+			"##FILTER=<ID=LowCovTumor,Description=\"Low coverage in the tumor (<" << fs.minCovTumor << ")\">\n"
+			"##FILTER=<ID=HighCovTumor,Description=\"High coverage in the tumor (>" << fs.maxCovTumor << ")\">\n"
+			"##FILTER=<ID=LowVafTumor,Description=\"Low variant allele frequency in the tumor (<" << fs.minVafTumor << ")\">\n"
+			"##FILTER=<ID=HighVafNormal,Description=\"High variant allele frequency in the normal (>" << fs.maxVafNormal << ")\">\n"
+			"##FILTER=<ID=LowAltCntTumor,Description=\"Low alternative allele count in the tumor (<" << fs.minAltCntTumor << ")\">\n"
+			"##FILTER=<ID=HighAltCntNormal,Description=\"High alternative allele count in the normal (>" << fs.maxAltCntNormal << ")\">\n"
+			"##FILTER=<ID=LowFisherScore,Description=\"Low Fisher's exact test score for tumor-normal allele counts (<" << fs.minPhredFisher << ")\">\n"
+			"##FILTER=<ID=LowFisherSTR,Description=\"Low Fisher's exact test score for tumor-normal STR allele counts (<" << fs.minPhredFisherSTR << ")\">\n"
+			"##FILTER=<ID=StrandBias,Description=\"Strand bias: # of non-reference reads in either forward or reverse strand below threshold (<" << fs.minStrandBias << ")\">\n"
 			"##FILTER=<ID=STR,Description=\"Microsatellite mutation\">\n"
 			"##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
 			"##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Depth\">\n"
-			"##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"allele depth: # of supporting ref,alt reads at the site\">\n"
-			"##FORMAT=<ID=SR,Number=.,Type=Integer,Description=\"strand counts for ref: # of supporting forward,reverse reads for reference allele\">\n"
-			"##FORMAT=<ID=SA,Number=.,Type=Integer,Description=\"strand counts for alt: # of supporting forward,reverse reads for alterantive allele\">\n";
+			"##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allele depth: # of supporting ref,alt reads at the site\">\n"
+			"##FORMAT=<ID=SR,Number=.,Type=Integer,Description=\"Strand counts for ref: # of supporting forward,reverse reads for reference allele\">\n"
+			"##FORMAT=<ID=SA,Number=.,Type=Integer,Description=\"Strand counts for alt: # of supporting forward,reverse reads for alterantive allele\">\n";
 
 	if(LR_MODE)	{
-		hdr << "##FORMAT=<ID=HPR,Number=.,Type=Integer,Description=\"haplotype counts for ref: # of reads supporting reference allele in haplotype 1, 2, and 0 respectively (0 = unassigned)\">\n"
-			   "##FORMAT=<ID=HPA,Number=.,Type=Integer,Description=\"haplotype counts for alt: # of reads supporting alternative allele in haplotype 1, 2, and 0 respectively (0 = unassigned)\">\n";
+		hdr << "##FORMAT=<ID=HPR,Number=.,Type=Integer,Description=\"Haplotype counts for ref: # of reads supporting reference allele in haplotype 1, 2, and 0 respectively (0 = unassigned)\">\n"
+			   "##FORMAT=<ID=HPA,Number=.,Type=Integer,Description=\"Haplotype counts for alt: # of reads supporting alternative allele in haplotype 1, 2, and 0 respectively (0 = unassigned)\">\n";
 	}
 	
 	hdr << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << sample_name_N << "\t" << sample_name_T << "\n";

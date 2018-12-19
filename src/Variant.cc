@@ -255,7 +255,7 @@ double Variant_t::compute_FET_score() {
 	return fet_score;
 }
 
-// compute fisher exact test score for haplotype bias (SB) in tumor
+// compute fisher exact test score for haplotype bias (HP) in tumor
 double Variant_t::compute_HP_score(int hpr1, int hpr2, int hpa1, int hpa2) {
 	
 	double prob = 0.0;
@@ -267,7 +267,7 @@ double Variant_t::compute_HP_score(int hpr1, int hpr2, int hpa1, int hpa2) {
 	
 	FET_t fet;
 	
-	// fisher exaxt test score for strand bias in tumor
+	// fisher exaxt test score for haplotype bias in tumor
 	prob = fet.kt_fisher_exact(hpr1, hpr2, hpa1, hpa2, &left, &right, &twotail);
 	if(prob == 1) { hp_score = 0.0; }
 	else { hp_score = -10.0*log10(prob); }

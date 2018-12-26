@@ -397,7 +397,8 @@ void parseMD(string & md, map<int,int> & M, int start, string & qual, int min_qv
 	// String for mismatching positions. Regex : [0-9]+(([A-Z]|\^[A-Z]+)[0-9]+)*10
 	// example: 6G4C20G1A5C5A1^C3A15G1G15
     map<int,int>::iterator mit;
-	size_t p = md.find_first_of("acgtACGT^");
+	string valid_bases = "acgtumrwsykvhdbxnACGTUMRWSYKVHDBXN^";
+	size_t p = md.find_first_of(valid_bases);
 	size_t p_old = -1;
 	size_t p2;
 	string del;
@@ -411,21 +412,19 @@ void parseMD(string & md, map<int,int> & M, int start, string & qual, int min_qv
 		step = atoi(num.c_str());
 		pos += step; rpos += step;
 		if(md[p]=='^') { // the reference contains bases that are missing in the read
-			p2 = md.find_first_not_of("acgtACGT^",p+1); // find next number 
+			p2 = md.find_first_not_of(valid_bases,p+1); // find next number 
 			del = md.substr(p+1,p2-(p+1)); // sequence in ref missing from the read
 			pos += del.size(); // increase only reference pointer -- read postion does not change
 			//cerr << del << "|";
-			p = md.find_first_of("acgtACGT^",p2);
+			p = md.find_first_of(valid_bases,p2);
 			p_old = p2-1;
 		}
 		else {
 			++pos; ++rpos;
 			
-			/*
 			if(rpos > qual.length()) {
-				cerr << "MD: " << md << " Pos: " << rpos << " Qual: " << qual <<  endl;
+				cerr << "ERROR: position out of range during MD parsing." << endl << "MD: " << md << " Pos: " << rpos << " Qual: " << qual <<  endl;
 			}
-			*/
 			
 			assert( rpos >= 0 );
 			assert( rpos <= qual.length() );
@@ -438,7 +437,7 @@ void parseMD(string & md, map<int,int> & M, int start, string & qual, int min_qv
 			}
 			//cerr << md[p] << "|";
 			p_old = p;
-			p = md.find_first_of("acgtACGT^",p_old+1);
+			p = md.find_first_of(valid_bases,p_old+1);
 		}
 	}
 	num = md.substr(p_old+1);

@@ -906,34 +906,6 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				while( (ref_aln[pr] != 'A') && (ref_aln[pr] != 'C') && (ref_aln[pr]) != 'G' && (ref_aln[pr] != 'T') ) { --pr; }
 				while( (path_aln[pa] != 'A') && (path_aln[pa] != 'C') && (path_aln[pa] != 'G') && (path_aln[pa] != 'T') ) { --pa; }
 				
-				/*
-				if (((code == '^') && (ts > 0) && (transcript[ts-1].code == code) && (transcript[ts-1].pos == rrpos)) ||
-					((code == 'v') && (ts > 0) && (transcript[ts-1].code == code) && ((transcript[ts-1].pos + transcript[ts-1].ref.length()) == rrpos)))
-				{
-					// extend the indel
-					if(within_tumor_node) { 
-						transcript[ts-1].isSomatic = true; 
-						//transcript[ts-1].nodesize = spanner->getSize();
-					}
-					transcript[ts-1].ref += ref_aln[i];
-					transcript[ts-1].qry += path_aln[i];
-					transcript[ts-1].end_pos = P; // update end position (in the path)
-					transcript[ts-1].ref_end_pos = pos_in_ref + ref->trim5; // update end position (in the ref)
-					if(code == '^') { // ins
-						transcript[ts-1].addCovNfwd(cov_at_pos_N_fwd);
-						transcript[ts-1].addCovNrev(cov_at_pos_N_rev);
-						transcript[ts-1].addCovTfwd(cov_at_pos_T_fwd);
-						transcript[ts-1].addCovTrev(cov_at_pos_T_rev);
-					}
-					if(code == 'v') { // del
-						transcript[ts-1].addRefCovNfwd(ref_cov_at_pos_N_fwd);
-						transcript[ts-1].addRefCovNrev(ref_cov_at_pos_N_rev);
-						transcript[ts-1].addRefCovTfwd(ref_cov_at_pos_T_fwd);
-						transcript[ts-1].addRefCovTrev(ref_cov_at_pos_T_rev);
-					}
-				}
-				*/
-				
 				if ( (ts > 0) && (prev_code != '=') ) // combination of multiple consecutive SNV,ins,del
 				{
 					if(within_tumor_node) { 
@@ -1031,23 +1003,9 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			int ACNR = transcript[ti].getMinNon0CovNrev(); // alt normal cov rev
 			//int ACNF = transcript[ti].getMinCovNfwd(); // alt normal cov fwd
 			//int ACNR = transcript[ti].getMinCovNrev(); // alt normal cov rev
-			
+
 			int ACTF = transcript[ti].getMinCovTfwd(); // alt tumor cov fwd
 			int ACTR = transcript[ti].getMinCovTrev(); // alt tumor cov rev
-			
-			if(transcript[ti].isSomatic) {
-				RCNF = transcript[ti].getAvgRefCovNfwd(); // ref cov normal fwd
-				RCNR = transcript[ti].getAvgRefCovNrev(); // ref cov normal rev
-
-				RCTF = transcript[ti].getAvgRefCovTfwd(); // ref cov tumor
-				RCTR = transcript[ti].getAvgRefCovTrev(); // ref cov tumor
-				//ACNF = transcript[ti].getMinCovNfwd(); // alt normal cov fwd
-				//ACNR = transcript[ti].getMinCovNrev(); // alt normal cov rev
-				ACNF = 0; // alt normal cov fwd
-				ACNR = 0; // alt normal cov rev
-				//ACTF = transcript[ti].getMedianCovTfwd(); // alt tumor cov fwd
-				//ACTR = transcript[ti].getMedianCovTrev(); // alt tumor cov rev
-			}
 			
 			int HP0RN = transcript[ti].getMinRefCovNhp0();
 			int HP1RN = transcript[ti].getMinRefCovNhp1();
@@ -1064,6 +1022,30 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			int HP0AT = transcript[ti].getMinCovThp0();
 			int HP1AT = transcript[ti].getMinCovThp1();
 			int HP2AT = transcript[ti].getMinCovThp2();
+			
+			if(transcript[ti].isSomatic) {
+				RCNF = transcript[ti].getAvgRefCovNfwd(); // ref cov normal fwd
+				RCNR = transcript[ti].getAvgRefCovNrev(); // ref cov normal rev
+
+				RCTF = transcript[ti].getAvgRefCovTfwd(); // ref cov tumor
+				RCTR = transcript[ti].getAvgRefCovTrev(); // ref cov tumor
+				//ACNF = transcript[ti].getMinCovNfwd(); // alt normal cov fwd
+				//ACNR = transcript[ti].getMinCovNrev(); // alt normal cov rev
+				ACNF = 0; // alt normal cov fwd
+				ACNR = 0; // alt normal cov rev
+				//ACTF = transcript[ti].getMedianCovTfwd(); // alt tumor cov fwd
+				//ACTR = transcript[ti].getMedianCovTrev(); // alt tumor cov rev
+								
+				HP0RT = transcript[ti].getAvgRefCovThp0();
+				HP1RT = transcript[ti].getAvgRefCovThp1();
+				HP2RT = transcript[ti].getAvgRefCovThp2();
+			
+				HP0RN = transcript[ti].getAvgRefCovNhp0();
+				HP1RN = transcript[ti].getAvgRefCovNhp1();
+				HP2RN = transcript[ti].getAvgRefCovNhp2();
+					
+				HP0AN = 0; HP1AN = 0; HP2AN = 0;
+			}
 			
 			//int ACTF = (transcript[ti].code=='x') ? transcript[ti].getMinCovTfwd() : transcript[ti].getMedianCovTfwd(); // alt tumor cov fwd
 			//int ACTR = (transcript[ti].code=='x') ? transcript[ti].getMinCovTrev() : transcript[ti].getMedianCovTrev(); // alt tumor cov rev

@@ -256,6 +256,8 @@ public:
 	int getAvgNon0RefCovTfwd() { return mean_non0_ref_cov_T.fwd; }
 	int getAvgNon0RefCovTrev() { return mean_non0_ref_cov_T.rev; }
 	
+	/*-----------------------------*/
+	
 	int getMinRefCovNhp0() { return min_ref_cov_N.hp0; }
 	int getMinRefCovNhp1() { return min_ref_cov_N.hp1; }
 	int getMinRefCovNhp2() { return min_ref_cov_N.hp2; }
@@ -271,6 +273,22 @@ public:
 	int getMinCovThp0() { return min_alt_cov_T.hp0; }
 	int getMinCovThp1() { return min_alt_cov_T.hp1; }
 	int getMinCovThp2() { return min_alt_cov_T.hp2; }
+	
+	int getAvgRefCovNhp0() { return mean_ref_cov_N.hp0; }
+	int getAvgRefCovNhp1() { return mean_ref_cov_N.hp1; }
+	int getAvgRefCovNhp2() { return mean_ref_cov_N.hp2; }
+	
+	int getAvgRefCovThp0() { return mean_ref_cov_T.hp0; }
+	int getAvgRefCovThp1() { return mean_ref_cov_T.hp1; }
+	int getAvgRefCovThp2() { return mean_ref_cov_T.hp2; }
+	
+	int getAvgCovNhp0() { return mean_alt_cov_N.hp0; }
+	int getAvgCovNhp1() { return mean_alt_cov_N.hp1; }
+	int getAvgCovNhp2() { return mean_alt_cov_N.hp2; }
+	
+	int getAvgCovThp0() { return mean_alt_cov_T.hp0; }
+	int getAvgCovThp1() { return mean_alt_cov_T.hp1; }
+	int getAvgCovThp2() { return mean_alt_cov_T.hp2; }
 };
 
 #endif

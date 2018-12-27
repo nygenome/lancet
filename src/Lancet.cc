@@ -64,7 +64,7 @@ void printHelpText(Filters & filters) {
 		"   --min-base-qual, -C       <int>         : minimum base quality required to consider a base for SNV calling [default: " << MIN_QV_CALL << "]\n"
 		"   --quality-range, -Q       <char>        : quality value range [default: " << (char) QV_RANGE << "]\n"
 		"   --min-map-qual, -b        <int>         : minimum read mapping quality in Phred-scale [default: " << MIN_MAP_QUAL << "]\n"
-		"   --max-as-xs-diff, -Z      <int>         : maximum different between AS and XS alignments scores [default: " << MAX_DELTA_AS_XS << "]\n"
+		"   --max-as-xs-diff, -Z      <int>         : maximum difference between AS and XS alignments scores [default: " << MAX_DELTA_AS_XS << "]\n"
 		"   --tip-len, -l             <int>         : max tip length [default: " << MAX_TIP_LEN << "]\n"
 		"   --cov-thr, -c             <int>         : min coverage threshold used to select reference anchors from the De Bruijn graph [default: " << COV_THRESHOLD << "]\n"
 		"   --cov-ratio, -x           <float>       : minimum coverage ratio used to remove nodes from the De Bruijn graph [default: " << MIN_COV_RATIO << "]\n"

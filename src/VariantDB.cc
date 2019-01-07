@@ -110,7 +110,8 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##INFO=<ID=TYPE,Number=1,Type=String,Description=\"Variant type (snv, del, ins, complex)\">\n";
 	
 	if(LR_MODE)	{
-		hdr << "##FORMAT=<ID=HPSN,Number=1,Type=Float,Description=\"Normal haplotype score: phred-scaled p-value of the Fisher's exact test for ref/alt haplotype counts in the normal\">\n"
+		hdr << "##FORMAT=<ID=HPS,Number=1,Type=Float,Description=\"Haplotype score for the T/N pair: phred-scaled p-value of the Fisher's exact test of the total counts of the two haplotype in the tumor-normal pair\">\n"
+			   "##FORMAT=<ID=HPSN,Number=1,Type=Float,Description=\"Normal haplotype score: phred-scaled p-value of the Fisher's exact test for ref/alt haplotype counts in the normal\">\n"
 			   "##FORMAT=<ID=HPST,Number=1,Type=Float,Description=\"Tumor haplotype score: phred-scaled p-value of the Fisher's exact test for ref/alt haplotype counts in the tumor\">\n";
 	}
 				

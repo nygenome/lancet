@@ -39,9 +39,11 @@ void Variant_t::printVCF() {
 	
 	double fet_score_haplotype_normal = 0.0;
 	double fet_score_haplotype_tumor = 0.0;
+	double fet_score_haplotype_pair = 0.0;
 	if (LR_MODE) {
 		fet_score_haplotype_normal = compute_HP_score(HPRN[0], HPRN[1], HPAN[0], HPAN[1]);
 		fet_score_haplotype_tumor = compute_HP_score(HPRT[0], HPRT[1], HPAT[0], HPAT[1]);
+		fet_score_haplotype_pair = compute_HP_score(HPRN[0]+HPAN[0], HPRN[1]+HPAN[1], HPRT[0]+HPAT[0], HPRT[1]+HPAT[1]);
 	}
 	
 	string status = "?";
@@ -61,7 +63,7 @@ void Variant_t::printVCF() {
 	INFO += ";LEN=" + itos(len) + ";KMERSIZE=" + itos(kmer) + ";SB=" + dtos(fet_score_strand_bias);
 	
 	if (LR_MODE) { // in linked-read mode add fet-score of haplotype bias in the tumor/normal
-		INFO += ";HPSN=" + dtos(fet_score_haplotype_normal) + ";HPST=" + dtos(fet_score_haplotype_tumor) ;
+		INFO += ";HPS=" + dtos(fet_score_haplotype_pair) + ";HPSN=" + dtos(fet_score_haplotype_normal) + ";HPST=" + dtos(fet_score_haplotype_tumor) ;
 	}
 	
 	if(!str.empty()) { INFO += ";MS=" + str; } // add STR info

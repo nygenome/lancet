@@ -492,7 +492,7 @@ void Node_t::updateCovDistr(int cov, const string & qv, unsigned int strand, int
 // updateHPCovDistr
 // updated the haplotype coverage distribution along the node string
 //////////////////////////////////////////////////////////////
-void Node_t::updateHPCovDistr(int hp0_cov, int hp1_cov, int hp2_cov, int sample) 
+void Node_t::updateHPCovDistr(int hp0_cov, int hp1_cov, int hp2_cov, const string & qv, int sample) 
 {
 	vector<cov_t> * cov_distr = NULL;
 	
@@ -501,6 +501,11 @@ void Node_t::updateHPCovDistr(int hp0_cov, int hp1_cov, int hp2_cov, int sample)
 	else { cerr << "Error: unrecognized sample " << sample << endl; }
 	
 	for (unsigned int i = 0; i < cov_distr->size(); ++i) {
+		if(qv[i] >= MIN_QUAL) { 
+			if(((*cov_distr)[i]).hp0 < hp0_cov) { ++(((*cov_distr)[i]).hp0_minqv); }
+			if(((*cov_distr)[i]).hp1 < hp1_cov) { ++(((*cov_distr)[i]).hp1_minqv); }
+			if(((*cov_distr)[i]).hp2 < hp2_cov) { ++(((*cov_distr)[i]).hp2_minqv); }
+		}
 		((*cov_distr)[i]).hp0 = hp0_cov;
 		((*cov_distr)[i]).hp1 = hp1_cov;
 		((*cov_distr)[i]).hp2 = hp2_cov;

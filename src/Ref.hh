@@ -46,6 +46,9 @@ typedef struct cov_t
   int hp0; // number of reads in haplotype 0 (unassigned)
   int hp1; // number of reads in haplotype 1
   int hp2; // number of reads in haplotype 2
+  int hp0_minqv; // number of reads in haplotype 0 after minQ cutoff
+  int hp1_minqv; // number of reads in haplotype 1 after minQ cutoff
+  int hp2_minqv; // number of reads in haplotype 2 after minQ cutoff
   //int minmq_fwd; // min mapping quality fwd coverage
   //int minmq_rev; // min mapping quality rev coverage
 } cov_t;

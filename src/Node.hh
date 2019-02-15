@@ -149,7 +149,7 @@ public:
 	float getTotCov() { return cov_tmr_m_fwd + cov_tmr_m_rev + cov_nml_m_fwd + cov_nml_m_rev; }
 	bool isStatusCnt(char c);
 	void updateCovDistr(int cov, const string & qv, unsigned int strand, int sample);
-	void updateHPCovDistr(int hp0_cov, int hp1_cov, int hp2_cov, int sample);
+	void updateHPCovDistr(int hp0_cov, int hp1_cov, int hp2_cov, const string & qv, int sample);
 	void updateCovStatus(char c);
 	void revCovDistr();
 	void computeMinCov();

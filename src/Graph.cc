@@ -200,7 +200,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 					
 					if(LR_MODE) { 
 						unode->updateCovDistr(unode->BXcnt(strand,sample), uc_qv, strand, sample); 
-						unode->updateHPCovDistr(unode->HPcnt(0,sample), unode->HPcnt(1,sample), unode->HPcnt(2,sample), sample); 
+						unode->updateHPCovDistr(unode->HPcnt(0,sample), unode->HPcnt(1,sample), unode->HPcnt(2,sample), uc_qv, sample); 
 						ref_m->updateCoverage(uc.mer_m, unode->BXcnt(strand,sample), strand, sample); // update reference k-mer coverage
 						ref_m->updateHPCoverage(uc.mer_m, unode->HPcnt(0,sample), unode->HPcnt(1,sample), unode->HPcnt(2,sample), sample); 
 						
@@ -229,7 +229,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 					
 					if(LR_MODE) { 
 						vnode->updateCovDistr(vnode->BXcnt(strand,sample), vc_qv, strand, sample); 
-						vnode->updateHPCovDistr(vnode->HPcnt(0,sample), vnode->HPcnt(1,sample), vnode->HPcnt(2,sample), sample); 
+						vnode->updateHPCovDistr(vnode->HPcnt(0,sample), vnode->HPcnt(1,sample), vnode->HPcnt(2,sample), vc_qv, sample); 
 						ref_m->updateCoverage(vc.mer_m, vnode->BXcnt(strand,sample), strand, sample); // update reference k-mer coverage
 						ref_m->updateHPCoverage(vc.mer_m, vnode->HPcnt(0,sample), vnode->HPcnt(1,sample), vnode->HPcnt(2,sample), sample);
 					}

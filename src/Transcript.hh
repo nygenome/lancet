@@ -147,6 +147,9 @@ public:
 			sum.hp0 += cov_distr[i].hp0;
 			sum.hp1 += cov_distr[i].hp1;
 			sum.hp2 += cov_distr[i].hp2;
+			sum.hp0_minqv += cov_distr[i].hp0_minqv;
+			sum.hp1_minqv += cov_distr[i].hp1_minqv;
+			sum.hp2_minqv += cov_distr[i].hp2_minqv;
 			
 			if(cov_distr[i].fwd != 0) { sum_non0.fwd += cov_distr[i].fwd; ++n_non0.fwd; }
 			if(cov_distr[i].rev != 0) { sum_non0.rev += cov_distr[i].rev; ++n_non0.rev; }
@@ -155,6 +158,9 @@ public:
 			if(cov_distr[i].hp0 != 0) { sum_non0.hp0 += cov_distr[i].hp0; ++n_non0.hp0; }
 			if(cov_distr[i].hp1 != 0) { sum_non0.hp1 += cov_distr[i].hp1; ++n_non0.hp1; }
 			if(cov_distr[i].hp2 != 0) { sum_non0.hp2 += cov_distr[i].hp2; ++n_non0.hp2; }
+			if(cov_distr[i].hp0_minqv != 0) { sum_non0.hp0_minqv += cov_distr[i].hp0_minqv; ++n_non0.hp0_minqv; }
+			if(cov_distr[i].hp1_minqv != 0) { sum_non0.hp1_minqv += cov_distr[i].hp1_minqv; ++n_non0.hp1_minqv; }
+			if(cov_distr[i].hp2_minqv != 0) { sum_non0.hp2_minqv += cov_distr[i].hp2_minqv; ++n_non0.hp2_minqv; }
 			
 			if(cov_distr[i].fwd < min.fwd) { min.fwd = cov_distr[i].fwd; }
 			if(cov_distr[i].rev < min.rev) { min.rev = cov_distr[i].rev; }
@@ -163,6 +169,9 @@ public:
 			if(cov_distr[i].hp0 < min.hp0) { min.hp0 = cov_distr[i].hp0; }
 			if(cov_distr[i].hp1 < min.hp1) { min.hp1 = cov_distr[i].hp1; }
 			if(cov_distr[i].hp2 < min.hp2) { min.hp2 = cov_distr[i].hp2; }
+			if(cov_distr[i].hp0_minqv < min.hp0_minqv) { min.hp0_minqv = cov_distr[i].hp0_minqv; }
+			if(cov_distr[i].hp1_minqv < min.hp1_minqv) { min.hp1_minqv = cov_distr[i].hp1_minqv; }
+			if(cov_distr[i].hp2_minqv < min.hp2_minqv) { min.hp2_minqv = cov_distr[i].hp2_minqv; }
 			
 			if(cov_distr[i].fwd < min_non0.fwd && cov_distr[i].fwd != 0) { min_non0.fwd = cov_distr[i].fwd; }
 			if(cov_distr[i].rev < min_non0.rev && cov_distr[i].rev != 0) { min_non0.rev = cov_distr[i].rev; }
@@ -171,6 +180,9 @@ public:
 			if(cov_distr[i].hp0 < min_non0.hp0 && cov_distr[i].hp0 != 0) { min_non0.hp0 = cov_distr[i].hp0; }
 			if(cov_distr[i].hp1 < min_non0.hp1 && cov_distr[i].hp1 != 0) { min_non0.hp1 = cov_distr[i].hp1; }
 			if(cov_distr[i].hp2 < min_non0.hp2 && cov_distr[i].hp2 != 0) { min_non0.hp2 = cov_distr[i].hp2; }
+			if(cov_distr[i].hp0_minqv < min_non0.hp0_minqv && cov_distr[i].hp0_minqv != 0) { min_non0.hp0_minqv = cov_distr[i].hp0_minqv; }
+			if(cov_distr[i].hp1_minqv < min_non0.hp1_minqv && cov_distr[i].hp1_minqv != 0) { min_non0.hp1_minqv = cov_distr[i].hp1_minqv; }
+			if(cov_distr[i].hp2_minqv < min_non0.hp2_minqv && cov_distr[i].hp2_minqv != 0) { min_non0.hp2_minqv = cov_distr[i].hp2_minqv; }
 		}
 		
 		if(n>0) { 
@@ -181,15 +193,21 @@ public:
 			mean.hp0 = (float)sum.hp0/(float)n; 
 			mean.hp1 = (float)sum.hp1/(float)n; 
 			mean.hp2 = (float)sum.hp2/(float)n; 
+			mean.hp0_minqv = (float)sum.hp0_minqv/(float)n; 
+			mean.hp1_minqv = (float)sum.hp1_minqv/(float)n; 
+			mean.hp2_minqv = (float)sum.hp2_minqv/(float)n; 
 		}
 		else { 
 			mean.fwd = 0; 		
 			mean.rev = 0; 		
 			mean.minqv_fwd = 0; 		
 			mean.minqv_rev = 0; 		
-			mean.hp0 = 0; 		
-			mean.hp1 = 0; 		
-			mean.hp2 = 0; 		
+			mean.hp0 = 0;
+			mean.hp1 = 0;
+			mean.hp2 = 0;
+			mean.hp0_minqv = 0; 		
+			mean.hp1_minqv = 0;		
+			mean.hp2_minqv = 0;
 		}
 		
 		if (n_non0.fwd > 0) { mean_non0.fwd = ceil((float)sum_non0.fwd/(float)n_non0.fwd); } else { mean_non0.fwd = 0; }
@@ -199,6 +217,9 @@ public:
 		if (n_non0.hp0 > 0) { mean_non0.hp0 = ceil((float)sum_non0.hp0/(float)n_non0.hp0); } else { mean_non0.hp0 = 0; }
 		if (n_non0.hp1 > 0) { mean_non0.hp1 = ceil((float)sum_non0.hp1/(float)n_non0.hp1); } else { mean_non0.hp1 = 0; }
 		if (n_non0.hp2 > 0) { mean_non0.hp2 = ceil((float)sum_non0.hp2/(float)n_non0.hp2); } else { mean_non0.hp2 = 0; }
+		if (n_non0.hp0_minqv > 0) { mean_non0.hp0_minqv = ceil((float)sum_non0.hp0_minqv/(float)n_non0.hp0_minqv); } else { mean_non0.hp0_minqv = 0; }
+		if (n_non0.hp1_minqv > 0) { mean_non0.hp1_minqv = ceil((float)sum_non0.hp1_minqv/(float)n_non0.hp1_minqv); } else { mean_non0.hp1_minqv = 0; }
+		if (n_non0.hp2_minqv > 0) { mean_non0.hp2_minqv = ceil((float)sum_non0.hp2_minqv/(float)n_non0.hp2_minqv); } else { mean_non0.hp2_minqv = 0; }
 		
 		//median_cov = cov_distr[int(ceil(n/2))];
 	}
@@ -266,13 +287,13 @@ public:
 	int getMinRefCovThp1() { return min_ref_cov_T.hp1; }
 	int getMinRefCovThp2() { return min_ref_cov_T.hp2; }
 	
-	int getMinCovNhp0() { return min_alt_cov_N.hp0; }
-	int getMinCovNhp1() { return min_alt_cov_N.hp1; }
-	int getMinCovNhp2() { return min_alt_cov_N.hp2; }
+	int getMinCovNhp0() { if(code == 'x') {return min_alt_cov_N.hp0_minqv;} else {return min_alt_cov_N.hp0;} }
+	int getMinCovNhp1() { if(code == 'x') {return min_alt_cov_N.hp1_minqv;} else {return min_alt_cov_N.hp1;} }
+	int getMinCovNhp2() { if(code == 'x') {return min_alt_cov_N.hp2_minqv;} else {return min_alt_cov_N.hp2;} }
 	
-	int getMinCovThp0() { return min_alt_cov_T.hp0; }
-	int getMinCovThp1() { return min_alt_cov_T.hp1; }
-	int getMinCovThp2() { return min_alt_cov_T.hp2; }
+	int getMinCovThp0() { if(code == 'x') {return min_alt_cov_T.hp0_minqv;} else {return min_alt_cov_T.hp0;} }
+	int getMinCovThp1() { if(code == 'x') {return min_alt_cov_T.hp1_minqv;} else {return min_alt_cov_T.hp1;} }
+	int getMinCovThp2() { if(code == 'x') {return min_alt_cov_T.hp2_minqv;} else {return min_alt_cov_T.hp2;} }
 	
 	int getAvgRefCovNhp0() { return mean_ref_cov_N.hp0; }
 	int getAvgRefCovNhp1() { return mean_ref_cov_N.hp1; }
@@ -282,13 +303,13 @@ public:
 	int getAvgRefCovThp1() { return mean_ref_cov_T.hp1; }
 	int getAvgRefCovThp2() { return mean_ref_cov_T.hp2; }
 	
-	int getAvgCovNhp0() { return mean_alt_cov_N.hp0; }
-	int getAvgCovNhp1() { return mean_alt_cov_N.hp1; }
-	int getAvgCovNhp2() { return mean_alt_cov_N.hp2; }
+	int getAvgCovNhp0() { if(code == 'x') {return mean_alt_cov_N.hp0_minqv; } else {return mean_alt_cov_N.hp0;} }
+	int getAvgCovNhp1() { if(code == 'x') {return mean_alt_cov_N.hp1_minqv; } else {return mean_alt_cov_N.hp1;} }
+	int getAvgCovNhp2() { if(code == 'x') {return mean_alt_cov_N.hp2_minqv; } else {return mean_alt_cov_N.hp2;} }
 	
-	int getAvgCovThp0() { return mean_alt_cov_T.hp0; }
-	int getAvgCovThp1() { return mean_alt_cov_T.hp1; }
-	int getAvgCovThp2() { return mean_alt_cov_T.hp2; }
+	int getAvgCovThp0() { if(code == 'x') {return mean_alt_cov_T.hp0_minqv; } else {return mean_alt_cov_T.hp0;} }
+	int getAvgCovThp1() { if(code == 'x') {return mean_alt_cov_T.hp1_minqv; } else {return mean_alt_cov_T.hp1;} }
+	int getAvgCovThp2() { if(code == 'x') {return mean_alt_cov_T.hp2_minqv; } else {return mean_alt_cov_T.hp2;} }
 };
 
 #endif

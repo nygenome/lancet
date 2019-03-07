@@ -27,8 +27,10 @@
 // add 10x barcode to set of barcodes for this node
 // return false if the insertion was not succesfull
 //////////////////////////////////////////////////////////////
-bool Node_t::addBX(std::string & bx, unsigned int strand, int label) { 
-
+bool Node_t::addBX(std::string & bx, unsigned int strand, int label) {
+	
+	bool ans = false; 
+	
 	pair<unordered_set<string>::iterator,bool> it;
 	if (label == TMR) {
 		if(strand == FWD) { it = bxset_tmr_fwd.insert(bx); }
@@ -38,7 +40,9 @@ bool Node_t::addBX(std::string & bx, unsigned int strand, int label) {
 		if(strand == FWD) { it = bxset_nml_fwd.insert(bx); }
 		if(strand == REV) { it = bxset_nml_rev.insert(bx); }
 	}
-	return it.second;
+	ans = it.second;
+	
+	return ans;
 }
 
 // addHP
@@ -474,6 +478,7 @@ void Node_t::updateCovDistr(int cov, const string & qv, unsigned int strand, int
 		
 		if(strand == FWD) { 
 			((*cov_distr)[i]).fwd = cov;
+			++((*cov_distr)[i]).fwd = cov;
 			if(qv[i] >= MIN_QUAL) { 
 				++(((*cov_distr)[i]).minqv_fwd);
 			}

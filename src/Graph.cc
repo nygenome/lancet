@@ -179,13 +179,17 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 		//bool bxovl_u = false;
 		//bool bxovl_v = false;
 				 
-		if(LR_MODE) {
+		if(LR_MODE) {			
 			if (offset == 0) {
-				unode->addBX(readid2info[readid].BX, strand, sample);
-				unode->addHP(readid2info[readid].HP, sample);
+				if(!(unode->hasBX(readid2info[readid].BX, sample))) { // update only if BX not already present in this node
+					unode->addBX(readid2info[readid].BX, strand, sample);
+					unode->addHP(readid2info[readid].HP, sample);
+				}
 			}	
-			vnode->addBX(readid2info[readid].BX, strand, sample);
-			vnode->addHP(readid2info[readid].HP, sample);
+			if(!(vnode->hasBX(readid2info[readid].BX, sample))) { // update only if BX not already present in this node
+				vnode->addBX(readid2info[readid].BX, strand, sample);
+				vnode->addHP(readid2info[readid].HP, sample);
+			}
 		}
 
 		if (!isRef)
@@ -193,6 +197,8 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			if (offset == 0) 
 			{ 
 				isOvlMate = (unode->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m)); //kmer from overlapping mates
+				
+				//if(isOvlMate) { cerr << "Overlapping mates for fragment:" << readid2info[readid].readname_m << endl; }
 									
 				if( !isOvlMate) { // do not update coverage for overlapping mates
 										
@@ -222,6 +228,8 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 			}
 			
 			isOvlMate = (vnode->hasOverlappingMate(readid2info[readid].readname_m, readid2info[readid].mate_order_m));
+
+			//if(isOvlMate) { cerr << "Overlapping mates for fragment:" << readid2info[readid].readname_m << endl; }
 
 			if( !isOvlMate ) { // do not update coverage for overlapping mates
 								

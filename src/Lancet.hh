@@ -37,6 +37,7 @@ bool PRIMARY_ALIGNMENT_ONLY = false;
 bool ACTIVE_REGIONS = true;
 bool verbose = false;
 bool VERBOSE = false;
+bool PRINT_CONFIG = false;
 bool KMER_RECOVERY = false;
 bool PRINT_ALL = false;
 bool PRINT_DOT_READS = true;

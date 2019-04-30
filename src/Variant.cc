@@ -154,6 +154,13 @@ void Variant_t::printVCF() {
 	}	
 	*/
 		
+	if (LR_MODE) {
+		if( (flag == 'T') && (HPAT[0]>0) && (HPAT[1]>0) ) { // apply HP filter only to somatic variants
+			if (FILTER.compare("") == 0) { FILTER = "MultiHP"; }
+			else { FILTER += ";MultiHP"; }
+		}
+	}
+			
 	if(FILTER.compare("") == 0) { FILTER = "PASS"; }
 		
 	//compute genotype	

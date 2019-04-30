@@ -126,8 +126,13 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##FILTER=<ID=LowFisherScore,Description=\"Low Fisher's exact test score for tumor-normal allele counts (<" << fs.minPhredFisher << ")\">\n"
 			"##FILTER=<ID=LowFisherSTR,Description=\"Low Fisher's exact test score for tumor-normal STR allele counts (<" << fs.minPhredFisherSTR << ")\">\n"
 			"##FILTER=<ID=StrandBias,Description=\"Strand bias: # of non-reference reads in either forward or reverse strand below threshold (<" << fs.minStrandBias << ")\">\n"
-			"##FILTER=<ID=STR,Description=\"Microsatellite mutation\">\n"
-			"##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
+			"##FILTER=<ID=STR,Description=\"Microsatellite mutation\">\n";
+	
+	if(LR_MODE)	{
+		hdr << "##FILTER=<ID=MultiHP,Description=\"Supporting reads on multiple haplotypes based on linked-reads analysis\">\n";
+	}	
+				
+	hdr << 	"##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
 			"##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Depth\">\n"
 			"##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allele depth: # of supporting ref,alt reads at the site\">\n"
 			"##FORMAT=<ID=SR,Number=.,Type=Integer,Description=\"Strand counts for ref: # of supporting forward,reverse reads for reference allele\">\n"

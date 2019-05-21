@@ -99,7 +99,7 @@ void printHelpText(Filters & filters) {
 		"   --dist-from-str, -D        <int>        : distance (in bp) of variant from STR locus [default: " << DIST_FROM_STR << "]\n"
 		
 		"\nFlags\n"
-		"   --10x, -J                     : 10x Genomics linked-read mode\n"	
+		"   --linked-reads, -J            : linked-reads analysis mode\n"	
 		"   --primary-alignment-only, -I  : only use primary alignments for variant calling\n"
 		"   --XA-tag-filter, -O           : skip reads with multiple hits listed in the XA tag (BWA only)\n"
 		"   --active-region-off, -W       : turn off active region module\n"		
@@ -170,7 +170,7 @@ void printConfiguration(ostream & out, Filters & filters)
 	out << "max-coverage-normal: "  << filters.maxCovNormal << endl;
 
 	// flags
-	out << "10x-mode: "         << bvalue(LR_MODE) << endl;	
+	out << "linked-reads: "     << bvalue(LR_MODE) << endl;	
 	out << "primary-alignment-only: " << bvalue(PRIMARY_ALIGNMENT_ONLY) << endl;	
 	out << "XA-tag-filter: "    << bvalue(XA_FILTER) << endl;	
 	out << "active-regions: "   << bvalue(ACTIVE_REGIONS) << endl;
@@ -690,7 +690,7 @@ int main(int argc, char** argv)
 		{"min-coverage-normal",  required_argument, 0, 'z'},
 		{"max-coverage-normal",  required_argument, 0, 'j'},
 
-		{"10x-mode", no_argument, 0, 'J'},
+		{"linked-reads", no_argument, 0, 'J'},
 		{"primary-alignment-only", no_argument, 0, 'I'},
 		{"XA-tag-filter", no_argument, 0, 'O'},
 		{"active-region-off", no_argument, 0, 'W'},		

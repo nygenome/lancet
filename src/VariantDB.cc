@@ -129,7 +129,7 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##FILTER=<ID=STR,Description=\"Microsatellite mutation\">\n";
 	
 	if(LR_MODE)	{
-		hdr << "##FILTER=<ID=MultiHP,Description=\"Supporting reads on multiple haplotypes based on linked-reads analysis\">\n";
+		hdr << "##FILTER=<ID=MultiHP,Description=\"Supporting reads from multiple haplotypes based on linked-reads analysis\">\n";
 	}	
 				
 	hdr << 	"##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"

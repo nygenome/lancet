@@ -209,7 +209,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 						unode->updateHPCovDistr(unode->HPcnt(0,sample), unode->HPcnt(1,sample), unode->HPcnt(2,sample), uc_qv, sample); 
 						ref_m->updateCoverage(uc.mer_m, unode->BXcnt(strand,sample), strand, sample); // update reference k-mer coverage
 						ref_m->updateHPCoverage(uc.mer_m, unode->HPcnt(0,sample), unode->HPcnt(1,sample), unode->HPcnt(2,sample), sample); 
-						
+						ref_m->updateBXset(uc.mer_m, unode->bxset_tmr_fwd, unode->bxset_tmr_rev, unode->bxset_nml_fwd, unode->bxset_nml_rev, strand, sample);
 					}
 					else { 
 						unode->updateCovDistr((int)(unode->getCov(strand,sample)), uc_qv, strand, sample); 
@@ -240,6 +240,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 						vnode->updateHPCovDistr(vnode->HPcnt(0,sample), vnode->HPcnt(1,sample), vnode->HPcnt(2,sample), vc_qv, sample); 
 						ref_m->updateCoverage(vc.mer_m, vnode->BXcnt(strand,sample), strand, sample); // update reference k-mer coverage
 						ref_m->updateHPCoverage(vc.mer_m, vnode->HPcnt(0,sample), vnode->HPcnt(1,sample), vnode->HPcnt(2,sample), sample);
+						ref_m->updateBXset(vc.mer_m, vnode->bxset_tmr_fwd, vnode->bxset_tmr_rev, vnode->bxset_nml_fwd, vnode->bxset_nml_rev, strand, sample);
 					}
 					else { 
 						vnode->updateCovDistr((int)(vnode->getCov(strand,sample)), vc_qv, strand, sample); 
@@ -515,8 +516,8 @@ void Graph_t::buildgraph(Ref_t * refinfo)
 	
 	ref_m->computeCoverage(TMR);
 	ref_m->computeCoverage(NML);
-	if (verbose) { ref_m->printKmerCoverage(NML); }
-	if (verbose) { ref_m->printKmerCoverage(TMR); }
+	//if (verbose) { ref_m->printKmerCoverage(NML); }
+	//if (verbose) { ref_m->printKmerCoverage(TMR); }
 }
 
 // dfs to detect cycles
@@ -677,6 +678,42 @@ void Graph_t::printAlignment(const string &ref_aln, const string &path_aln, Path
 	cerr << "\n"; 
 }
 
+void Graph_t::printVerticalAlignment(const string &ref_aln, const string &path_aln, Path_t * path, vector<cov_t> & covN, vector<cov_t> & covT, vector<cov_t> & refcovN, vector<cov_t> & refcovT) 
+{
+	cerr << "Pos\tr\tp\td\tan+\tan-\tat+\tat-\trn+\trn-\trt+\trt-" << endl;
+	
+	int k = 0;
+	int j = 0;
+	for (unsigned int i = 0; i < ref_aln.length(); ++i)
+	{
+		cerr << k << "\t" << ref_aln[i] << "\t" << path_aln[i] << "\t";
+		
+		bool ins = false;  
+		bool del = false;
+		if (ref_aln[i] == path_aln[i]) { ++(path->match_bp);  cerr << ' '; }
+		else if (ref_aln[i] == '-')    { ++(path->ins_bp);    cerr << '^'; ins = true; }
+		else if (path_aln[i] == '-')   { ++(path->del_bp);    cerr << 'v'; del = true; }
+		else                           { ++(path->snp_bp);    cerr << 'x'; }
+		
+		if (ins) {
+			cerr << "\t" << covN[k].fwd << "\t" << covN[k].rev << "\t" << covT[k].fwd << "\t" << covT[k].rev;
+			cerr << "\t\t\t\t";
+			k++;
+		}
+		else if (del) {
+			cerr << "\t\t\t\t";
+			cerr << "\t" << refcovN[j].fwd << "\t" << refcovN[j].rev << "\t" << refcovT[j].fwd << "\t" << refcovT[j].rev;
+			j++;
+		}
+		else {
+			cerr << "\t" << covN[k].fwd << "\t" << covN[k].rev << "\t" << covT[k].fwd << "\t" << covT[k].rev;
+			cerr << "\t" << refcovN[j].fwd << "\t" << refcovN[j].rev << "\t" << refcovT[j].fwd << "\t" << refcovT[j].rev;
+			k++; j++;
+		}
+		cerr << "\n";
+	} 
+}
+
 // processPath
 // align path sequence to reference and parse aligment to extract mutations
 //////////////////////////////////////////////////////////////
@@ -724,7 +761,17 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 	coverageT = cov_path_aln;
 	*/
 	assert(ref_aln.length() == path_aln.length());	
-	if(verbose) { printAlignment(ref_aln, path_aln, path); }
+	//if(verbose) { printAlignment(ref_aln, path_aln, path); }
+		
+	if(verbose) { 
+		vector<cov_t> refcovN = (ref->getNormalCoverage());
+		vector<cov_t> refcovT = (ref->getTumorCoverage());
+		
+		cerr << "Array size test: alt(" << coverageN.size() << ") =? ref(" << refcovN.size() << ")" << endl;
+			
+		printVerticalAlignment(ref_aln, path_aln, path, coverageN, coverageT, refcovN, refcovT); 
+	
+	}
 	
 	//print coverage distribution along the sequence path
 	if (verbose) { 
@@ -801,7 +848,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 		*/
 		
 		for (unsigned int i = 0; i < ref_aln.length(); ++i) {	
-			
+						
 			/*
 			int toadd = min( (int)(pathpos+K-1), (int)(coverageN.size()-1));
 			assert(toadd >= 0);
@@ -855,11 +902,12 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			assert(pathpos <= coverageN.size());
 			assert(pathpos <= coverageT.size());
 			
-			int P = pathpos;
+			int P = pathpos-1;
+			/*
 			if (code == 'x') { P = pathpos-1; } // snv
 			else if(code == 'v') { P = pathpos-1; } // del
 			else if(code == '^') { P = pathpos-1; } //ins
-			
+			*/
 			cov_t COVn = coverageN[P];
 			cov_t COVt = coverageT[P];
 			
@@ -875,7 +923,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				cov_window_T.remove(coverageT[pathpos-1]);
 			}
 			*/
-		
+								
 			if (code != '=')
 			{ 
 				if(verbose) {
@@ -1006,12 +1054,15 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 
 			int RCTF = transcript[ti].getMinRefCovTfwd(); // ref cov tumor fwd
 			int RCTR = transcript[ti].getMinRefCovTrev(); // ref cov tumor rev
-			
-			int ACNF = transcript[ti].getMinNon0CovNfwd(); // alt normal cov fwd
-			int ACNR = transcript[ti].getMinNon0CovNrev(); // alt normal cov rev
-			//int ACNF = transcript[ti].getMinCovNfwd(); // alt normal cov fwd
-			//int ACNR = transcript[ti].getMinCovNrev(); // alt normal cov rev
 
+			int ACNF = transcript[ti].getMinCovNfwd(); // alt normal cov fwd
+			int ACNR = transcript[ti].getMinCovNrev(); // alt normal cov rev			
+			
+			if (transcript[ti].code != 'x') { // for indels skip over zero coverage values (due to the +k coverage values added after variant end postion
+				ACNF = transcript[ti].getMinNon0CovNfwd(); // alt normal cov fwd
+				ACNR = transcript[ti].getMinNon0CovNrev(); // alt normal cov rev
+			}
+			
 			int ACTF = transcript[ti].getMinCovTfwd(); // alt tumor cov fwd
 			int ACTR = transcript[ti].getMinCovTrev(); // alt tumor cov rev
 			
@@ -1096,10 +1147,23 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				array<int,3> HPAN = {HP1AN, HP2AN, HP0AN}; // alternative HP normal
 				array<int,3> HPAT = {HP1AT, HP2AT, HP0AT}; // alternative HP tumor
 				
+				string bxset_ref_N = "";
+				string bxset_ref_T = "";
+				string bxset_alt_N = "";
+				string bxset_alt_T = "";
+					
+				if (LR_MODE) {
+					bxset_ref_N = transcript[ti].getRefBxSetNml();
+					bxset_ref_T = transcript[ti].getRefBxSetTmr();
+					bxset_alt_N = transcript[ti].getAltBxSetNml();
+					bxset_alt_T = transcript[ti].getAltBxSetTmr();					
+				}
+				
 				vDB->addVar(Variant_t(LR_MODE, ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, 
 					RCN, RCT, ACN, ACT,
 					HPRN, HPRT, HPAN, HPAT,
-					transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters, K, STR.str(), transcript[ti].code));
+					transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters, K, STR.str(), transcript[ti].code,
+					bxset_ref_N, bxset_ref_T, bxset_alt_N, bxset_alt_T));
 				}
 		}
 		if(verbose) { cerr << endl; }
@@ -1366,11 +1430,11 @@ void Graph_t::eka(Node_t * source, Node_t * sink, Ori_t dir,
 				
 		if (path->hasCycle_m) { ++allcycles; }
 		++complete;
-		
+				
 		//if(path->hasTumorOnlyNode()) {
 			processPath(path, ref, fp, printPathsToFile, complete, perfect, withsnps, withindel, withmix);
 		//}
-		
+			
 		for (unsigned int i = 0; i < path->edges_m.size(); ++i) {
 			(path->edges_m[i])->setFlag(1);
 		}

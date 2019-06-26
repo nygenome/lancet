@@ -23,7 +23,7 @@
 *************************** /COPYRIGHT **************************************/
 
 
-void Variant_t::printVCF() {
+string Variant_t::printVCF() {
 	//CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  Pat4-FF-Normal-DNA      Pat4-FF-Tumor-DNA
 	string ID = ".";
 	string FILTER = "";
@@ -52,7 +52,7 @@ void Variant_t::printVCF() {
 	else if(flag == 'S') { status = "SHARED"; }
 	else if(flag == 'L') { status = "LOH"; }
 	else if(flag == 'N') { status = "NORMAL"; }
-	else if(flag == 'E') { status = "NONE"; return; } // do not print varaints without support
+	else if(flag == 'E') { status = "NONE"; return ""; } // do not print varaints without support
 		
 	string INFO = status + ";FETS=" + dtos(fet_score);
 	if(type=='I') { INFO += ";TYPE=ins"; }
@@ -164,8 +164,11 @@ void Variant_t::printVCF() {
 	if(FILTER.compare("") == 0) { FILTER = "PASS"; }
 		
 	//compute genotype	
-	GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
-	GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
+	string GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
+	string GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
+	
+	string BX_normal = bxset_ref_N + "," + bxset_alt_N;
+	string BX_tumor  = bxset_ref_T + "," + bxset_alt_T;
 		
 	string NORMAL = "";
 	string TUMOR = "";
@@ -185,18 +188,22 @@ void Variant_t::printVCF() {
 
 	if (LR_MODE) {
 		
-		FORMAT += ":HPR:HPA";
+		FORMAT += ":HPR:HPA:BX";
 		
 		string HPrefN = itos(HPRN[0]) + "," + itos(HPRN[1]) + "," + itos(HPRN[2]);
 		string HPaltN = itos(HPAN[0]) + "," + itos(HPAN[1]) + "," + itos(HPAN[2]);
 		string HPrefT = itos(HPRT[0]) + "," + itos(HPRT[1]) + "," + itos(HPRT[2]);
 		string HPaltT = itos(HPAT[0]) + "," + itos(HPAT[1]) + "," + itos(HPAT[2]);
 	
-		NORMAL += ":" + HPrefN + ":" + HPaltN;
-		TUMOR += ":" + HPrefT + ":" + HPaltT;
+		NORMAL += ":" + HPrefN + ":" + HPaltN + ":" + BX_normal;
+		TUMOR += ":" + HPrefT + ":" + HPaltT + ":" + BX_tumor;
 	}
 	
-	cout << chr << "\t" << pos << "\t" << ID << "\t" << ref << "\t" << alt << "\t" << QUAL << "\t" << FILTER << "\t" << INFO << "\t" << FORMAT << "\t" << NORMAL << "\t" << TUMOR << endl;	
+    std::stringstream vcfline;
+	vcfline << chr << "\t" << pos << "\t" << ID << "\t" << ref << "\t" << alt << "\t" << QUAL << "\t" << FILTER << "\t" << INFO << "\t" << FORMAT << "\t" << NORMAL << "\t" << TUMOR << endl;	
+	//cout << vcfline;
+	
+	return vcfline.str();
 }
 
 // compute genotype info in VCF format (GT field)
@@ -220,13 +227,14 @@ string Variant_t::genotype(int R, int A) {
 
 // compute genotype info in VCF format for this variant
 //////////////////////////////////////////////////////////////
+/*
 void Variant_t::reGenotype() {
 	
 	//compute genotype
 	GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
 	GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
 }
-
+*/
 
 // 	compute fisher exaxt test score for tumor/normal coverages
 //////////////////////////////////////////////////////////////

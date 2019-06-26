@@ -468,23 +468,33 @@ void Node_t::updateCovStatus(char c)
 void Node_t::updateCovDistr(int cov, const string & qv, unsigned int strand, int sample) 
 {
 	vector<cov_t> * cov_distr = NULL;
-	
-	if(sample == TMR)      { cov_distr = &cov_distr_tmr; }
-	else if(sample == NML) { cov_distr = &cov_distr_nml; }
+	unordered_set<string> bxset;
+		
+	if(sample == TMR)      { 
+		cov_distr = &cov_distr_tmr; 
+		if(strand == FWD) { bxset = bxset_tmr_fwd; }
+		if(strand == REV) { bxset = bxset_tmr_rev; }
+	}
+	else if(sample == NML) { 
+		cov_distr = &cov_distr_nml; 
+		if(strand == FWD) { bxset = bxset_nml_fwd; }
+		if(strand == REV) { bxset = bxset_nml_rev; }
+	}
 	else { cerr << "Error: unrecognized sample " << sample << endl; }
-	
+		
  	//string::const_iterator it=qv.begin();
 	for (unsigned int i = 0; i < cov_distr->size(); ++i) {
 		
-		if(strand == FWD) { 
+		if(strand == FWD) {
 			((*cov_distr)[i]).fwd = cov;
-			++((*cov_distr)[i]).fwd = cov;
+			((*cov_distr)[i]).bxset_fwd = bxset;
 			if(qv[i] >= MIN_QUAL) { 
 				++(((*cov_distr)[i]).minqv_fwd);
 			}
 		}
-		else if(strand == REV) { 
+		else if(strand == REV) {
 			((*cov_distr)[i]).rev = cov;
+			((*cov_distr)[i]).bxset_rev = bxset;
 			if(qv[i] >= MIN_QUAL) { 
 				++(((*cov_distr)[i]).minqv_rev);
 			}

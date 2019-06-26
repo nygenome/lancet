@@ -53,7 +53,8 @@ void Ref_t::indexMers()
 			//assert(i<seq.length()); // check for out of range index
 			cmer.set(seq.substr(i, K));
 			
-			cov_t c;
+			//cov_t c;
+			cov_t c = {0,0,0,0,0,0,0,0,0,0};
 		    mertable_nml->insert(std::pair<string,cov_t>(cmer.mer_m,c));
 		    mertable_tmr->insert(std::pair<string,cov_t>(cmer.mer_m,c));
 			
@@ -70,11 +71,51 @@ bool Ref_t::hasMer(const string & cmer)
 }
 
 // updated coverage for input mer
+void Ref_t::updateBXset(const string & cmer, 
+	unordered_set<string> & bxset_tmr_fwd,
+	unordered_set<string> & bxset_tmr_rev,
+	unordered_set<string> & bxset_nml_fwd,
+	unordered_set<string> & bxset_nml_rev,
+	unsigned int strand, int sample) {
+		
+	indexMers();
+	
+	unordered_map<string,cov_t> * mertable = NULL;
+	unordered_set<string> bxset;
+	
+	if(sample == TMR)      { 
+		mertable = mertable_tmr; 
+		if(strand == FWD) { bxset = bxset_tmr_fwd; }
+		if(strand == REV) { bxset = bxset_tmr_rev; }
+	}
+	else if(sample == NML) { 
+		mertable = mertable_nml; 
+		if(strand == FWD) { bxset = bxset_nml_fwd; }
+		if(strand == REV) { bxset = bxset_nml_rev; }
+	}
+	else { cerr << "Error: unrecognized sample " << sample << endl; }
+	
+	assert(mertable != NULL);
+	//if (mertable == NULL) { cerr << "Error: null pointer to mer-table!" << endl; } 
+	
+	std::unordered_map<string,cov_t>::iterator it = mertable->find(cmer);
+	if (it != mertable->end()) {
+		if(strand == FWD) { 
+			((*it).second).bxset_fwd = bxset;
+		}
+		else if(strand == REV) { 
+			((*it).second).bxset_rev = bxset;
+		}
+	}
+}
+
+// updated coverage for input mer
 void Ref_t::updateCoverage(const string & cmer, int cov, unsigned int strand, int sample) {
 	indexMers();
 	
 	unordered_map<string,cov_t> * mertable = NULL;
-		
+	unordered_set<string> bxset;
+	
 	if(sample == TMR)      { mertable = mertable_tmr; }
 	else if(sample == NML) { mertable = mertable_nml; }
 	else { cerr << "Error: unrecognized sample " << sample << endl; }
@@ -128,9 +169,9 @@ void Ref_t::computeCoverage(int sample) {
 	assert(mertable != NULL);
 	assert(coverage != NULL);
 
-	for (unsigned i = 0; (i + K) < seq.length(); ++i) 	
+	for (unsigned i = 0; (i + K) < rawseq.length(); ++i) 	
 	{	
-		cmer.set(seq.substr(i, K));			
+		cmer.set(rawseq.substr(i, K));			
 		std::unordered_map<string,cov_t>::iterator it = mertable->find(cmer.mer_m);
 		if (it != mertable->end()) {
 			int cov_fwd = ((*it).second).fwd;
@@ -138,6 +179,8 @@ void Ref_t::computeCoverage(int sample) {
 			int cov_hp0 = ((*it).second).hp0;
 			int cov_hp1 = ((*it).second).hp1;
 			int cov_hp2 = ((*it).second).hp2;
+			unordered_set<string> bxset_fwd = ((*it).second).bxset_fwd;
+			unordered_set<string> bxset_rev = ((*it).second).bxset_rev;
 			
 			/*
 			normal_coverage.at(i) = n_cov;			
@@ -157,7 +200,9 @@ void Ref_t::computeCoverage(int sample) {
 					coverage->at(j).rev = cov_rev;
 					coverage->at(j).hp0 = cov_hp0;
 					coverage->at(j).hp1 = cov_hp1; 				
-					coverage->at(j).hp2 = cov_hp2; 
+					coverage->at(j).hp2 = cov_hp2;
+					coverage->at(j).bxset_fwd = bxset_fwd; 
+					coverage->at(j).bxset_rev = bxset_rev;				
 				}
 			}
 			else {
@@ -166,22 +211,36 @@ void Ref_t::computeCoverage(int sample) {
 				coverage->at(i+K-1).hp0 = cov_hp0;
 				coverage->at(i+K-1).hp1 = cov_hp1;
 				coverage->at(i+K-1).hp2 = cov_hp2;
-				
+				coverage->at(i+K-1).bxset_fwd = bxset_fwd; 
+				coverage->at(i+K-1).bxset_rev = bxset_rev;	
+							
 				//for (int l = 0; l < K-1; l++) {
 					//if(normal_coverage.at(i+l) < n_cov) { normal_coverage.at(i+l) = n_cov; }
 					//if(tumor_coverage.at(i+l) < t_cov) { tumor_coverage.at(i+l) = t_cov; }
 					//normal_coverage.at(i+l) = n_cov;
 					//tumor_coverage.at(i+l) = t_cov;
 				//}
-			}
-			
+			}	
 		}
 		else {
-			coverage->at(i).fwd = 0;
-			coverage->at(i).rev = 0;
-			coverage->at(i).hp0 = 0;
-			coverage->at(i).hp1 = 0;
-			coverage->at(i).hp2 = 0;
+			if(i==0) {
+				for (int j=i; j<K; ++j) { 
+					coverage->at(j).fwd = 0; 				
+					coverage->at(j).rev = 0;
+					coverage->at(j).hp0 = 0;
+					coverage->at(j).hp1 = 0; 				
+					coverage->at(j).hp2 = 0;
+					coverage->at(j).bxset_fwd.clear(); 
+					coverage->at(j).bxset_rev.clear();				
+				}
+			}
+			coverage->at(i+K-1).fwd = 0;
+			coverage->at(i+K-1).rev = 0;
+			coverage->at(i+K-1).hp0 = 0;
+			coverage->at(i+K-1).hp1 = 0;
+			coverage->at(i+K-1).hp2 = 0;
+			coverage->at(i+K-1).bxset_fwd.clear();
+			coverage->at(i+K-1).bxset_rev.clear();			
 		}
 	}
 }
@@ -197,7 +256,7 @@ cov_t Ref_t::getCovStructAt(unsigned pos, int sample) {
 	assert(coverage != NULL);
 	//if (coverage == NULL) { cerr << "Error: null pointer to coverage vector!" << endl; } 
 	
-	cov_t c = {0,0,0,0,0,0,0};
+	cov_t c = {0,0,0,0,0,0,0,0,0,0};
 	if(coverage->size()>pos) {c = coverage->at(pos); }
 	
 	return c;
@@ -271,20 +330,21 @@ int Ref_t::getMinCovInKbp(unsigned pos, int K, int sample) {
 void Ref_t::printKmerCoverage(int sample) {
 
 	vector<cov_t> * coverage = NULL;
-	if(sample == NML) { coverage = normal_coverage; }
-	else if(sample == TMR) { coverage = tumor_coverage; }
+	char S = 'u';
+	if(sample == NML) { coverage = normal_coverage; S = 'n'; }
+	else if(sample == TMR) { coverage = tumor_coverage; S = 't'; }
 	else { cerr << "Error: unknown sample " << sample << endl; return; }
 	
 	assert(coverage != NULL);
 	//if (coverage == NULL) { cerr << "Error: null pointer to coverage vector!" << endl; } 
 	
-    cerr << "cov " << sample << "+: ";
+    cerr << "cov " << S << "+: ";
 	for (unsigned i=0; i<coverage->size(); ++i) {
 	    cerr << " " << coverage->at(i).fwd;
 	}
 	cerr << endl;
 	
-    cerr << "cov " << sample << "-: ";
+    cerr << "cov " << S << "-: ";
 	for (unsigned i=0; i<coverage->size(); ++i) {
 	    cerr << " " << coverage->at(i).rev;
 	}
@@ -308,8 +368,8 @@ void Ref_t::resetCoverage() {
 	//if (normal_coverage == NULL) { cerr << "Error: null pointer to coverage vector for normal!" << endl; } 
 	//if (tumor_coverage == NULL) { cerr << "Error: null pointer to coverage vector for tumor!" << endl; } 
 	
-	normal_coverage->resize(seq.size()); 
-	tumor_coverage->resize(seq.size());
+	normal_coverage->resize(rawseq.size()); 
+	tumor_coverage->resize(rawseq.size());
 	
 	for (unsigned i=0; i<normal_coverage->size(); ++i) { 
 		normal_coverage->at(i).fwd = 0;

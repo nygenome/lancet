@@ -206,6 +206,7 @@ public:
 		
 	//void loadReadsSFA(const string & filename);
 	void printAlignment(const string &ref_aln, const string &path_aln, Path_t * path);
+	void printVerticalAlignment(const string &ref_aln, const string &path_aln, Path_t * path, vector<cov_t> & covN, vector<cov_t> & covT, vector<cov_t> & refcovN, vector<cov_t> & refcovT);
 	void processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPathsToFile, int &complete, int &perfect, int &withsnps, int &withindel, int &withmix);
 	void processShortPath(Node_t * node, Ref_t * ref, FILE * fp, bool printPathsToFile, int &complete, int &perfect, int &withsnps, int &withindel, int &withmix);
 	//Path_t * bfs(Node_t * source, Node_t * sink, Ori_t dir, Ref_t * ref);

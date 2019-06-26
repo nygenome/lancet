@@ -49,6 +49,16 @@ void VariantDB_t::addVar(const Variant_t & v) {
 		int new_tot_cov = new_ref_cov_normal + new_ref_cov_tumor + new_alt_cov_normal + new_alt_cov_tumor;
 		
 		if(old_tot_cov < new_tot_cov) {
+			
+			/*
+			cerr << "*** Variant replacement ***" << endl;
+			cerr << "Key: " << v.getSignature() << endl;
+			cerr << "Old var: " << it_v->second.printVCF() << endl;
+			Variant_t tmp = v;
+			cerr << "New var: " << tmp.printVCF() << endl;
+			cerr << "***************************" << endl;
+			*/
+			
 			it_v->second.kmer = v.kmer;
 			
 			it_v->second.ref_cov_normal_fwd = v.ref_cov_normal_fwd;
@@ -137,9 +147,10 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allele depth: # of supporting ref,alt reads at the site\">\n"
 			"##FORMAT=<ID=SR,Number=.,Type=Integer,Description=\"Strand counts for ref: # of supporting forward,reverse reads for reference allele\">\n"
 			"##FORMAT=<ID=SA,Number=.,Type=Integer,Description=\"Strand counts for alt: # of supporting forward,reverse reads for alterantive allele\">\n";
-
+	
 	if(LR_MODE)	{
-		hdr << "##FORMAT=<ID=HPR,Number=.,Type=Integer,Description=\"Haplotype counts for ref: # of reads supporting reference allele in haplotype 1, 2, and 0 respectively (0 = unassigned)\">\n"
+		hdr << "##FORMAT=<ID=BX,Number=.,Type=Integer,Description=\"Barcodes supporting ref and alt alleles\">\n"
+		       "##FORMAT=<ID=HPR,Number=.,Type=Integer,Description=\"Haplotype counts for ref: # of reads supporting reference allele in haplotype 1, 2, and 0 respectively (0 = unassigned)\">\n"
 			   "##FORMAT=<ID=HPA,Number=.,Type=Integer,Description=\"Haplotype counts for alt: # of reads supporting alternative allele in haplotype 1, 2, and 0 respectively (0 = unassigned)\">\n";
 	}
 	
@@ -167,7 +178,7 @@ void VariantDB_t::printToVCF(const string version, const string reference, char 
 		//string pos = (it->second).getPosition();
 	    //unordered_map<string,int>::iterator itp = nCNT.find(pos);
 		//if (itp == nCNT.end()) { // print variant if no muations in the normal at locus
-			it->second.printVCF();
+			cout << it->second.printVCF();
 		//}
 	}	
 }

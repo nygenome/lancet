@@ -27,6 +27,7 @@
 #include <string>
 //#include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <set>
 #include <vector>
 #include "Mer.hh"
@@ -49,6 +50,8 @@ typedef struct cov_t
   int hp0_minqv; // number of reads in haplotype 0 after minQ cutoff
   int hp1_minqv; // number of reads in haplotype 1 after minQ cutoff
   int hp2_minqv; // number of reads in haplotype 2 after minQ cutoff
+  unordered_set<string> bxset_fwd; // set of barcodes associated to the kmer in the fwd strand
+  unordered_set<string> bxset_rev; // set of barcodes associated to the kmer in the rev strand
   //int minmq_fwd; // min mapping quality fwd coverage
   //int minmq_rev; // min mapping quality rev coverage
 } cov_t;
@@ -107,6 +110,12 @@ public:
 	void updateCoverage(const string & cmer, int cov, unsigned int strand, int sample);
 	void updateHPCoverage(const string & cmer, int hp0_cov, int hp1_cov, int hp2_cov, int sample);
 	void computeCoverage(int sample);
+	void updateBXset(const string & cmer, 
+		unordered_set<string> & bxset_tmr_fwd,
+		unordered_set<string> & bxset_tmr_rev,
+		unordered_set<string> & bxset_nml_fwd,
+		unordered_set<string> & bxset_nml_rev,
+		unsigned int strand, int sample);
 	
 	cov_t getCovStructAt(unsigned pos, int sample);
 	int getCovAt(unsigned pos, unsigned int strand, int sample);
@@ -117,6 +126,9 @@ public:
 	void resetCoverage();
 	void clear();
 	void init();
+	
+	vector<cov_t> getNormalCoverage() { vector<cov_t> V(normal_coverage->begin()+trim5, normal_coverage->end()-trim3); return V; };
+	vector<cov_t> getTumorCoverage()  { vector<cov_t> V(tumor_coverage->begin()+trim5, tumor_coverage->end()-trim3);   return V; };	
 };
 
 #endif

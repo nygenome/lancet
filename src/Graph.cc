@@ -179,7 +179,7 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 		//bool bxovl_u = false;
 		//bool bxovl_v = false;
 				 
-		if(LR_MODE) {			
+		if(LR_MODE) {
 			if (offset == 0) {
 				if(!(unode->hasBX(readid2info[readid].BX, sample))) { // update only if BX not already present in this node
 					unode->addBX(readid2info[readid].BX, strand, sample);

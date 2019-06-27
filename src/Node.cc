@@ -31,6 +31,8 @@ bool Node_t::addBX(std::string & bx, unsigned int strand, int label) {
 	
 	bool ans = false; 
 	
+	if (bx == "null") { return ans; } // skip over null barcodes
+	
 	pair<unordered_set<string>::iterator,bool> it;
 	if (label == TMR) {
 		if(strand == FWD) { it = bxset_tmr_fwd.insert(bx); }

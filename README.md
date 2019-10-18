@@ -64,13 +64,17 @@ The previous command shows an exemplary submission of multiple parallel lancet j
 
 ### Linked-Reads analysis
 
-The recommended command line options for 10x Genomics linked-reads analysis are:
+The recommended command line options for [10x Genomics](https://www.10xgenomics.com/) linked-reads analysis are:
 
-~~~
-lancet **--linked-reads** **--primary-alignment-only** --tumor T.bam --normal N.bam --ref ref.fa --reg chr1 --num-threads 8 > out.vcf
-~~~
+```
+lancet --linked-reads --primary-alignment-only --tumor T.bam --normal N.bam --ref ref.fa --reg chr1 --num-threads 8 > out.vcf
+```
+where:
 
-[LongRanger](https://support.10xgenomics.com/genome-exome/software/pipelines/latest/what-is-long-ranger) BAMs are directy supported, however, for improved accuarcy, we highly recommend to apply to the BAMs the [MarkDuplicates](https://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates) program from [Picard Tools](https://broadinstitute.github.io/picard/), which marks PCR duplicates more accurately than LongRanger.
+* **linked-reads** activates the linked-reads mode to support LongRanger BAM format (e.g., BX and HP tags, etc.).
+* **primary-alignment-only** forces the program to only use the primary alignment of each read for the analysis.
+
+[LongRanger](https://support.10xgenomics.com/genome-exome/software/pipelines/latest/what-is-long-ranger) BAMs are directy supported, however, for improved accuarcy, we highly recommend to process the BAMs with the [MarkDuplicates](https://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates) program from [Picard Tools](https://broadinstitute.github.io/picard/), which marks PCR duplicates more accurately than LongRanger.
 
 ### Output
 
@@ -153,7 +157,7 @@ The final graph (after compression) containing one single variant is depicted be
  _____|\__,_|_|  _|\___|\___|\__|
 
 Program: lancet (micro-assembly somatic variant caller)
-Version: 1.1.1, October 18 2019
+Version: 1.1.0, October 18 2019
 Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>
 
 Usage: lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>

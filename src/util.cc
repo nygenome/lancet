@@ -93,6 +93,42 @@ string dtos(double d) // convert double to string
     return s.str();
 }
 
+// unordered set to vector conversion
+//////////////////////////////////////////////////////////////////////////
+vector<std::string> toVector(unordered_set<string> & s) {
+	vector<string> v(s.size());
+	copy(s.begin(), s.end(), v.begin());
+	return v;
+}
+
+// concatenate and convert two vectors into a string
+//////////////////////////////////////////////////////////////////////////
+string twoVecToString(vector<string> & v1, vector<string> & v2) { 
+	string s = "";
+	for ( auto it = v1.begin(); it != v1.end(); ++it ) { s += *it + ";"; }
+	for ( auto it = v2.begin(); it != v2.end(); ++it ) { 
+		if (next(it) == v2.end()) { s += *it; }
+		else { s += *it + ";"; }
+	}
+	if(s == "") { s = "."; }
+	
+	return s;
+}	
+
+// concatenate and convert two sets into a string
+//////////////////////////////////////////////////////////////////////////
+string twoSetsToString(unordered_set<string> & v1, unordered_set<string> & v2) { 
+	string s = "";
+	for ( auto it = v1.begin(); it != v1.end(); ++it ) { s += *it + ";"; }
+	for ( auto it = v2.begin(); it != v2.end(); ++it ) { 
+		if (next(it) == v2.end()) { s += *it; }
+		else { s += *it + ";"; }
+	}
+	if(s == "") { s = "."; }
+	
+	return s;
+}
+
 // xfclose
 //////////////////////////////////////////////////////////////////////////
 

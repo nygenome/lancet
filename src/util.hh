@@ -28,6 +28,7 @@
 #include <sstream>
 #include <assert.h>
 #include <map>
+#include <unordered_set>
 
 #include "api/BamReader.h"
 
@@ -73,6 +74,9 @@ std::string dtos(double d);
 bool isDNA(char b);
 bool isAmbiguos(char b);
 char rrc(char b);
+std::vector<std::string> toVector(std::unordered_set<std::string> & s);
+std::string twoVecToString(std::vector<std::string> & v1, std::vector<std::string> & v2);
+std::string twoSetsToString(std::unordered_set<std::string> & v1, std::unordered_set<std::string> & v2);
 std::string rc_str(const std::string & str);
 void reverse(std::string & str);
 bool Fasta_Read(FILE * fp, std::string & s, std::string & hdr);

@@ -45,6 +45,9 @@ void Graph_t::clear(bool flag)
 	//sparse_hash_map<Mer_t, Node_t *>().swap(nodes_m);
 	//hopscotch_map<Mer_t, Node_t *, hash<Mer_t>, equal_to<Mer_t>, allocator<pair<Mer_t,Node_t *>>, 30, true>().swap(nodes_m);
 
+	bx_table_tmr.clear(); unordered_map<Mer_t,set<string>>().swap(bx_table_tmr);
+	bx_table_nml.clear(); unordered_map<Mer_t,set<string>>().swap(bx_table_nml);
+
 	source_m = NULL;
 	sink_m = NULL;
 
@@ -54,6 +57,60 @@ void Graph_t::clear(bool flag)
 		delete ref_m;
 		ref_m = NULL;
 	}	
+}
+
+
+// addBX
+//////////////////////////////////////////////////////////////
+void Graph_t::addBX(const string & bx, Mer_t & mer, int sample) {
+		
+	unordered_map<Mer_t,set<string>> * map = NULL;
+	
+	if(sample == TMR) { map = &bx_table_tmr; }
+	if(sample == NML) { map = &bx_table_nml; } 
+	
+	auto got = map->find(mer);
+	if ( got != map->end() ) {
+		(got->second).insert(bx);
+	}
+	else { // new BX
+		(*map)[mer].insert(bx);
+	}
+}
+
+// getBXsetAt
+//////////////////////////////////////////////////////////////
+string Graph_t::getBXsetAt(int start, int end, string & seq, int sample) {
+	
+	CanonicalMer_t cmer;
+	string result;
+	set<string> bxset;
+	unordered_map<Mer_t,set<string>> * map;
+	
+	if(sample == TMR) { map = &bx_table_tmr; }
+	else if(sample == NML) { map = &bx_table_nml; }
+	else { cerr << "Error: unrecognized sample " << sample << endl; }
+		
+	for (int i=start; i<=end; i++) {
+		
+		cmer.set(seq.substr(i,K));
+				
+		auto it = map->find(cmer.mer_m);
+		if(it != map->end()) {
+			bxset.insert((it->second).begin(),(it->second).end());
+		}
+	}
+	
+	for ( auto itv = bxset.begin(); itv != bxset.end(); ++itv ) { 
+		if (next(itv) == bxset.end()) { result += *itv; }
+		else { result += *itv + ";"; }
+	}
+		
+	if(result == "") { result = "."; }
+	
+	//cerr << "BX set: " << result << endl;
+	
+	return result;
 }
 
 // loadSequence
@@ -180,18 +237,31 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 		//bool bxovl_v = false;
 				 
 		if(LR_MODE) {
+										
 			if (offset == 0) {
+								
+				if (readid2info[readid].BX != "null") { // skip over null barcodes
+					addBX(readid2info[readid].BX, uc.mer_m, sample);
+					ref_m->addBX(readid2info[readid].BX, uc.mer_m, sample);
+				}
+				
 				if(!(unode->hasBX(readid2info[readid].BX, sample))) { // update only if BX not already present in this node
 					unode->addBX(readid2info[readid].BX, strand, sample);
 					unode->addHP(readid2info[readid].HP, sample);
 				}
 			}	
+			
+			if (readid2info[readid].BX != "null") { // skip over null barcodes
+				addBX(readid2info[readid].BX, vc.mer_m, sample);
+				ref_m->addBX(readid2info[readid].BX, vc.mer_m, sample);
+			}
+			
 			if(!(vnode->hasBX(readid2info[readid].BX, sample))) { // update only if BX not already present in this node
 				vnode->addBX(readid2info[readid].BX, strand, sample);
 				vnode->addHP(readid2info[readid].HP, sample);
 			}
 		}
-
+		
 		if (!isRef)
 		{		
 			if (offset == 0) 
@@ -209,7 +279,6 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 						unode->updateHPCovDistr(unode->HPcnt(0,sample), unode->HPcnt(1,sample), unode->HPcnt(2,sample), uc_qv, sample); 
 						ref_m->updateCoverage(uc.mer_m, unode->BXcnt(strand,sample), strand, sample); // update reference k-mer coverage
 						ref_m->updateHPCoverage(uc.mer_m, unode->HPcnt(0,sample), unode->HPcnt(1,sample), unode->HPcnt(2,sample), sample); 
-						ref_m->updateBXset(uc.mer_m, unode->bxset_tmr_fwd, unode->bxset_tmr_rev, unode->bxset_nml_fwd, unode->bxset_nml_rev, strand, sample);
 					}
 					else { 
 						unode->updateCovDistr((int)(unode->getCov(strand,sample)), uc_qv, strand, sample); 
@@ -240,7 +309,6 @@ void Graph_t::loadSequence(int readid, const string & seq, const string & qv, bo
 						vnode->updateHPCovDistr(vnode->HPcnt(0,sample), vnode->HPcnt(1,sample), vnode->HPcnt(2,sample), vc_qv, sample); 
 						ref_m->updateCoverage(vc.mer_m, vnode->BXcnt(strand,sample), strand, sample); // update reference k-mer coverage
 						ref_m->updateHPCoverage(vc.mer_m, vnode->HPcnt(0,sample), vnode->HPcnt(1,sample), vnode->HPcnt(2,sample), sample);
-						ref_m->updateBXset(vc.mer_m, vnode->bxset_tmr_fwd, vnode->bxset_tmr_rev, vnode->bxset_nml_fwd, vnode->bxset_nml_rev, strand, sample);
 					}
 					else { 
 						vnode->updateCovDistr((int)(vnode->getCov(strand,sample)), vc_qv, strand, sample); 
@@ -720,7 +788,8 @@ void Graph_t::printVerticalAlignment(const string &ref_aln, const string &path_a
 void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPathsToFile,
 	int &complete, int &perfect, int &withsnps, int &withindel, int &withmix) {
 	
-	const string & refseq = ref->seq;
+	//const string & refseq = ref->seq;
+	string refseq = ref->seq;
 	int HD_DISTANCE_CUTOFF = 5;
 		
 	path->match_bp = 0;
@@ -771,52 +840,6 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			
 		printVerticalAlignment(ref_aln, path_aln, path, coverageN, coverageT, refcovN, refcovT); 
 	
-	}
-	
-	//print coverage distribution along the sequence path
-	if (verbose) { 
-		
-		/*
-		cerr << "T_mol_cov\tT_read_cov\tN_mol_cov\tN_read_cov" << endl; 
-		for (unsigned int i=0; i<coverageT.size(); ++i) {
-			//cerr << (coverageT[i].bxcov_fwd + coverageT[i].bxcov_rev) << "\t" << (coverageT[i].fwd + coverageT[i].rev) << "\t";
-			//cerr << (coverageN[i].bxcov_fwd + coverageN[i].bxcov_rev) << "\t" << (coverageN[i].fwd + coverageN[i].rev) << endl;
-			
-			cerr << (coverageT[i].bxcov_minqv_fwd + coverageT[i].bxcov_minqv_rev) << "\t" << (coverageT[i].minqv_fwd + coverageT[i].minqv_rev) << "\t";
-			cerr << (coverageN[i].bxcov_minqv_fwd + coverageN[i].bxcov_minqv_rev) << "\t" << (coverageN[i].minqv_fwd + coverageN[i].minqv_rev) << endl;
-		}
-		cerr << endl;
-		
-		cerr << "t':"; 
-		for (unsigned int i=0; i<coverageT.size(); ++i) {
-			cerr << (coverageT[i].fwd + coverageT[i].rev) << " ";
-		}
-		cerr << endl;
-		
-		cerr << "t+':"; 
-		for (unsigned int i=0; i<coverageT.size(); ++i) {
-			cerr << coverageT[i].fwd << " ";
-		}
-		cerr << endl;
-
-		cerr << "t-':"; 
-		for (unsigned int i=0; i<coverageT.size(); ++i) {
-			cerr << coverageT[i].rev << " ";
-		}
-		cerr << endl;
-		
-		cerr << "n+':"; 
-		for (unsigned int i=0; i<coverageN.size(); ++i) {
-			cerr << coverageN[i].fwd << " ";
-		}
-		cerr << endl;
-
-		cerr << "n-':"; 
-		for (unsigned int i=0; i<coverageN.size(); ++i) {
-			cerr << coverageN[i].rev << " ";
-		}
-		cerr << endl;
-		*/
 	}
 	
 	try {
@@ -913,7 +936,8 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			
 			cov_t REFn = ref->getCovStructAt(pos_in_ref+ref->trim5, NML);
 			cov_t REFt = ref->getCovStructAt(pos_in_ref+ref->trim5, TMR);
-			
+			//cov_t REFn = ref->getCovStructAt(pos_in_ref, NML);
+			//cov_t REFt = ref->getCovStructAt(pos_in_ref, TMR);
 			/*
 			if(old_pathpos != pathpos) { // remove old coverage only if change in path position
 				assert(pathpos > 0);
@@ -930,7 +954,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					
 					if (code == 'x') {
 						cerr << (ref_aln[i] == '-' ? '*' : ref_aln[i]) << " " << (path_aln[i] == '-' ? '*' : path_aln[i]) << " " << code 
-						<< " " << pos_in_ref + ref->refstart + ref->trim5 << " " << P 
+						<< " " << pos_in_ref + ref->refstart + ref->trim5 << " " << P << " " << pos_in_ref
 						<< " " << spanner->nodeid_m << " " << spanner->getTotCov() << " (" <<  spanner->avgCovDistr('N') << "," << spanner->avgCovDistr('T') << ") A:("
 						<< COVn.minqv_fwd << "+," << COVn.minqv_rev << "-)n,(" << COVt.minqv_fwd << "+," << COVt.minqv_rev << "-)t R:(" 
 						<< REFn.fwd << "+," << REFn.rev << "-)n,(" << REFt.fwd << "+," << REFt.rev << "-)t " << spanner->reads_m.size() << " " << spanner->cntReadCode(CODE_BASTARD)							
@@ -941,7 +965,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					}
 					else {
 						cerr << (ref_aln[i] == '-' ? '*' : ref_aln[i]) << " " << (path_aln[i] == '-' ? '*' : path_aln[i]) << " " << code 
-						<< " " << pos_in_ref + ref->refstart + ref->trim5 << " " << P 
+						<< " " << pos_in_ref + ref->refstart + ref->trim5 << " " << P << " " << pos_in_ref
 						<< " " << spanner->nodeid_m << " " << spanner->getTotCov() << " (" <<  spanner->avgCovDistr('N') << "," << spanner->avgCovDistr('T') << ") A:("
 						<< COVn.fwd << "+," << COVn.rev << "-)n,(" << COVt.fwd << "+," << COVt.rev << "-)t R:(" 
 						<< REFn.fwd << "+," << REFn.rev << "-)n,(" << REFt.fwd << "+," << REFt.rev << "-)t " << spanner->reads_m.size() << " " << spanner->cntReadCode(CODE_BASTARD)
@@ -971,7 +995,7 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					transcript[ts-1].ref += ref_aln[i];
 					transcript[ts-1].qry += path_aln[i];
 					transcript[ts-1].end_pos = P; // update end position (in the path)
-					transcript[ts-1].ref_end_pos = pos_in_ref + ref->trim5; // update end position (in the ref)
+					transcript[ts-1].ref_end_pos = pos_in_ref; // update end position (in the ref)
 					
 					if ( (code == '^') && (transcript[ts-1].code == code) && (transcript[ts-1].pos == rrpos) ) { // extending insertion
 						transcript[ts-1].addAltCovNml(COVn);
@@ -992,11 +1016,11 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				
 				else {
 					// create new transcript for mutation
-					transcript.push_back(Transcript_t(rrpos, pos_in_ref+ref->trim5, P+1, code, 
+					transcript.push_back(Transcript_t(rrpos, pos_in_ref, P+1, code, 
 						ref_aln[i], path_aln[i], 
 						COVn, COVt, REFn, REFt,
 						ref_aln[pr], path_aln[pa], 
-						P, pos_in_ref+ref->trim5, within_tumor_node));
+						P, pos_in_ref, within_tumor_node));
 				}
 			}
 		}
@@ -1029,17 +1053,15 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 							//transcript[ti].nodesize = spanner->getSize();
 						
 							// print read ids
-							/*
-							unordered_set<ReadId_t>::const_iterator it;
-							for (auto it = spanner->reads_m.begin(); it != spanner->reads_m.end(); it++) {
-							cerr << readid2info[*it].readname_m.c_str() << endl;
-							}
-							*/
+							//unordered_set<ReadId_t1>::const_iterator it;
+							//for (auto it = spanner->reads_m.begin(); it != spanner->reads_m.end(); it++) {
+							//cerr << readid2info[*it].readname_m.c_str() << endl;
+							//}
 						}
 						transcript[ti].addAltCovNml(coverageN[idx1]);
 						transcript[ti].addAltCovTmr(coverageT[idx1]);
 					}
-					unsigned int idx2 = transcript[ti].ref_end_pos + j;
+					unsigned int idx2 = transcript[ti].ref_end_pos + ref->trim5 + j;
 					transcript[ti].addRefCovNml(ref->getCovStructAt(idx2, NML));
 					transcript[ti].addRefCovTmr(ref->getCovStructAt(idx2, TMR));
 				}
@@ -1049,38 +1071,38 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 			transcript[ti].updateStats();
 			
 			// select coverage according to mutation type and sample
-			int RCNF = transcript[ti].getMinRefCovNfwd(); // ref cov normal fwd
-			int RCNR = transcript[ti].getMinRefCovNrev(); // ref cov normal rev
+			unsigned short RCNF = transcript[ti].getMinRefCovNfwd(); // ref cov normal fwd
+			unsigned short RCNR = transcript[ti].getMinRefCovNrev(); // ref cov normal rev
 
-			int RCTF = transcript[ti].getMinRefCovTfwd(); // ref cov tumor fwd
-			int RCTR = transcript[ti].getMinRefCovTrev(); // ref cov tumor rev
+			unsigned short RCTF = transcript[ti].getMinRefCovTfwd(); // ref cov tumor fwd
+			unsigned short RCTR = transcript[ti].getMinRefCovTrev(); // ref cov tumor rev
 
-			int ACNF = transcript[ti].getMinCovNfwd(); // alt normal cov fwd
-			int ACNR = transcript[ti].getMinCovNrev(); // alt normal cov rev			
+			unsigned short ACNF = transcript[ti].getMinCovNfwd(); // alt normal cov fwd
+			unsigned short ACNR = transcript[ti].getMinCovNrev(); // alt normal cov rev			
 			
 			if (transcript[ti].code != 'x') { // for indels skip over zero coverage values (due to the +k coverage values added after variant end postion
 				ACNF = transcript[ti].getMinNon0CovNfwd(); // alt normal cov fwd
 				ACNR = transcript[ti].getMinNon0CovNrev(); // alt normal cov rev
 			}
 			
-			int ACTF = transcript[ti].getMinCovTfwd(); // alt tumor cov fwd
-			int ACTR = transcript[ti].getMinCovTrev(); // alt tumor cov rev
+			unsigned short ACTF = transcript[ti].getMinCovTfwd(); // alt tumor cov fwd
+			unsigned short ACTR = transcript[ti].getMinCovTrev(); // alt tumor cov rev
 			
-			int HP0RN = transcript[ti].getMinRefCovNhp0();
-			int HP1RN = transcript[ti].getMinRefCovNhp1();
-			int HP2RN = transcript[ti].getMinRefCovNhp2();
+			unsigned short HP0RN = transcript[ti].getMinRefCovNhp0();
+			unsigned short HP1RN = transcript[ti].getMinRefCovNhp1();
+			unsigned short HP2RN = transcript[ti].getMinRefCovNhp2();
 			
-			int HP0RT = transcript[ti].getMinRefCovThp0();
-			int HP1RT = transcript[ti].getMinRefCovThp1();
-			int HP2RT = transcript[ti].getMinRefCovThp2();
+			unsigned short HP0RT = transcript[ti].getMinRefCovThp0();
+			unsigned short HP1RT = transcript[ti].getMinRefCovThp1();
+			unsigned short HP2RT = transcript[ti].getMinRefCovThp2();
 			
-			int HP0AN = transcript[ti].getMinCovNhp0();
-			int HP1AN = transcript[ti].getMinCovNhp1();
-			int HP2AN = transcript[ti].getMinCovNhp2();
+			unsigned short HP0AN = transcript[ti].getMinCovNhp0();
+			unsigned short HP1AN = transcript[ti].getMinCovNhp1();
+			unsigned short HP2AN = transcript[ti].getMinCovNhp2();
 			
-			int HP0AT = transcript[ti].getMinCovThp0();
-			int HP1AT = transcript[ti].getMinCovThp1();
-			int HP2AT = transcript[ti].getMinCovThp2();
+			unsigned short HP0AT = transcript[ti].getMinCovThp0();
+			unsigned short HP1AT = transcript[ti].getMinCovThp1();
+			unsigned short HP2AT = transcript[ti].getMinCovThp2();
 			
 			if(transcript[ti].isSomatic) {
 				RCNF = transcript[ti].getAvgRefCovNfwd(); // ref cov normal fwd
@@ -1137,15 +1159,15 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 					//cerr << "STR = " << STR.str() << endl; 					
 				}
 				
-				pair <int,int> RCN (RCNF,RCNR);   // reference coverage normal
-				pair <int,int> RCT (RCTF,RCTR);   // reference coverage tumor        
-				pair <int,int> ACN (ACNF,ACNR);   // alternative coverage normal        
-				pair <int,int> ACT (ACTF,ACTR);   // alternative coverage tumor
+				pair <unsigned short,unsigned short> RCN (RCNF,RCNR);   // reference coverage normal
+				pair <unsigned short,unsigned short> RCT (RCTF,RCTR);   // reference coverage tumor        
+				pair <unsigned short,unsigned short> ACN (ACNF,ACNR);   // alternative coverage normal        
+				pair <unsigned short,unsigned short> ACT (ACTF,ACTR);   // alternative coverage tumor
 				
-				array<int,3> HPRN = {HP1RN, HP2RN, HP0RN}; // reference HP normal
-				array<int,3> HPRT = {HP1RT, HP2RT, HP0RT}; // reference HP tumor
-				array<int,3> HPAN = {HP1AN, HP2AN, HP0AN}; // alternative HP normal
-				array<int,3> HPAT = {HP1AT, HP2AT, HP0AT}; // alternative HP tumor
+				array<unsigned short,3> HPRN = {HP1RN, HP2RN, HP0RN}; // reference HP normal
+				array<unsigned short,3> HPRT = {HP1RT, HP2RT, HP0RT}; // reference HP tumor
+				array<unsigned short,3> HPAN = {HP1AN, HP2AN, HP0AN}; // alternative HP normal
+				array<unsigned short,3> HPAT = {HP1AT, HP2AT, HP0AT}; // alternative HP tumor
 				
 				string bxset_ref_N = "";
 				string bxset_ref_T = "";
@@ -1153,18 +1175,18 @@ void Graph_t::processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPaths
 				string bxset_alt_T = "";
 					
 				if (LR_MODE) {
-					bxset_ref_N = transcript[ti].getRefBxSetNml();
-					bxset_ref_T = transcript[ti].getRefBxSetTmr();
-					bxset_alt_N = transcript[ti].getAltBxSetNml();
-					bxset_alt_T = transcript[ti].getAltBxSetTmr();					
+					bxset_ref_N = ref->getBXsetAt(transcript[ti].ref_pos-1, transcript[ti].ref_end_pos-1, refseq, NML);
+					bxset_ref_T = ref->getBXsetAt(transcript[ti].ref_pos-1, transcript[ti].ref_end_pos-1, refseq, TMR);			
+					bxset_alt_N = getBXsetAt(transcript[ti].start_pos-2, transcript[ti].end_pos-1, pathseq, NML);
+					bxset_alt_T = getBXsetAt(transcript[ti].start_pos-2, transcript[ti].end_pos-1, pathseq, TMR);
 				}
 				
 				vDB->addVar(Variant_t(LR_MODE, ref->refchr, transcript[ti].pos-1, transcript[ti].ref, transcript[ti].qry, 
 					RCN, RCT, ACN, ACT,
 					HPRN, HPRT, HPAN, HPAT,
-					transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, filters, K, STR.str(), transcript[ti].code,
+					transcript[ti].prev_bp_ref, transcript[ti].prev_bp_alt, K, STR.str(), transcript[ti].code,
 					bxset_ref_N, bxset_ref_T, bxset_alt_N, bxset_alt_T));
-				}
+			}
 		}
 		if(verbose) { cerr << endl; }
 
@@ -2597,6 +2619,14 @@ void Graph_t::compressNode(Node_t * node, Ori_t dir)
 			node->cov_status.push_back(buddy->cov_status[j]);
 		}
 		
+
+		// copy over barcodes
+		node->bxset_tmr_fwd.insert(buddy->bxset_tmr_fwd.begin(), buddy->bxset_tmr_fwd.end());
+		node->bxset_tmr_rev.insert(buddy->bxset_tmr_rev.begin(), buddy->bxset_tmr_rev.end());
+		node->bxset_nml_fwd.insert(buddy->bxset_nml_fwd.begin(), buddy->bxset_nml_fwd.end());
+		node->bxset_nml_rev.insert(buddy->bxset_nml_rev.begin(), buddy->bxset_nml_rev.end());
+		
+					
 		node->computeMinCov(); // recompute min coverage 
 		
 		node->cov_tmr_m_fwd = ((ncov_tmr_fwd * amerlen) + (ccov_tmr_fwd * bmerlen)) / (amerlen + bmerlen);
@@ -2778,9 +2808,9 @@ void Graph_t::removeLowCov(bool docompression, int compid)
 			if (node->isSpecial())    { continue; }
 			//if (node->touchRef_m) { continue; }
 
-			if ( (node->getMinCov() <= LOW_COV_THRESHOLD) || (node->getMinCov() <= (MIN_COV_RATIO*avgcov)) ||
+			//if ( (node->getMinCov() <= LOW_COV_THRESHOLD) || (node->getMinCov() <= (MIN_COV_RATIO*avgcov)) ||
+			if ( (node->getMinCovMinQV() <= LOW_COV_THRESHOLD) || (node->getMinCovMinQV() <= (MIN_COV_RATIO*avgcov)) ||
 				(node->getTotTmrCov() == 1 && node->getTotNmlCov() == 1) )
-			//if ( (node->minCovMinQV() <= LOW_COV_THRESHOLD) || (node->minCovMinQV() <= (MIN_COV_RATIO*avgcov)) )
 			{
 				++lowcovnodes;
 				removeNode(node);

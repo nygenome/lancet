@@ -62,6 +62,16 @@ done
 ```
 The previous command shows an exemplary submission of multiple parallel lancet jobs, one for each human chromosome, to the Sun Grid Engine queuing system.
 
+### Linked-Reads analysis
+
+The recommended command line options for 10x Genomics linked-reads analysis are:
+
+~~~
+lancet **--linked-reads** **--primary-alignment-only** --tumor T.bam --normal N.bam --ref ref.fa --reg chr1 --num-threads 8 > out.vcf
+~~~
+
+[LongRanger](https://support.10xgenomics.com/genome-exome/software/pipelines/latest/what-is-long-ranger) BAMs are directy supported, however, for improved accuarcy, we highly recommend to apply to the BAMs the [MarkDuplicates](https://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates) program from [Picard Tools](https://broadinstitute.github.io/picard/), which marks PCR duplicates more accurately than LongRanger.
+
 ### Output
 
 Lancet generates in output the list of variants in VCF format (v4.1). All variants (SNVs and indels either shared, specific to the tumor, or specific to the normal) are exported in output. Following VCF conventions, high quality variants are flagged as **PASS** in the FILTER column. For non-PASS variants the FILTER info reports the list of filters that are not satisfied by each variant.
@@ -143,7 +153,7 @@ The final graph (after compression) containing one single variant is depicted be
  _____|\__,_|_|  _|\___|\___|\__|
 
 Program: lancet (micro-assembly somatic variant caller)
-Version: 1.0.7, July 16 2018
+Version: 1.1.1, October 18 2019
 Contact: Giuseppe Narzisi <gnarzisi@nygenome.org>
 
 Usage: lancet [options] --tumor <BAM file> --normal <BAM file> --ref <FASTA file> --reg <chr:start-end>
@@ -163,7 +173,7 @@ Optional
    --min-base-qual, -C       <int>         : minimum base quality required to consider a base for SNV calling [default: 17]
    --quality-range, -Q       <char>        : quality value range [default: !]
    --min-map-qual, -b        <int>         : minimum read mapping quality in Phred-scale [default: 15]
-   --max-as-xs-diff, -Z      <int>         : maximum different between AS and XS alignments scores [default: 5]
+   --max-as-xs-diff, -Z      <int>         : maximum difference between AS and XS alignments scores [default: 5]
    --tip-len, -l             <int>         : max tip length [default: 11]
    --cov-thr, -c             <int>         : min coverage threshold used to select reference anchors from the De Bruijn graph [default: 5]
    --cov-ratio, -x           <float>       : minimum coverage ratio used to remove nodes from the De Bruijn graph [default: 0.01]
@@ -197,7 +207,9 @@ Short Tandem Repeat parameters
    --dist-from-str, -D        <int>        : distance (in bp) of variant from STR locus [default: 1]
 
 Flags
+   --linked-reads, -J            : linked-reads analysis mode
    --primary-alignment-only, -I  : only use primary alignments for variant calling
+   --XA-tag-filter, -O           : skip reads with multiple hits listed in the XA tag (BWA only)
    --active-region-off, -W       : turn off active region module
    --kmer-recovery, -R           : turn on k-mer recovery (experimental)
    --print-graph, -A             : print graph (in .dot format) after every stage

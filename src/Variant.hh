@@ -57,29 +57,41 @@ class Variant_t
 {
 public:
 
+	/*
+	Type				size	range
+	short int			2		-32,768 to 32,767
+	unsigned short int	2		0 to 65,535
+	unsigned int		4		0 to 4,294,967,295
+	int					4		-2,147,483,648 to 2,147,483,647
+	long int			4		-2,147,483,648 to 2,147,483,647
+	unsigned long int	4		0 to 4,294,967,295
+	*/
+		
 	bool LR_MODE;
 	unsigned short kmer;
 	string chr;
 	int pos;
 	char type;
 	unsigned short len;
+	
 	string ref;
 	string alt;
 	string str;
-	char status; // T=somatic, S=shared
-	int ref_cov_normal_fwd;
-	int ref_cov_normal_rev;
-	int ref_cov_tumor_fwd;
-	int ref_cov_tumor_rev;
-	int alt_cov_normal_fwd;
-	int alt_cov_normal_rev;
-	int alt_cov_tumor_fwd;
-	int alt_cov_tumor_rev;
 	
-	array<int,3> HPRN;
-	array<int,3> HPRT; 
-	array<int,3> HPAN;
-	array<int,3> HPAT;
+	char status; // T=somatic, S=shared
+	unsigned short ref_cov_normal_fwd;
+	unsigned short ref_cov_normal_rev;
+	unsigned short ref_cov_tumor_fwd;
+	unsigned short ref_cov_tumor_rev;
+	unsigned short alt_cov_normal_fwd;
+	unsigned short alt_cov_normal_rev;
+	unsigned short alt_cov_tumor_fwd;
+	unsigned short alt_cov_tumor_rev;
+	
+	array<unsigned short,3> HPRN;
+	array<unsigned short,3> HPRT; 
+	array<unsigned short,3> HPAN;
+	array<unsigned short,3> HPAT;
 	
 	string bxset_ref_N;
 	string bxset_ref_T;
@@ -89,24 +101,25 @@ public:
 	char prev_bp_ref; // base-pair preceding the mutation in reference
 	char prev_bp_alt; // base-pair preceding the mutation in alternative
 	
-	string GT_normal; // normal genotype
-	string GT_tumor; // tumor genotype
-	
-	Filters * filters; // filter thresholds
-
 	Variant_t(bool mode, string chr_, int pos_, string ref_, string alt_, 
 		const pair <int,int> & RCN, const pair <int,int> & RCT,
 		const pair <int,int> & ACN, const pair <int,int> & ACT,
-		const array<int,3> & HPRN_, const array<int,3> & HPRT_, 
-		const array<int,3> & HPAN_, const array<int,3> & HPAT_,
-		char prev_bp_ref_, char prev_bp_alt_, Filters * fs, int k, string str_, char code,
+		const array<unsigned short,3> & HPRN_, const array<unsigned short,3> & HPRT_, 
+		const array<unsigned short,3> & HPAN_, const array<unsigned short,3> & HPAT_,
+		char prev_bp_ref_, char prev_bp_alt_, int k, string str_, char code,
 		const string & bxRN, const string & bxRT, const string & bxAN, const string & bxAT)
-	{ 	
+	{ 				
 		LR_MODE = mode;
 		kmer = k;
-		str = str_;
-		filters = fs;
+
+		str = str_;		
+		//str = new char [str_.length()+1];
+		//strcpy(str, str_.c_str());
+		
 		chr = chr_;
+		//chr = new char [chr_.length()+1];
+		//strcpy(chr, chr_.c_str());
+		
 		pos = pos_;
 		
 		/*
@@ -164,18 +177,15 @@ public:
 		//reGenotype();
 	}
 	
-	string printVCF();
+	string printVCF(Filters * fs);
 	string genotype(int R, int A);
-	string getGenotypeNormal() { return GT_normal; }
-	string getGenotypeTumor() { return GT_tumor; }
-	//void reGenotype();
 	char bestState(int Rn, int An, int Rt, int At);
 	string getSignature() const;
 	string getPosition();
 	double compute_FET_score();
 	double compute_SB_score();
 	double compute_HP_score(int hpr1, int hpr2, int hpa1, int hpa2);
-	
+	void printSizeOfElements();
 };
 
 #endif

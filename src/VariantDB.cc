@@ -75,28 +75,19 @@ void VariantDB_t::addVar(const Variant_t & v) {
 			it_v->second.HPAN = v.HPAN;
 			it_v->second.HPAT = v.HPAT;
 			
+			if(LR_MODE) {
+				it_v->second.bxset_ref_N = v.bxset_ref_N;
+				it_v->second.bxset_ref_T = v.bxset_ref_T;
+				it_v->second.bxset_alt_N = v.bxset_alt_N;
+				it_v->second.bxset_alt_T = v.bxset_alt_T;
+			}
+			
 			//it_v->second.reGenotype(); // recompute genotype
 		}
 	}
 	else { 
 		DB.insert(pair<string,Variant_t>(key,v));
 	}
-
-	// updated counts of variants per position in the normal
-	/*
-    if( ((v.getGenotypeNormal()).compare("0/0")!=0) && ((v.ref_cov_normal_fwd + v.ref_cov_normal_rev)>0) ) {
-		
-		string pos = v.getPosition();
-	    unordered_map<string,int>::iterator it_p = nCNT.find(pos);	
-		
-		if (it_p != nCNT.end()) { 
-			it_p->second += 1; 
-		}
-		else { 
-			nCNT.insert(pair<string,int>(pos,1)); 
-		}
-    }
-	*/
 }
 
 void VariantDB_t::printHeader(const string version, const string reference, char * date, Filters &fs, string &sample_name_N, string &sample_name_T) {
@@ -120,9 +111,9 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##INFO=<ID=TYPE,Number=1,Type=String,Description=\"Variant type (snv, del, ins, complex)\">\n";
 	
 	if(LR_MODE)	{
-		hdr << "##FORMAT=<ID=HPS,Number=1,Type=Float,Description=\"Haplotype score for the T/N pair: phred-scaled p-value of the Fisher's exact test of the total counts of the two haplotype in the tumor-normal pair\">\n"
-			   "##FORMAT=<ID=HPSN,Number=1,Type=Float,Description=\"Normal haplotype score: phred-scaled p-value of the Fisher's exact test for ref/alt haplotype counts in the normal\">\n"
-			   "##FORMAT=<ID=HPST,Number=1,Type=Float,Description=\"Tumor haplotype score: phred-scaled p-value of the Fisher's exact test for ref/alt haplotype counts in the tumor\">\n";
+		hdr << "##INFO=<ID=HPS,Number=1,Type=Float,Description=\"Haplotype score for the T/N pair: phred-scaled p-value of the Fisher's exact test of the total counts of the two haplotype in the tumor-normal pair\">\n"
+			   "##INFO=<ID=HPSN,Number=1,Type=Float,Description=\"Normal haplotype score: phred-scaled p-value of the Fisher's exact test for ref/alt haplotype counts in the normal\">\n"
+			   "##INFO=<ID=HPST,Number=1,Type=Float,Description=\"Tumor haplotype score: phred-scaled p-value of the Fisher's exact test for ref/alt haplotype counts in the tumor\">\n";
 	}
 				
 	hdr <<	"##FILTER=<ID=LowCovNormal,Description=\"Low coverage in the normal (<" << fs.minCovNormal << ")\">\n"
@@ -149,7 +140,7 @@ void VariantDB_t::printHeader(const string version, const string reference, char
 			"##FORMAT=<ID=SA,Number=.,Type=Integer,Description=\"Strand counts for alt: # of supporting forward,reverse reads for alterantive allele\">\n";
 	
 	if(LR_MODE)	{
-		hdr << "##FORMAT=<ID=BX,Number=.,Type=Integer,Description=\"Barcodes supporting ref and alt alleles\">\n"
+		hdr << "##FORMAT=<ID=BX,Number=.,Type=String,Description=\"Barcodes supporting ref and alt alleles\">\n"
 		       "##FORMAT=<ID=HPR,Number=.,Type=Integer,Description=\"Haplotype counts for ref: # of reads supporting reference allele in haplotype 1, 2, and 0 respectively (0 = unassigned)\">\n"
 			   "##FORMAT=<ID=HPA,Number=.,Type=Integer,Description=\"Haplotype counts for alt: # of reads supporting alternative allele in haplotype 1, 2, and 0 respectively (0 = unassigned)\">\n";
 	}
@@ -175,10 +166,14 @@ void VariantDB_t::printToVCF(const string version, const string reference, char 
 	for (it=myVec.begin(); it!=myVec.end(); ++it) {
 		//cerr << it->first << "\t";
 		
+		//cerr << "Size of " << it->first << " : " << sizeof(it->second) << endl;
+		
+		//it->second.printSizeOfElements();
+				
 		//string pos = (it->second).getPosition();
 	    //unordered_map<string,int>::iterator itp = nCNT.find(pos);
 		//if (itp == nCNT.end()) { // print variant if no muations in the normal at locus
-			cout << it->second.printVCF();
+			cout << it->second.printVCF(filters);
 		//}
 	}	
 }

@@ -131,6 +131,9 @@ public:
 	
 	VariantDB_t *vDB; // DB of variants
 	Filters * filters; // filter thresholds
+	
+	unordered_map<Mer_t,set<string>> bx_table_tmr; // mer to barcode map for tumor
+	unordered_map<Mer_t,set<string>> bx_table_nml; // mer to barcode map for normal
 
 	Graph_t() : ref_m(NULL), is_ref_added(0), readCycles(0) {
 		clear(true); 
@@ -205,6 +208,9 @@ public:
 	*/
 		
 	//void loadReadsSFA(const string & filename);
+	void addBX(const string & bx, Mer_t & mer, int sample);
+	string getBXsetAt(int start, int end, string & seq, int sample);
+	
 	void printAlignment(const string &ref_aln, const string &path_aln, Path_t * path);
 	void printVerticalAlignment(const string &ref_aln, const string &path_aln, Path_t * path, vector<cov_t> & covN, vector<cov_t> & covT, vector<cov_t> & refcovN, vector<cov_t> & refcovT);
 	void processPath(Path_t * path, Ref_t * ref, FILE * fp, bool printPathsToFile, int &complete, int &perfect, int &withsnps, int &withindel, int &withmix);

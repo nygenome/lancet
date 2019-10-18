@@ -226,7 +226,7 @@ public:
 	bool extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo, BamRegion &region, int &readcnt, int code);
 	bool isActiveRegion(BamReader &reader, Ref_t *refinfo, BamRegion &region, int code);
 	int processReads();
-	void setFilters(Filters * fs) { filters = fs; }
+	void setFilters(Filters * fs) { filters = fs; vDB.setFilters(fs); }
 	void setID(int i) { ID = i; }
 	string retriveSampleName(SamHeader &header);
 };

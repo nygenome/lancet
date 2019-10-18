@@ -27,8 +27,8 @@
 void Ref_t::init() {
 	
 	// allocate memory for mertables
-	mertable_nml = new 	unordered_map<string,cov_t>();
-	mertable_tmr = new 	unordered_map<string,cov_t>();
+	mertable_nml = new unordered_map<string,cov_t>();
+	mertable_tmr = new unordered_map<string,cov_t>();
 	
 	// allocate memory for coverage info
 	normal_coverage = new vector<cov_t>(); // normal k-mer coverage across the reference
@@ -70,43 +70,58 @@ bool Ref_t::hasMer(const string & cmer)
 	return mertable_nml->count(cmer);
 }
 
-// updated coverage for input mer
-void Ref_t::updateBXset(const string & cmer, 
-	unordered_set<string> & bxset_tmr_fwd,
-	unordered_set<string> & bxset_tmr_rev,
-	unordered_set<string> & bxset_nml_fwd,
-	unordered_set<string> & bxset_nml_rev,
-	unsigned int strand, int sample) {
+// addBX
+//////////////////////////////////////////////////////////////
+void Ref_t::addBX(const string & bx, Mer_t & mer, int sample) {
 		
+	unordered_map<Mer_t,set<string>> * map = NULL;
+	unordered_map<string,cov_t> * mertable = NULL;
+	
 	indexMers();
 	
-	unordered_map<string,cov_t> * mertable = NULL;
-	unordered_set<string> bxset;
-	
-	if(sample == TMR)      { 
-		mertable = mertable_tmr; 
-		if(strand == FWD) { bxset = bxset_tmr_fwd; }
-		if(strand == REV) { bxset = bxset_tmr_rev; }
-	}
-	else if(sample == NML) { 
-		mertable = mertable_nml; 
-		if(strand == FWD) { bxset = bxset_nml_fwd; }
-		if(strand == REV) { bxset = bxset_nml_rev; }
-	}
-	else { cerr << "Error: unrecognized sample " << sample << endl; }
+	if(sample == TMR) { map = &bx_table_tmr; mertable = mertable_tmr; }
+	if(sample == NML) { map = &bx_table_nml; mertable = mertable_nml; } 
 	
 	assert(mertable != NULL);
-	//if (mertable == NULL) { cerr << "Error: null pointer to mer-table!" << endl; } 
 	
-	std::unordered_map<string,cov_t>::iterator it = mertable->find(cmer);
+	auto it = mertable->find(mer);	
 	if (it != mertable->end()) {
-		if(strand == FWD) { 
-			((*it).second).bxset_fwd = bxset;
-		}
-		else if(strand == REV) { 
-			((*it).second).bxset_rev = bxset;
+		(*map)[mer].insert(bx);
+	}
+}
+
+// getBXsetAt
+/////////////////////////////////////////////////////////////
+string Ref_t::getBXsetAt(int start, int end, string & rseq, int sample) {
+	
+	CanonicalMer_t cmer;
+	string result;
+	set<string> bxset;
+	unordered_map<Mer_t,set<string>> * map;
+	
+	if(sample == TMR) { map = &bx_table_tmr; }
+	else if(sample == NML) { map = &bx_table_nml; }
+	else { cerr << "Error: unrecognized sample " << sample << endl; }
+		
+	for (int i=start; i<=end; i++) {
+		cmer.set(rseq.substr(i,K));
+		
+		auto it = map->find(cmer.mer_m);		
+		if(it != map->end()) {
+			bxset.insert((it->second).begin(),(it->second).end());
 		}
 	}
+	
+	for ( auto itv = bxset.begin(); itv != bxset.end(); ++itv ) { 
+		if (next(itv) == bxset.end()) { result += *itv; }
+		else { result += *itv + ";"; }
+	}
+		
+	if(result == "") { result = "."; }
+	
+	//cerr << "BX set: " << result << endl;
+	
+	return result;
 }
 
 // updated coverage for input mer
@@ -114,7 +129,6 @@ void Ref_t::updateCoverage(const string & cmer, int cov, unsigned int strand, in
 	indexMers();
 	
 	unordered_map<string,cov_t> * mertable = NULL;
-	unordered_set<string> bxset;
 	
 	if(sample == TMR)      { mertable = mertable_tmr; }
 	else if(sample == NML) { mertable = mertable_nml; }
@@ -179,8 +193,6 @@ void Ref_t::computeCoverage(int sample) {
 			int cov_hp0 = ((*it).second).hp0;
 			int cov_hp1 = ((*it).second).hp1;
 			int cov_hp2 = ((*it).second).hp2;
-			unordered_set<string> bxset_fwd = ((*it).second).bxset_fwd;
-			unordered_set<string> bxset_rev = ((*it).second).bxset_rev;
 			
 			/*
 			normal_coverage.at(i) = n_cov;			
@@ -200,9 +212,7 @@ void Ref_t::computeCoverage(int sample) {
 					coverage->at(j).rev = cov_rev;
 					coverage->at(j).hp0 = cov_hp0;
 					coverage->at(j).hp1 = cov_hp1; 				
-					coverage->at(j).hp2 = cov_hp2;
-					coverage->at(j).bxset_fwd = bxset_fwd; 
-					coverage->at(j).bxset_rev = bxset_rev;				
+					coverage->at(j).hp2 = cov_hp2;				
 				}
 			}
 			else {
@@ -210,9 +220,7 @@ void Ref_t::computeCoverage(int sample) {
 				coverage->at(i+K-1).rev = cov_rev;
 				coverage->at(i+K-1).hp0 = cov_hp0;
 				coverage->at(i+K-1).hp1 = cov_hp1;
-				coverage->at(i+K-1).hp2 = cov_hp2;
-				coverage->at(i+K-1).bxset_fwd = bxset_fwd; 
-				coverage->at(i+K-1).bxset_rev = bxset_rev;	
+				coverage->at(i+K-1).hp2 = cov_hp2;	
 							
 				//for (int l = 0; l < K-1; l++) {
 					//if(normal_coverage.at(i+l) < n_cov) { normal_coverage.at(i+l) = n_cov; }
@@ -225,13 +233,11 @@ void Ref_t::computeCoverage(int sample) {
 		else {
 			if(i==0) {
 				for (int j=i; j<K; ++j) { 
-					coverage->at(j).fwd = 0; 				
+					coverage->at(j).fwd = 0;
 					coverage->at(j).rev = 0;
 					coverage->at(j).hp0 = 0;
-					coverage->at(j).hp1 = 0; 				
-					coverage->at(j).hp2 = 0;
-					coverage->at(j).bxset_fwd.clear(); 
-					coverage->at(j).bxset_rev.clear();				
+					coverage->at(j).hp1 = 0;
+					coverage->at(j).hp2 = 0;			
 				}
 			}
 			coverage->at(i+K-1).fwd = 0;
@@ -239,8 +245,6 @@ void Ref_t::computeCoverage(int sample) {
 			coverage->at(i+K-1).hp0 = 0;
 			coverage->at(i+K-1).hp1 = 0;
 			coverage->at(i+K-1).hp2 = 0;
-			coverage->at(i+K-1).bxset_fwd.clear();
-			coverage->at(i+K-1).bxset_rev.clear();			
 		}
 	}
 }
@@ -354,10 +358,13 @@ void Ref_t::printKmerCoverage(int sample) {
 // clear DT and free memory
 void Ref_t::clear() {
 	
-	if(mertable_nml != NULL)    { mertable_nml->clear();    delete mertable_nml;    mertable_nml = NULL;    }
-	if(mertable_tmr != NULL)    { mertable_tmr->clear();    delete mertable_tmr;    mertable_tmr = NULL;    }
-	if(normal_coverage != NULL) { normal_coverage->clear(); delete normal_coverage; normal_coverage = NULL; }
-	if(tumor_coverage != NULL)  { tumor_coverage->clear();  delete tumor_coverage;  tumor_coverage = NULL;  }
+	if(mertable_nml != NULL)    { mertable_nml->clear(); unordered_map<string,cov_t>().swap(*mertable_nml); delete mertable_nml; mertable_nml = NULL;  }
+	if(mertable_tmr != NULL)    { mertable_tmr->clear(); unordered_map<string,cov_t>().swap(*mertable_tmr); delete mertable_tmr; mertable_tmr = NULL;  }
+	if(normal_coverage != NULL) { normal_coverage->clear(); vector<cov_t>().swap(*normal_coverage); delete normal_coverage; normal_coverage = NULL; }
+	if(tumor_coverage != NULL)  { tumor_coverage->clear();  vector<cov_t>().swap(*tumor_coverage);  delete tumor_coverage;  tumor_coverage = NULL;  }
+	
+	bx_table_tmr.clear(); unordered_map<Mer_t,set<string>>().swap(bx_table_tmr);
+	bx_table_nml.clear(); unordered_map<Mer_t,set<string>>().swap(bx_table_nml);
 }
 
 // reset coverage to 0

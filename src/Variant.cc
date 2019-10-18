@@ -22,8 +22,21 @@
 **
 *************************** /COPYRIGHT **************************************/
 
+void Variant_t::printSizeOfElements() {
 
-string Variant_t::printVCF() {
+	cerr << endl;
+	cerr << this->getSignature() << endl;
+	//cerr << "chr : sizeof(" << sizeof(chr) << "), size(" <<  chr.size() << "), capacity(" << chr.capacity() << ")" << endl;
+	cerr << "ref : sizeof(" << sizeof(ref) << "), size(" <<  ref.size() << "), capacity(" << ref.capacity() << ")" << endl;
+	cerr << "alt : sizeof(" << sizeof(alt) << "), size(" <<  alt.size() << "), capacity(" << alt.capacity() << ")" << endl;
+	
+	//cerr << "bxset_ref_N : sizeof(" << sizeof(bxset_ref_N) << "), size(" <<  bxset_ref_N.size() << "), capacity(" << bxset_ref_N.capacity() << ")" << endl;
+	//cerr << "bxset_ref_T : sizeof(" << sizeof(bxset_ref_N) << "), size(" <<  bxset_ref_T.size() << "), capacity(" << bxset_ref_T.capacity() << ")"<< endl;
+	//cerr << "Size of str : " << sizeof(*str) << endl;
+	
+}
+
+string Variant_t::printVCF(Filters * fs) {
 	//CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  Pat4-FF-Normal-DNA      Pat4-FF-Tumor-DNA
 	string ID = ".";
 	string FILTER = "";
@@ -67,6 +80,7 @@ string Variant_t::printVCF() {
 	}
 	
 	if(!str.empty()) { INFO += ";MS=" + str; } // add STR info
+	//if(strcmp(str,"")!=0) { string str_string(str);  INFO += ";MS=" + str_string; } // add STR info
 	
 	double QUAL = fet_score;	
 	// apply filters
@@ -77,54 +91,55 @@ string Variant_t::printVCF() {
 	int normal_cov = tot_ref_cov_normal + tot_alt_cov_normal;
 	double normal_vaf = (normal_cov == 0) ? 0 : ((double)tot_alt_cov_normal/(double)normal_cov);
 		
-	if (filters == NULL) { cerr << "Error: filters not assigned" << endl; }
-	
+	if (fs == NULL) { cerr << "Error: filters not assigned" << endl; }
+
+	//if(strcmp(str,"")!=0) { 
 	if(!str.empty()) { // STR variant
-		if(fet_score < filters->minPhredFisherSTR) {
+		if(fet_score < fs->minPhredFisherSTR) {
 			if (FILTER.compare("") == 0) { FILTER = "LowFisherSTR"; }
 			else { FILTER += ";LowFisherSTR"; }
 		}
 	}
 	// non-STR variant
-	else if(fet_score < filters->minPhredFisher) { 
+	else if(fet_score < fs->minPhredFisher) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowFisherScore"; }
 		else { FILTER += ";LowFisherScore"; }
 	}
 	
 	// the following filters are applied to all variants
-	//if(fet_score < filters->minPhredFisher) { 
+	//if(fet_score < fs->minPhredFisher) { 
 	//	if (FILTER.compare("") == 0) { FILTER = "LowFisherScore"; }
 	//	else { FILTER += ";LowFisherScore"; }
 	//}
-	if(normal_cov < filters->minCovNormal) { 
+	if(normal_cov < fs->minCovNormal) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowCovNormal"; }
 		else { FILTER += ";LowCovNormal"; }	
 	}
-	if(normal_cov > filters->maxCovNormal) { 
+	if(normal_cov > fs->maxCovNormal) { 
 		if (FILTER.compare("") == 0) { FILTER = "HighCovNormal"; }
 		else { FILTER += ";HighCovNormal"; }	
 	}
-	if(tumor_cov < filters->minCovTumor) { 
+	if(tumor_cov < fs->minCovTumor) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowCovTumor"; }
 		else { FILTER += ";LowCovTumor"; }	
 	}
-	if(tumor_cov > filters->maxCovTumor) { 
+	if(tumor_cov > fs->maxCovTumor) { 
 		if (FILTER.compare("") == 0) { FILTER = "HighCovTumor"; }
 		else { FILTER += ";HighCovTumor"; }	
 	}
-	if(tumor_vaf < filters->minVafTumor) { 
+	if(tumor_vaf < fs->minVafTumor) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowVafTumor"; }
 		else { FILTER += ";LowVafTumor"; }	
 	}
-	if(normal_vaf > filters->maxVafNormal) { 
+	if(normal_vaf > fs->maxVafNormal) { 
 		if (FILTER.compare("") == 0) { FILTER = "HighVafNormal"; }
 		else { FILTER += ";HighVafNormal"; }	
 	}
-	if(tot_alt_cov_tumor < filters->minAltCntTumor) { 
+	if(tot_alt_cov_tumor < fs->minAltCntTumor) { 
 		if (FILTER.compare("") == 0) { FILTER = "LowAltCntTumor"; }
 		else { FILTER += ";LowAltCntTumor"; }	
 	}
-	if(tot_alt_cov_normal > filters->maxAltCntNormal) { 
+	if(tot_alt_cov_normal > fs->maxAltCntNormal) { 
 		if (FILTER.compare("") == 0) { FILTER = "HighAltCntNormal"; }
 		else { FILTER += ";HighAltCntNormal"; }
 	}
@@ -141,7 +156,7 @@ string Variant_t::printVCF() {
 	
 	// snv specific filters
 	//if( (type == 'S') && (tot_alt_cov_tumor > 2) ) { // for snv strand bias filter is applied at all coverages
-		if( (alt_cov_tumor_fwd < filters->minStrandBias) || (alt_cov_tumor_rev < filters->minStrandBias) ) { 
+		if( (alt_cov_tumor_fwd < fs->minStrandBias) || (alt_cov_tumor_rev < fs->minStrandBias) ) { 
 			if (FILTER.compare("") == 0) { FILTER = "StrandBias"; }
 			else { FILTER += ";StrandBias"; }
 		}
@@ -166,7 +181,7 @@ string Variant_t::printVCF() {
 	//compute genotype	
 	string GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
 	string GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
-	
+		
 	string BX_normal = bxset_ref_N + "," + bxset_alt_N;
 	string BX_tumor  = bxset_ref_T + "," + bxset_alt_T;
 		
@@ -200,6 +215,7 @@ string Variant_t::printVCF() {
 	}
 	
     std::stringstream vcfline;
+		
 	vcfline << chr << "\t" << pos << "\t" << ID << "\t" << ref << "\t" << alt << "\t" << QUAL << "\t" << FILTER << "\t" << INFO << "\t" << FORMAT << "\t" << NORMAL << "\t" << TUMOR << endl;	
 	//cout << vcfline;
 	
@@ -224,17 +240,6 @@ string Variant_t::genotype(int R, int A) {
 	
 	return GT;
 }
-
-// compute genotype info in VCF format for this variant
-//////////////////////////////////////////////////////////////
-/*
-void Variant_t::reGenotype() {
-	
-	//compute genotype
-	GT_normal = genotype((ref_cov_normal_fwd+ref_cov_normal_rev),(alt_cov_normal_fwd+alt_cov_normal_rev));
-	GT_tumor = genotype((ref_cov_tumor_fwd+ref_cov_tumor_rev),(alt_cov_tumor_fwd+alt_cov_tumor_rev));
-}
-*/
 
 // 	compute fisher exaxt test score for tumor/normal coverages
 //////////////////////////////////////////////////////////////

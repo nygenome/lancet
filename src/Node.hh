@@ -120,6 +120,29 @@ public:
 			hpset_tmr.resize(3,0); 
 			hpset_nml.resize(3,0); 
 		}
+		
+		~Node_t() { //destructor
+			//cerr << "Node_t " << nodeid_m << " destructor called" << endl;
+			bxset_tmr_fwd.clear(); unordered_set<string>().swap(bxset_tmr_fwd);
+			bxset_tmr_rev.clear(); unordered_set<string>().swap(bxset_tmr_rev);
+			bxset_nml_fwd.clear(); unordered_set<string>().swap(bxset_nml_fwd);
+			bxset_nml_rev.clear(); unordered_set<string>().swap(bxset_nml_rev);
+
+			reads_m.clear(); unordered_set<ReadId_t>().swap(reads_m);
+			edges_m.clear(); vector<Edge_t>().swap(edges_m);
+			cov_status.clear(); vector<char>().swap(cov_status);			
+
+			hpset_nml.clear(); vector<int>().swap(hpset_nml);
+			hpset_tmr.clear(); vector<int>().swap(hpset_tmr);
+			
+			cov_distr_tmr.clear(); vector<cov_t>().swap(cov_distr_tmr);
+			cov_distr_nml.clear(); vector<cov_t>().swap(cov_distr_nml);
+			
+			mate1_name.clear(); vector<string>().swap(mate1_name);
+			mate2_name.clear(); vector<string>().swap(mate2_name);
+
+			readstarts_m.clear(); vector<ReadStart_t>().swap(readstarts_m);			
+		}
 
 	friend ostream& operator<<(std::ostream& o, const Node_t & n) { return n.print(o); }
 	friend ostream & operator<<(std::ostream & o, const Node_t * n) { return n->print(o); }

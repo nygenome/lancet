@@ -226,7 +226,7 @@ int Microassembler::processGraph(Graph_t & g, const string & refname, int minkme
 				g.countRefPath(out_prefix + ".paths.fa", refname, false);
 				//g.printFasta(prefix + "." + refname + ".nodes.fa");
 
-				if (PRINT_ALL) { g.printDot(out_prefix + ".final.c" + comp + ".dot",c); }					
+				if (PRINT_ALL) { g.printDot(out_prefix + ".final.c" + comp + ".dot",c); }				
 			}
 			
 			if (rptInQry || cycleInGraph) { continue; }
@@ -455,7 +455,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 	string rg = "";
 	string xt = "";	
 	string xa = "";
-	string bx = ""; // 10x barcode
+	string bx = ""; // linked-read barcode
 	int hp = 0; // 10x Haplotype number of the molecule that generated the read
 	
 	int nm = 0;
@@ -583,6 +583,7 @@ bool Microassembler::extractReads(BamReader &reader, Graph_t &g, Ref_t *refinfo,
 				bx = "";
 				al.GetTag("BX", bx); // get the BX barcode for the read
 				if(bx.empty()) { bx = "null"; }
+				//cerr << "BX=" << bx << endl; 
 				
 				hp = 0;
 				hp = extract_sam_tag("HP", al);
@@ -784,7 +785,7 @@ int Microassembler::processReads() {
 		++counter;
 		progress = floor(100*(double(counter)/(double)reftable->size()));
 		if (progress > old_progress) {
-			cerr << "Thread " << ID << " is " << progress << "\% done." << endl;
+			cerr << "Thread " << ID << " is " << progress << "\% done, with " << vDB.getNumVariants() << " variants collected so far." << endl;
 			old_progress = progress;
 		}
 			
@@ -847,7 +848,7 @@ int Microassembler::processReads() {
 		welapsed = (wfinish.tv_sec - wstart.tv_sec);
 		welapsed += (wfinish.tv_nsec - wstart.tv_nsec) / 1000000000.0;
 		ofile << welapsed << "\t" << refinfo->refchr << ":" << refinfo->refstart << "-" << refinfo->refend << "\t" << numreads_g << endl;
-		*/
+		*/		
 	}
 	//ofile.close();
 	

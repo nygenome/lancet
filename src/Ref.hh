@@ -40,20 +40,16 @@ using namespace std;
 
 typedef struct cov_t
 {
-  int fwd; // total fwd read coverage
-  int rev; // total rev read coverage 
-  int minqv_fwd; // min base quality fwd read coverage
-  int minqv_rev; // min base quality rev read coverage
-  int hp0; // number of reads in haplotype 0 (unassigned)
-  int hp1; // number of reads in haplotype 1
-  int hp2; // number of reads in haplotype 2
-  int hp0_minqv; // number of reads in haplotype 0 after minQ cutoff
-  int hp1_minqv; // number of reads in haplotype 1 after minQ cutoff
-  int hp2_minqv; // number of reads in haplotype 2 after minQ cutoff
-  unordered_set<string> bxset_fwd; // set of barcodes associated to the kmer in the fwd strand
-  unordered_set<string> bxset_rev; // set of barcodes associated to the kmer in the rev strand
-  //int minmq_fwd; // min mapping quality fwd coverage
-  //int minmq_rev; // min mapping quality rev coverage
+  unsigned short fwd; // total fwd read coverage
+  unsigned short rev; // total rev read coverage 
+  unsigned short minqv_fwd; // min base quality fwd read coverage
+  unsigned short minqv_rev; // min base quality rev read coverage
+  unsigned short hp0; // number of reads in haplotype 0 (unassigned)
+  unsigned short hp1; // number of reads in haplotype 1
+  unsigned short hp2; // number of reads in haplotype 2
+  unsigned short hp0_minqv; // number of reads in haplotype 0 after minQ cutoff
+  unsigned short hp1_minqv; // number of reads in haplotype 1 after minQ cutoff
+  unsigned short hp2_minqv; // number of reads in haplotype 2 after minQ cutoff
 } cov_t;
 
 class Ref_t
@@ -88,6 +84,9 @@ public:
 	vector<cov_t> * normal_coverage; // normal k-mer coverage across the reference
 	vector<cov_t> * tumor_coverage; // tumor k-mer coverage across the reference
 	
+	unordered_map<Mer_t,set<string>> bx_table_tmr; // mer to barcode map for tumor
+	unordered_map<Mer_t,set<string>> bx_table_nml; // mer to barcode map for normal
+	
 	Ref_t(int k) : indexed_m(0) 
 	{
 		K = k; 
@@ -95,6 +94,14 @@ public:
 		mertable_tmr = NULL;
 		normal_coverage = NULL;
 		tumor_coverage = NULL;
+	}
+	
+	~Ref_t() { // destructor
+		//cerr << "Ref_t " << hdr << " destructor called" << endl;
+		if(mertable_nml != NULL)    { mertable_nml->clear(); unordered_map<string,cov_t>().swap(*mertable_nml); mertable_nml = NULL;  }
+		if(mertable_tmr != NULL)    { mertable_tmr->clear(); unordered_map<string,cov_t>().swap(*mertable_tmr); mertable_tmr = NULL;  }
+		if(normal_coverage != NULL) { normal_coverage->clear(); vector<cov_t>().swap(*normal_coverage); normal_coverage = NULL; }
+		if(tumor_coverage != NULL)  { tumor_coverage->clear();  vector<cov_t>().swap(*tumor_coverage); tumor_coverage = NULL;  }		
 	}
 	
 	void setHdr(string hdr_) { hdr = hdr_; }
@@ -110,12 +117,9 @@ public:
 	void updateCoverage(const string & cmer, int cov, unsigned int strand, int sample);
 	void updateHPCoverage(const string & cmer, int hp0_cov, int hp1_cov, int hp2_cov, int sample);
 	void computeCoverage(int sample);
-	void updateBXset(const string & cmer, 
-		unordered_set<string> & bxset_tmr_fwd,
-		unordered_set<string> & bxset_tmr_rev,
-		unordered_set<string> & bxset_nml_fwd,
-		unordered_set<string> & bxset_nml_rev,
-		unsigned int strand, int sample);
+	
+	void addBX(const string & bx, Mer_t & mer, int sample);	
+	string getBXsetAt(int start, int end, string & rseq, int sample);
 	
 	cov_t getCovStructAt(unsigned pos, int sample);
 	int getCovAt(unsigned pos, unsigned int strand, int sample);

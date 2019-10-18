@@ -547,6 +547,7 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 		//merge variant from all threads
 		cerr << "Merge variants" << endl;
 		VariantDB_t variantDB(LR_MODE); // variants DB
+		variantDB.setFilters(&filters);
 		for( i=0; i < NUM_THREADS; ++i ) {
 			
 			tot_skip += assemblers[i]->num_skip;
@@ -931,6 +932,7 @@ int main(int argc, char** argv)
 		cerr << "Merge variants" << endl;
 		VariantDB_t variantDB(LR_MODE); // variants DB
 		variantDB.setCommandLine(COMMAND_LINE);
+		variantDB.setFilters(&filters);
 		for( i=0; i < NUM_THREADS; ++i ) {
 			
 			tot_skip += assemblers[i]->num_skip;

@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include "util.hh"
 
 using namespace std;
 
@@ -151,9 +152,6 @@ public:
 			sum.hp1_minqv += cov_distr[i].hp1_minqv;
 			sum.hp2_minqv += cov_distr[i].hp2_minqv;
 			
-			//bxset.insert(cov_distr[i].bxset_fwd.begin(), cov_distr[i].bxset_fwd.end()); 
-			//bxset.insert(cov_distr[i].bxset_rev.begin(), cov_distr[i].bxset_rev.end());
-			
 			if(cov_distr[i].fwd != 0) { sum_non0.fwd += cov_distr[i].fwd; ++n_non0.fwd; }
 			if(cov_distr[i].rev != 0) { sum_non0.rev += cov_distr[i].rev; ++n_non0.rev; }
 			if(cov_distr[i].minqv_fwd != 0) { sum_non0.minqv_fwd += cov_distr[i].minqv_fwd; ++n_non0.minqv_fwd; }
@@ -164,9 +162,9 @@ public:
 			if(cov_distr[i].hp0_minqv != 0) { sum_non0.hp0_minqv += cov_distr[i].hp0_minqv; ++n_non0.hp0_minqv; }
 			if(cov_distr[i].hp1_minqv != 0) { sum_non0.hp1_minqv += cov_distr[i].hp1_minqv; ++n_non0.hp1_minqv; }
 			if(cov_distr[i].hp2_minqv != 0) { sum_non0.hp2_minqv += cov_distr[i].hp2_minqv; ++n_non0.hp2_minqv; }
-			
-			if(cov_distr[i].fwd < min.fwd) { min.fwd = cov_distr[i].fwd; min.bxset_fwd = cov_distr[i].bxset_fwd; }
-			if(cov_distr[i].rev < min.rev) { min.rev = cov_distr[i].rev; min.bxset_rev = cov_distr[i].bxset_rev; }
+
+			if(cov_distr[i].fwd < min.fwd) { min.fwd = cov_distr[i].fwd; }
+			if(cov_distr[i].rev < min.rev) { min.rev = cov_distr[i].rev; }			
 			if(cov_distr[i].minqv_fwd < min.minqv_fwd) { min.minqv_fwd = cov_distr[i].minqv_fwd; }
 			if(cov_distr[i].minqv_rev < min.minqv_rev) { min.minqv_rev = cov_distr[i].minqv_rev; }
 			if(cov_distr[i].hp0 < min.hp0) { min.hp0 = cov_distr[i].hp0; }
@@ -313,22 +311,6 @@ public:
 	int getAvgCovThp0() { if(code == 'x') {return mean_alt_cov_T.hp0_minqv; } else {return mean_alt_cov_T.hp0;} }
 	int getAvgCovThp1() { if(code == 'x') {return mean_alt_cov_T.hp1_minqv; } else {return mean_alt_cov_T.hp1;} }
 	int getAvgCovThp2() { if(code == 'x') {return mean_alt_cov_T.hp2_minqv; } else {return mean_alt_cov_T.hp2;} }
-	
-	string getRefBxSet(unordered_set<string> & set1, unordered_set<string> & set2) { 
-		string bxs;
-		for ( auto it = set1.begin(); it != set1.end(); ++it ) { bxs += *it + ";"; }
-		for ( auto it = set2.begin(); it != set2.end(); ++it ) { 
-			if (next(it) == set2.end()) { bxs += *it; }
-			else { bxs += *it + ";"; }
-		}
-		if(bxs == "") { bxs = "."; }
-		return bxs;
-	}	
-	
-	string getRefBxSetNml() { return getRefBxSet(min_ref_cov_N.bxset_fwd, min_ref_cov_N.bxset_rev); }
-	string getAltBxSetNml() { return getRefBxSet(min_alt_cov_N.bxset_fwd, min_alt_cov_N.bxset_rev); }
-	string getRefBxSetTmr() { return getRefBxSet(min_ref_cov_T.bxset_fwd, min_ref_cov_T.bxset_rev); }
-	string getAltBxSetTmr() { return getRefBxSet(min_alt_cov_T.bxset_fwd, min_alt_cov_T.bxset_rev); }
 	
 };
 

@@ -62,9 +62,14 @@ public:
 	unordered_map<string,int> nCNT; // counts of variants per postion in the normal
 	string command_line; // command line used to run the tool
 
+	Filters * filters; // filter thresholds
+
 	VariantDB_t(bool lrmode = false) { LR_MODE = lrmode; }
+
+	int getNumVariants() {return DB.size(); }
 	
 	void setLRmode (bool lrmode) { LR_MODE = lrmode; }
+	void setFilters (Filters * fs) { filters = fs; }
 	void setCommandLine(string cl) { command_line = cl; }
 	void addVar(const Variant_t & v);
 	void printHeader(const string version, const string reference, char * date, Filters &fs, string &sample_name_N, string &sample_name_T);

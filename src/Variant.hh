@@ -32,6 +32,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cfloat>
+#include <array>
+
 #include "util.hh"
 #include "FET.hh"
 
@@ -88,10 +90,10 @@ public:
 	unsigned short alt_cov_tumor_fwd;
 	unsigned short alt_cov_tumor_rev;
 	
-	array<unsigned short,3> HPRN;
-	array<unsigned short,3> HPRT; 
-	array<unsigned short,3> HPAN;
-	array<unsigned short,3> HPAT;
+	std::array<unsigned short, 3> HPRN;
+	std::array<unsigned short, 3> HPRT; 
+	std::array<unsigned short, 3> HPAN;
+	std::array<unsigned short, 3> HPAT;
 	
 	string bxset_ref_N;
 	string bxset_ref_T;

@@ -8,7 +8,7 @@ CXX := g++
 CXXFLAGS := -std=c++0x -Wno-deprecated -Wall -O3 -fexceptions -g -Wl,-rpath,$(ABS_BAMTOOLS_DIR)/lib64/
 #CXXFLAGS := -std=c++0x -Wno-deprecated -Wall -O3 -fexceptions -pg -Wl,-rpath,$(ABS_BAMTOOLS_DIR)/lib/ # compile for gprof
 INCLUDES := -I$(ABS_BAMTOOLS_DIR)/include/bamtools -I$(ABS_HTSLIB_DIR)/
-LDFLAGS := -L$(ABS_BAMTOOLS_DIR)/lib64/ -L$(ABS_HTSLIB_DIR)/
+LDFLAGS := -L$(ABS_BAMTOOLS_DIR)/lib/ -L$(ABS_BAMTOOLS_DIR)/lib64/ -L$(ABS_HTSLIB_DIR)/
 LDLIBS := -llzma -lbz2 -lz -ldl -lpthread -lcurl -lcrypto -lbamtools
 
 all: lancet

@@ -226,4 +226,5 @@ Flags
 ```
 
 ### Funding
-Lancet development is currently funded by [ITCR](https://itcr.cancer.gov/) under the NCI R21 award [1R21CA220411-01A1](https://projectreporter.nih.gov/project_info_description.cfm?aid=9507249&icde=40260779&ddparam=&ddvalue=&ddsub=&cr=1&csb=default&cs=ASC&pball=).
+
+Informatics Technology for Cancer Research ([ITCR](https://itcr.cancer.gov/)) under the NCI R21 award [1R21CA220411-01A1](https://projectreporter.nih.gov/project_info_description.cfm?aid=9507249&icde=40260779&ddparam=&ddvalue=&ddsub=&cr=1&csb=default&cs=ASC&pball=).

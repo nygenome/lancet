@@ -24,9 +24,7 @@ Building and running lancet from source requires a GNU-like environment with
 2. GNU Make
 3. GNU CMake (version >= 3.0)
 
-It should be possible to build lancet on most Linux installations 
-or on a Mac installation with [Xcode and Xcode command line tools] installed.
-Lancet is available through github and can be obtained and compiled with the following command:
+Lancet can be built on most Linux installations. Most distributions already ship with all the c++ libraries that Lancet depends on: `lzma bz2 z dl pthread curl crypto deflate`. Compilation on MacOS require Xcode and Xcode command line tools installed. Lancet source code is available through github and can be obtained and compiled with the following command:
 
 ```sh
 git clone git://github.com/nygenome/lancet.git

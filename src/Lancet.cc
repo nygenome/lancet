@@ -107,6 +107,7 @@ void printHelpText(Filters & filters) {
 		"   --print-graph, -A             : print graph (in .dot format) after every stage\n"
 		"   --verbose, -v                 : be verbose\n"
 		"   --more-verbose, -V            : be more verbose\n"
+		"   --print-config-file -G        : print config file to file\n"
 		"\n";
 	
 	printUsage();
@@ -176,6 +177,7 @@ void printConfiguration(ostream & out, Filters & filters)
 	out << "active-regions: "   << bvalue(ACTIVE_REGIONS) << endl;
 	out << "kmer-recovery: "    << bvalue(KMER_RECOVERY) << endl;
 	out << "print-graphs: "     << bvalue(PRINT_ALL) << endl;
+	out << "print-config-file: "<< bvalue(PRINT_CONFIG_FILE) << endl;
 	out << "verbose: "          << bvalue(verbose) << endl;
 	out << "more-verbose: "     << bvalue(VERBOSE) << endl;
 	
@@ -411,11 +413,12 @@ int rLancet(string tumor_bam, string normal_bam, string ref_fasta, string reg, s
 
 	if (errflg) { exit(EXIT_FAILURE); }
 	
-    ofstream params_file;
-    params_file.open ("config.txt");
-	printConfiguration(params_file, filters); // save parameters setting to file
-    params_file.close();
-
+	if (PRINT_CONFIG_FILE) {
+		ofstream params_file;
+    	params_file.open ("config.txt");
+		printConfiguration(params_file, filters); // save parameters setting to file
+    	params_file.close();
+	}
 	if(verbose) { printConfiguration(cerr, filters); }
 	
 	BamReader readerT;
@@ -700,6 +703,7 @@ int main(int argc, char** argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"more-verbose", no_argument, 0, 'V'},
 		{"print-graph", no_argument, 0, 'A'},
+		{"print-config-file", no_argument, 0, 'G'},
 		
 		{0, 0, 0, 0}
 	};
@@ -707,7 +711,7 @@ int main(int argc, char** argv)
 	int option_index = 0;
 
 	//while (!errflg && ((ch = getopt (argc, argv, "u:m:n:r:g:s:k:K:l:t:c:d:x:BDRACIhSL:T:M:vF:q:b:Q:P:p:E")) != EOF))
-	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:ARhSIWJOL:T:P:M:vVF:q:b:B:Q:p:s:E:a:m:e:i:o:y:z:w:j:X:U:N:Y:D:Z:", long_options, &option_index)) != -1))
+	while (!errflg && ((ch = getopt_long (argc, argv, "u:n:r:g:k:K:l:f:t:c:C:d:x:GARhSIWJOL:T:P:M:vVF:q:b:B:Q:p:s:E:a:m:e:i:o:y:z:w:j:X:U:N:Y:D:Z:", long_options, &option_index)) != -1))
 	{
 		switch (ch)
 		{
@@ -766,6 +770,7 @@ int main(int argc, char** argv)
 			case 'v': verbose          = 1;            break;
 			case 'V': VERBOSE=1; verbose=1;            break;
 			case 'A': PRINT_ALL        = 1;            break;
+			case 'G': PRINT_CONFIG_FILE= 1;            break;
 
 			case 'h': errflg = 1;                      break;
 
@@ -821,10 +826,12 @@ int main(int argc, char** argv)
 
 	RefVector references = readerT.GetReferenceData(); // Extract all reference sequence entries.
 	
-    ofstream params_file;
-    params_file.open ("config.txt");
-	printConfiguration(params_file, filters); // save parameters setting to file
-    params_file.close();
+	if (PRINT_CONFIG_FILE) {
+		ofstream params_file;
+    	params_file.open ("config.txt");
+		printConfiguration(params_file, filters); // save parameters setting to file
+    	params_file.close();
+	}
 	if(verbose) { printConfiguration(cerr, filters); }
 	
 	// run the assembler on each region

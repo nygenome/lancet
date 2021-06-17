@@ -757,7 +757,7 @@ int Microassembler::processReads() {
 	int paircnt = 0;
 	int graphcnt = 0;
 	int readcnt = 0;
-	//int numreads_g = 0;
+	int numreads_g = 0;
 	
 	// for each reference location
 	BamRegion region;
@@ -766,21 +766,23 @@ int Microassembler::processReads() {
 	int counter = 0;
 	double progress;
 	double old_progress = 0;
+
+	//#define W_ELAPSED_TIME 1
 	
-	/*
-    ofstream ofile;
-	stringstream filename;
-	filename << "elapsedtime.bywindow." << ID << ".txt";
-    ofile.open(filename.str());
-	*/
+#ifdef W_ELAPSED_TIME
+		ofstream ofile;
+		stringstream filename;
+		filename << "elapsedtime.bywindow." << ID << ".txt";
+    	ofile.open(filename.str());
+#endif
 	
 	for ( ri=reftable->begin() ; ri != reftable->end(); ++ri ) {
 
-		/*
-		struct timespec wstart, wfinish;
-		double welapsed;
-		clock_gettime(CLOCK_MONOTONIC, &wstart);
-		*/
+#ifdef W_ELAPSED_TIME
+			struct timespec wstart, wfinish;
+			double welapsed;
+			clock_gettime(CLOCK_MONOTONIC, &wstart);
+#endif
 		
 		++counter;
 		progress = floor(100*(double(counter)/(double)reftable->size()));
@@ -832,8 +834,8 @@ int Microassembler::processReads() {
 			bool skipN = extractReads(readerN, g, refinfo, region, readcnt, NML);
 			
 			if(!skipT && !skipN) { 
-				//numreads_g = processGraph(g, graphref, minK, maxK);
-				processGraph(g, graphref, minK, maxK);
+				numreads_g = processGraph(g, graphref, minK, maxK);
+				//processGraph(g, graphref, minK, maxK);
 				
 			}
 			else { ++num_skip; g.clear(true); }
@@ -843,14 +845,16 @@ int Microassembler::processReads() {
 			if(verbose) { cerr << "Skip region: not enough evidence for variation." << endl; }
 		}
 		
-		/*
-		clock_gettime(CLOCK_MONOTONIC, &wfinish);
-		welapsed = (wfinish.tv_sec - wstart.tv_sec);
-		welapsed += (wfinish.tv_nsec - wstart.tv_nsec) / 1000000000.0;
-		ofile << welapsed << "\t" << refinfo->refchr << ":" << refinfo->refstart << "-" << refinfo->refend << "\t" << numreads_g << endl;
-		*/		
+#ifdef W_ELAPSED_TIME
+			clock_gettime(CLOCK_MONOTONIC, &wfinish);
+			welapsed = (wfinish.tv_sec - wstart.tv_sec);
+			welapsed += (wfinish.tv_nsec - wstart.tv_nsec) / 1000000000.0;
+			ofile << welapsed << "\t" << refinfo->refchr << ":" << refinfo->refstart << "-" << refinfo->refend << "\t" << numreads_g << endl;
+#endif	
 	}
-	//ofile.close();
+#ifdef W_ELAPSED_TIME	
+	ofile.close();
+#endif
 	
 	readerT.Close();
 	readerN.Close();

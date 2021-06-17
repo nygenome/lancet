@@ -91,7 +91,7 @@ public:
 	int MIN_QUAL_TRIM;
 	int MIN_MAP_QUAL;
 	int MAX_DELTA_AS_XS;
-
+	
 	string TUMOR;
 	string NORMAL;
 	string RG_FILE;
@@ -157,7 +157,7 @@ public:
 	int num_snv_or_indel_or_softclip_regions;
 	
 	Microassembler(bool lrmode) { 
-		
+					
 		LR_MODE = lrmode;
 		vDB.setLRmode(lrmode);
 		

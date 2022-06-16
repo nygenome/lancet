@@ -1,0 +1,83 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [
+          linux-cmake-shared,
+          linux-cmake-static,
+          macos-cmake-shared,
+          macos-cmake-static,
+          windows-cmake-shared,
+          windows-cmake-static,
+        ]
+        include:
+          - name: linux-cmake-shared
+            os: ubuntu-latest
+            build-system: cmake
+            CXXFLAGS: -Werror
+            cmake-options: -DBUILD_SHARED_LIBS=ON
+          - name: linux-cmake-static
+            os: ubuntu-latest
+            build-system: cmake
+            CXXFLAGS: -Werror
+            cmake-options: -DBUILD_SHARED_LIBS=OFF
+
+          - name: macos-cmake-shared
+            os: macos-latest
+            build-system: cmake
+            CXXFLAGS: -Werror
+            cmake-options: -DBUILD_SHARED_LIBS=ON
+          - name: macos-cmake-static
+            os: macos-latest
+            build-system: cmake
+            CXXFLAGS: -Werror
+            cmake-options: -DBUILD_SHARED_LIBS=OFF
+
+          - name: windows-cmake-shared
+            os: windows-latest
+            build-system: cmake
+            CXXFLAGS: /WX
+            cmake-options: -DBUILD_SHARED_LIBS=ON -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake
+          - name: windows-cmake-static
+            os: windows-latest
+            build-system: cmake
+            CXXFLAGS: /WX
+            cmake-options: -DBUILD_SHARED_LIBS=OFF -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Linux dependencies
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y pkg-config libjsoncpp-dev zlib1g-dev
+
+    - name: Install macOS dependencies
+      if: startsWith(matrix.os, 'macos')
+      run: brew install pkg-config jsoncpp zlib
+
+    - name: Install Windows dependencies
+      if: startsWith(matrix.os, 'windows')
+      run: vcpkg install zlib:x64-windows
+
+    - name: Create CMake Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure CMake
+      working-directory: ${{runner.workspace}}/build
+      run: cmake ${{github.workspace}} -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS="${{matrix.CXXFLAGS}}" ${{matrix.cmake-options}}
+
+    - name: Build CMake
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config Release
+
+    - name: Test CMake
+      working-directory: ${{runner.workspace}}/build
+      run: ctest -C Release

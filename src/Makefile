@@ -1,5 +1,5 @@
-BAMTOOLS_DIR := ../bamtools-2.5.1/
-HTSLIB_DIR := ../htslib-1.8/
+BAMTOOLS_DIR := ../bamtools-2.5.2/
+HTSLIB_DIR := ../htslib-1.15.1/
 
 ABS_BAMTOOLS_DIR := $(realpath $(BAMTOOLS_DIR))
 ABS_HTSLIB_DIR := $(realpath $(HTSLIB_DIR))

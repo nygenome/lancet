@@ -1,2 +1,0 @@
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar qc libBamTools-utils.a "CMakeFiles/BamTools-utils.dir/utils/bamtools_fasta.cpp.o" "CMakeFiles/BamTools-utils.dir/utils/bamtools_options.cpp.o" "CMakeFiles/BamTools-utils.dir/utils/bamtools_pileup_engine.cpp.o" "CMakeFiles/BamTools-utils.dir/utils/bamtools_utilities.cpp.o"
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib libBamTools-utils.a
